@@ -141,6 +141,23 @@ def refresh_eps(syms, workers=6, log=print):
 
 
 # ---------------------------------------------------------------- prices
+def settled(df):
+    """Drop bars whose session has not closed yet (a run during market hours would otherwise store intraday prices as
+    the close). US tickers: day D counts after 16:15 New York time on D; ^HSI after 16:30 Hong Kong time on D."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    ny = datetime.now(ZoneInfo("America/New_York"))
+    hk = datetime.now(ZoneInfo("Asia/Hong_Kong"))
+    us_last = pd.Timestamp(ny.date()) if (ny.hour, ny.minute) >= (16, 15) else pd.Timestamp(ny.date()) - pd.Timedelta(days=1)
+    hk_last = pd.Timestamp(hk.date()) if (hk.hour, hk.minute) >= (16, 30) else pd.Timestamp(hk.date()) - pd.Timedelta(days=1)
+    df = df.copy()
+    hk_cols = [c for c in df.columns if c.startswith("^HSI")]
+    us_cols = [c for c in df.columns if c not in hk_cols]
+    df.loc[df.index > us_last, us_cols] = float("nan")
+    df.loc[df.index > hk_last, hk_cols] = float("nan")
+    return df.dropna(how="all")
+
+
 def _merge(path, new):
     old = pd.read_csv(path, index_col=0, parse_dates=True) if os.path.exists(path) else None
     if old is not None:
@@ -186,6 +203,6 @@ def refresh_prices(syms, start_universe, log=print):
         if adj:
             a.columns = [f"{x}_TR" for x in a.columns]
             c = pd.concat([c, a], axis=1)
-        out[path] = _merge(path, c)
+        out[path] = _merge(path, settled(c))
         log(f"prices: {os.path.basename(path)} {start} -> {out[path].index.max().date()} ({len(c)} new rows fetched)")
     return out[C.CLOSES], out[C.BENCHF]
