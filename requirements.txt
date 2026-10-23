@@ -1,0 +1,6 @@
+yfinance>=0.2.40
+pandas>=2.0
+numpy
+requests
+lxml
+scikit-learn==1.9.0   # must match the version the P/E models were pickled with

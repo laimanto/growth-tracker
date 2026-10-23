@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growth Tracker</title>
+<style>
+:root{color-scheme:light;--bg:#f6f6f4;--surface:#fcfcfb;--border:#e3e2de;--grid:#ecebe7;--text:#0b0b0b;--text2:#52514e;--muted:#8a8984;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#8a8984;--s5:#4a3aa7;--band:rgba(42,120,214,.12);
+  --c3:#1baf7a;--c4:#eda100;--c5:#e87ba4;--c6:#008300;--c7:#4a3aa7;--c8:#e34948;--c9:#52514e;--c10:#0d8a9e;--c11:#b8860b;
+  --buy:#008300;--buybg:#e3f3e3;--sell:#d03b3b;--sellbg:#fbe5e5;--watch:#a86b00;--watchbg:#fbf0dc;--hold:#2a78d6;--holdbg:#e2eefb;--chip:#efeeea;--hl:#fff1b8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#121211;--surface:#1a1a19;--border:#33322f;--grid:#2a2a28;--text:#fff;--text2:#c3c2b7;--muted:#8f8e86;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#8f8e86;--s5:#9085e9;--band:rgba(57,135,229,.18);
+  --c3:#199e70;--c4:#c98500;--c5:#d55181;--c6:#2fa82f;--c7:#9085e9;--c8:#e66767;--c9:#c3c2b7;--c10:#3fb7c9;--c11:#d4a72c;
+  --buy:#4cc24c;--buybg:#16301a;--sell:#ff7b7b;--sellbg:#3a1b1b;--watch:#e0a63a;--watchbg:#352a14;--hold:#6aa8f0;--holdbg:#16263a;--chip:#26261f;--hl:#4a3f12}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#121211;--surface:#1a1a19;--border:#33322f;--grid:#2a2a28;--text:#fff;--text2:#c3c2b7;--muted:#8f8e86;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#8f8e86;--s5:#9085e9;--band:rgba(57,135,229,.18);
+  --c3:#199e70;--c4:#c98500;--c5:#d55181;--c6:#2fa82f;--c7:#9085e9;--c8:#e66767;--c9:#c3c2b7;--c10:#3fb7c9;--c11:#d4a72c;
+  --buy:#4cc24c;--buybg:#16301a;--sell:#ff7b7b;--sellbg:#3a1b1b;--watch:#e0a63a;--watchbg:#352a14;--hold:#6aa8f0;--holdbg:#16263a;--chip:#26261f;--hl:#4a3f12}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:12px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.page{max-width:1320px;margin:0 auto;padding:0 14px 50px}
+.top{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:10px;border-bottom:1px solid var(--border)}
+.head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:18px;margin:0}h2{font-size:13.5px;margin:0 0 4px}h3{font-size:12.5px;margin:10px 0 5px}
+.meta{color:var(--text2);font-size:12px}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;margin-top:4px}
+.tabs button{font:inherit;border:0;background:none;color:var(--text2);padding:6px 11px;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--text);border-bottom-color:var(--s1);font-weight:600}
+section{padding-top:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin:0 0 12px}
+.cap{color:var(--text2);font-size:11.5px;margin:0 0 8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 12px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 11px}
+.tile .k{color:var(--text2);font-size:11px}.tile .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.tile .n{color:var(--muted);font-size:11.5px}
+table{border-collapse:collapse;width:100%;font-size:11.5px;font-variant-numeric:tabular-nums}
+th,td{padding:3px 6px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{color:var(--text2);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface);z-index:2}
+th.grp{position:static;cursor:default;text-align:center;border-bottom:0;padding-bottom:0;font-weight:500;color:var(--muted)}
+td.l,th.l{text-align:left}td.rsn{text-align:left;color:var(--text2)}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--chip)}
+td.hl{background:var(--hl)!important;font-weight:600}
+.ic{display:inline-block;margin-left:3px;font-size:10px;color:var(--muted);cursor:help}
+.rb{display:inline-block;margin:0 3px 0 0;padding:0 6px;border-radius:999px;font-size:10.5px;background:var(--chip);color:var(--text2);cursor:help;white-space:nowrap}
+.rb.g{background:var(--buybg);color:var(--buy)}.rb.r{background:var(--sellbg);color:var(--sell)}.rb.y{background:var(--watchbg);color:var(--watch)}.rb.b{background:var(--holdbg);color:var(--hold)}
+td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-weight:600}
+.tscroll{overflow:auto;max-height:68vh}
+.topbar{overflow-x:auto;overflow-y:hidden;height:14px;margin-bottom:2px}.topbar div{height:1px}
+.badge{display:inline-block;padding:0 7px;border-radius:999px;font-size:11px;font-weight:600}
+.BUY{color:var(--buy);background:var(--buybg)}.SELL,.SOLD{color:var(--sell);background:var(--sellbg)}.WATCH{color:var(--watch);background:var(--watchbg)}
+.HOLD{color:var(--hold);background:var(--holdbg)}.OUT,.NODATA,.open{color:var(--muted);background:var(--chip)}.closed{color:var(--text2);background:var(--chip)}
+.pos{color:var(--buy)}.neg{color:var(--sell)}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.ctrl input,.ctrl select{font:inherit;font-size:12px;padding:3px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chips button{font:inherit;font-size:11.5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:2px 9px;cursor:pointer}
+.chips button.on{border-color:var(--text2);color:var(--text);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text2);margin:2px 0 6px}
+.sw{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.chart{position:relative}.chart svg{display:block;width:100%;height:auto}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:11.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:5;min-width:140px;font-variant-numeric:tabular-nums}
+.tip .r{display:flex;justify-content:space-between;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.rule{border-left:4px solid var(--s1);padding:6px 12px;background:var(--chip);border-radius:6px;margin:6px 0}
+.rule b{display:inline-block;min-width:66px}
+.meter{position:relative;height:10px;background:var(--chip);border-radius:5px;margin:4px 0 12px}.meter i{position:absolute;top:-3px;width:2px;height:16px}
+.note{font-size:12px;color:var(--text2)}.note li{margin:3px 0}
+.heat td{text-align:center;color:#fff;font-weight:600;min-width:48px}
+.themebtn{margin-left:auto;font:inherit;font-size:11.5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:6px;padding:2px 8px;cursor:pointer}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="top"><div class="page" style="padding-bottom:0">
+  <div class="head"><h1>Growth Tracker</h1><span class="meta" id="meta"></span><button class="themebtn" id="themeBtn" type="button">Theme</button></div>
+  <nav class="tabs" id="tabs"></nav></div></div>
+<div class="page">
+
+<section data-tab="Signals">
+  <div class="tiles" id="sigTiles"></div>
+  <div class="card"><h2>Signals</h2>
+    <p class="cap">Enter: trailing 12-month EPS growth <b>and every forecast year (Cur, +1, +2)</b> ≥ 30% × relative P/E (In bar). Exit: <b>any forecast year</b> &lt; 25% × relative P/E (Out bar). <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
+    <div class="ctrl"><div class="chips" id="stateChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
+    <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
+</section>
+
+<section data-tab="Earnings">
+  <div class="card"><h2>Earnings calendar</h2>
+    <p class="cap">"Review" = the 3–14 day window after a report, when analysts revise and the model portfolio acts. Fcst Δ = change of the next-year consensus EPS over 7 / 30 / 90 days.</p>
+    <div class="ctrl"><div class="chips" id="calChips"></div></div>
+    <div class="topbar" data-for="calWrap"><div></div></div><div class="tscroll" id="calWrap"><table id="calTab"></table></div></div>
+</section>
+
+<section data-tab="Stock detail">
+  <div class="card"><div class="ctrl"><b>Stock</b><input id="detSearch" list="detList" placeholder="Ticker"><datalist id="detList"></datalist></div><div id="detBody"></div></div>
+</section>
+
+<section data-tab="Performance">
+  <div class="tiles" id="perfTiles"></div>
+  <div class="card"><h2>Risk and return</h2><p class="cap" id="riskCap"></p>
+    <div class="ctrl"><div class="chips" id="winChips"></div></div><div class="topbar" data-for="riskWrap"><div></div></div><div class="tscroll" id="riskWrap"><table id="riskTab"></table></div></div>
+  <div class="card"><h2>Model portfolio since the start (rebased to 1)</h2><p class="cap">Total return for funds; NDX and HSI are index levels (price only), HSI in HKD (last close carried on US days). Cash earns 0%.</p>
+    <div class="legend" id="perfLeg"></div><div class="chart" id="perfChart"></div></div>
+  <div class="grid2">
+    <div class="card"><h2>Weights by sector</h2><div class="chart" id="pfSector"></div></div>
+    <div class="card"><h2>Model portfolio set-up</h2><table id="setupTab"></table></div></div>
+</section>
+
+<section data-tab="Trades">
+  <div class="card"><h2>Positions (one row per buy → sell)</h2><p class="cap">Paper trades of the model portfolio, executed at the close. Entry price is the average purchase price, exit price the average sale price; P&amp;L includes partial sales from rebalancing. No orders are sent to any broker.</p>
+    <div class="topbar" data-for="tripWrap"><div></div></div><div class="tscroll" id="tripWrap"><table id="tripTab"></table></div>
+    <details style="margin-top:10px"><summary class="cap" style="cursor:pointer">All individual trades (incl. rebalancing)</summary><div class="tscroll"><table id="trTab"></table></div></details></div>
+</section>
+
+<section data-tab="Strategy">
+  <div class="card"><h2>The strategy</h2>
+    <div class="rule"><b>Universe</b> S&amp;P 500 + Nasdaq-100, bought only once a stock is in either index.</div>
+    <div class="rule"><b>Measure</b> Relative P/E = P/E (price ÷ last 4 quarters' EPS) ÷ median P/E of its sector. A cheap stock needs less growth, an expensive one more.</div>
+    <div class="rule"><b>Enter</b> Trailing 12-month EPS growth ≥ <b>30% × relative P/E</b> and <b>each</b> forecast fiscal year (current, next, year after) ≥ <b>30% × relative P/E</b>.</div>
+    <div class="rule"><b>Exit</b> <b>Any</b> forecast fiscal year &lt; <b>25% × relative P/E</b>. The last, already reported year is shown but not required (requiring it made results worse).</div>
+    <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report (consensus revisions cluster there) or at the first close of each month (monthly sweep, which also resets equal weights).</div>
+    <div class="rule"><b>Portfolio</b> Equal weight across all stocks that qualify; cash if none.</div>
+    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Not used to sell.</div>
+    <p class="cap" id="ruleEx"></p>
+    <h3>Column guide</h3><table id="guide"></table></div>
+  <div class="card"><h2>Backtest 1: Jan 2022 to Sep 2026, realistic set-up</h2>
+    <p class="cap">Point-in-time universe (a stock is a candidate only after joining the S&amp;P 500 / Nasdaq-100). Forecast = actual EPS leaning 40% on recent growth (as analysts anchor), plus a 30% random error; 100 simulations. After Sep 2026 today's consensus is used. Shaded: 5th to 95th percentile of the runs.</p>
+    <div class="tiles" id="btTilesA"></div><div class="legend" id="btLegA"></div><div class="chart" id="btChartA"></div>
+    <h3>By calendar year (median run vs QQQ)</h3><table id="btYears"></table>
+    <h3>Sensitivity: universe and forecast quality (30% error, median of 100 runs)</h3><table id="btPit"></table></div>
+  <div class="card"><h2>Rule versions compared</h2><p class="cap">Same set-ups as the two backtests. v1.2 (live) requires every forecast year to clear the bar. The threshold grid and the sensitivity table were run on the earlier 2-year-average version.</p><table id="btVer"></table></div>
+  <div class="card"><h2>Backtest 2: Jan 2008 to Sep 2024, long run</h2>
+    <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; monthly; log scale.</p>
+    <div class="tiles" id="btTilesB"></div><div class="legend" id="btLegB"></div><div class="chart" id="btChartB"></div></div>
+  <div class="card"><h2>Why 30% / 25%: threshold grid</h2><p class="cap">Sortino of every entry × exit combination (2008–2024, 20%/30% forecast errors). A smooth plateau at entry 25–35%, exit 15–25%; the chosen cell is outlined.</p>
+    <div class="tscroll"><table class="heat" id="btGrid"></table></div></div>
+  <div class="card"><h2>Real ETFs with related ideas</h2><p class="cap">None beat QQQ by more than ~2%/yr over its life. QGRW (+1.7%/yr vs QQQ since Dec 2022) is the best; FFTY (reported growth + consensus + price strength, ~1,960% turnover) lost badly.</p><table id="btEtf"></table></div>
+  <div class="card note"><h2>Caveats</h2><ul>
+    <li>Backtests use actual EPS plus simulated errors as the "forecast". Real consensus errs most at turning points; with strong anchoring the 2022–26 result drops to ~23%/yr (QQQ 14.6%).</li>
+    <li>Stocks removed from the indexes since 2022 are missing from the data (mostly losers), which flatters the backtests somewhat.</li>
+    <li>No minimum growth: very cheap stocks (low relative P/E) can qualify on modest growth.</li>
+    <li>v1.2 holds fewer stocks (about 18 in 2022–26, about 9 in the long run), so single names matter more.</li>
+    <li>This is a paper model portfolio for tracking the rule live. It does not place orders.</li></ul>
+    <h3>Forecast revisions vs days since the last report (217 stocks, 23 Oct 2026)</h3><table id="btTiming"></table></div>
+</section>
+</div>
+
+<script>
+const D = /*DATA*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pct = (v, d = 0) => v == null ? '–' : (v >= 0 ? '+' : '') + (v * 100).toFixed(d) + '%';
+const pctu = (v, d = 0) => v == null ? '–' : (v * 100).toFixed(d) + '%';
+const num = (v, d = 1) => v == null ? '–' : v.toFixed(d);
+const money = v => v == null ? '–' : (v <= -0.5 ? '-$' : '$') + Math.abs(v).toLocaleString(undefined, {maximumFractionDigits: 0});
+const px = v => v == null ? '–' : v >= 1000 ? v.toFixed(0) : v.toFixed(2);
+const cls = v => v == null || Math.abs(v) < 5e-4 ? '' : v > 0 ? 'pos' : 'neg';
+const clsm = v => v == null || Math.abs(v) < 0.5 ? '' : v > 0 ? 'pos' : 'neg';
+const badge = s => `<span class="badge ${s.replace(' ', '')}">${s}</span>`;
+const daysAgo = d => d ? Math.round((Date.parse(D.price_date) - Date.parse(d)) / 864e5) : 1e9;
+const fresh = d => d && daysAgo(d) <= D.rules.highlight;
+const S = D.signals, BY = Object.fromEntries(S.map(r => [r.sym, r]));
+const TABS = ['Signals', 'Earnings', 'Stock detail', 'Performance', 'Trades', 'Strategy'];
+
+document.getElementById('meta').textContent = `Last update ${D.updated_utc} UTC · ${D.updated_hk} GMT+8`;
+function showTab(t) {
+  document.querySelectorAll('section[data-tab]').forEach(s => s.classList.toggle('hide', s.dataset.tab !== t));
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.textContent === t));
+  try { localStorage.setItem('gt_tab', t); } catch (e) {}
+  drawCharts(); syncBars();
+}
+document.getElementById('tabs').innerHTML = TABS.map(t => `<button type="button">${t}</button>`).join('');
+document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => { showTab(b.textContent); window.scrollTo(0, 0); }));
+
+/* top horizontal scrollbars, mirrored with the table container */
+function syncBars() {
+  document.querySelectorAll('.topbar').forEach(bar => {
+    const w = document.getElementById(bar.dataset.for); if (!w) return;
+    bar.firstElementChild.style.width = w.scrollWidth + 'px';
+    bar.style.display = w.scrollWidth > w.clientWidth + 2 ? 'block' : 'none';
+    if (!bar._on) { bar._on = 1; bar.addEventListener('scroll', () => { w.scrollLeft = bar.scrollLeft; }); w.addEventListener('scroll', () => { bar.scrollLeft = w.scrollLeft; }); }
+  });
+}
+
+/* sortable table */
+function table(el, cols, rows, opt = {}) {
+  const t = document.getElementById(el);
+  let key = opt.sort || null, dir = opt.dir || -1;
+  const draw = () => {
+    let r = rows.slice();
+    if (key) { const c = cols.find(c => c.k === key) || {}; r.sort((a, b) => { const x = c.v ? c.v(a) : a[key], y = c.v ? c.v(b) : b[key];
+      if (x == null) return 1; if (y == null) return -1; return (x > y ? 1 : x < y ? -1 : 0) * dir; }); }
+    const grp = opt.groups ? '<tr>' + opt.groups.map(g => `<th class="grp" colspan="${g[1]}">${g[0]}</th>`).join('') + '</tr>' : '';
+    t.innerHTML = grp + '<tr>' + cols.map(c => `<th class="${c.l ? 'l' : ''}" data-k="${c.k}" title="${c.t || ''}">${c.h}${key === c.k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr>' +
+      r.map(x => `<tr class="${opt.click ? 'click' : ''}" data-sym="${x.sym || ''}">` + cols.map(c => `<td class="${c.l ? 'l' : ''} ${c.rsn ? 'rsn' : ''} ${c.cls ? c.cls(x) : ''}" title="${c.tt ? c.tt(x) : ''}">${c.f ? c.f(x) : (x[c.k] ?? '–')}</td>`).join('') + '</tr>').join('');
+    t.querySelectorAll('th[data-k]').forEach(h => h.addEventListener('click', () => { const k = h.dataset.k; if (key === k) dir = -dir; else { key = k; dir = -1; } draw(); }));
+    if (opt.click) t.querySelectorAll('tr.click').forEach(tr => tr.addEventListener('click', () => opt.click(tr.dataset.sym)));
+    syncBars();
+  };
+  draw();
+}
+const fyTip = (r, i, lab) => r.fy ? `FY${r.fy[i]} ${lab}` : '';
+const ic = s => `<span class="ic" title="${s.replace(/"/g, '&quot;')}">ⓘ</span>`;
+const lastG = r => r.lastFlag ? r.trail : r.gLast;
+const rb = (txt, tip, c = '') => `<span class="rb ${c}" title="${tip.replace(/"/g, '&quot;')}">${txt}</span>`;
+function remarks(r) {
+  const b = [], wk = [r.gCur, r.g1, r.g2 ?? r.g1].filter(v => v != null);
+  const weak = wk.length ? Math.min(...wk) : null;
+  if (r.in_review) b.push(rb('review now', `Reported ${r.days_since_report} days ago: analysts are revising, and the model acts in this 3–14 day window.`, 'b'));
+  if (r.next_report) { const d = Math.round((Date.parse(r.next_report) - Date.parse(D.price_date)) / 864e5); if (d >= 0 && d <= 7) b.push(rb(`report ${d}d`, `Next earnings report ${r.next_report}.`, 'y')); }
+  if (r.rev30 != null && r.rev30 >= 0.05) b.push(rb('fcst ↑', `Next-year consensus EPS up ${pct(r.rev30, 1)} in 30 days.`, 'g'));
+  if (r.rev30 != null && r.rev30 <= -0.05) b.push(rb('fcst ↓', `Next-year consensus EPS down ${pct(r.rev30, 1)} in 30 days.`, 'r'));
+  if (r.held && r.state !== 'SELL' && weak != null && r.need_out != null && weak - r.need_out < 0.03) b.push(rb('near exit', `Weakest forecast year ${pct(weak)} is within 3 pts of the exit bar ${pctu(r.need_out)}.`, 'r'));
+  if (r.state === 'WATCH' && r.room != null) b.push(rb(-r.room < 0.001 ? 'just short' : `${(-r.room * 100).toFixed(1)} pts short`, r.why || '', 'y'));
+  if (weak != null && weak < 0.15 && ['BUY', 'HOLD', 'WATCH'].includes(r.state)) b.push(rb('low growth', `Weakest forecast year only ${pct(weak)}: it qualifies mainly because its P/E (${num(r.pe)}) is far below its sector median (${num(r.sector_pe)}).`));
+  if (r.n_analysts && r.n_analysts < 5) b.push(rb('few analysts', `Only ${r.n_analysts} analysts cover next year: the forecast is less reliable.`));
+  if (r.lastFlag) b.push(rb('one-off', r.lastFlag));
+  if (r.g2 == null && r.g1 != null) b.push(rb('FY+2 n/a', 'No FY+2 consensus at Nasdaq (fewer than 3 analysts): +2 is taken equal to +1.'));
+  if (r.tkind && r.tkind !== 'P/E model') b.push(rb('target: growth only', 'Not enough P/E history (24 months): the 12m target uses the growth-only model.'));
+  return b.join('') || '';
+}
+const bar = r => r.held || r.state === 'SOLD' ? r.need_out : r.need_in;      // the bar that matters for this row
+const yc = (r, v) => v == null || r.need_in == null ? cls(v) : (v < bar(r) ? 'below' : cls(v));
+const G4 = [
+  {k: 'gLast', h: 'Last', t: 'EPS growth, last fiscal year (actual) - shown, not part of the rule', v: r => lastG(r),
+   f: r => pct(lastG(r)) + (r.lastFlag ? ic(`Reported FY${r.fy ? r.fy[0] : ''} growth ${pct(r.gLast)} is distorted by one-off items (${r.lastFlag.split(':')[0]}); showing the trailing 12-month growth instead.`) : ''),
+   cls: r => cls(lastG(r)), tt: r => r.lastFlag ? '' : fyTip(r, 0, 'actual')},
+  {k: 'gCur', h: 'Cur', t: 'EPS growth, current fiscal year (consensus)', f: r => pct(r.gCur), cls: r => yc(r, r.gCur), tt: r => fyTip(r, 1, 'consensus')},
+  {k: 'g1', h: '+1', t: 'EPS growth, next fiscal year (consensus)', f: r => pct(r.g1), cls: r => yc(r, r.g1), tt: r => fyTip(r, 2, 'consensus')},
+  {k: 'g2', h: '+2', t: 'EPS growth, fiscal year after next (Nasdaq consensus; ≈ = not available, taken equal to +1)', v: r => r.g2 ?? r.g1,
+   f: r => r.g2 != null ? pct(r.g2) : (r.g1 != null ? pct(r.g1) + ic('No FY+2 consensus at Nasdaq (fewer than 3 analysts): taken equal to +1.') : '–'), cls: r => yc(r, r.g2 ?? r.g1), tt: r => r.g2 != null ? fyTip(r, 3, 'consensus') : ''}];
+
+/* ---------- Signals ---------- */
+const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
+let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
+function sigTiles() {
+  const c = s => S.filter(r => r.state === s).length;
+  const t = [['BUY', c('BUY'), 'qualify, not held'], ['SELL', c('SELL'), 'held, forecast below exit bar'], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
+    ['HOLD', c('HOLD'), 'held, still qualify'], ['WATCH', c('WATCH'), '≤ 5 pts short of entry'], ['Prices', D.price_date, 'last close used']];
+  document.getElementById('sigTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
+}
+function sigTable() {
+  const q = document.getElementById('sigSearch').value.trim().toUpperCase(), sec = document.getElementById('sigSector').value;
+  const rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
+  const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
+  table('sigTab', [
+    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state), v: r => -ord[r.state], tt: r => r.why || ''}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
+    {k: 'entry_date', h: 'Entry', t: 'buy date (BUY/WATCH: date the signal started)', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
+    {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
+    {k: 'target', h: '12m tgt', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
+    {k: 'upside', h: 'Upside', t: 'target ÷ last price − 1', f: r => pct(r.upside), cls: r => cls(r.upside)},
+    {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
+    {k: 'exit_date', h: 'Exit', t: 'SELL: date the sell signal started; SOLD: date sold', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''},
+    {k: 'pe', h: 'P/E', f: r => num(r.pe)},
+    {k: 'relpe', h: 'Rel P/E', t: 'P/E ÷ sector median P/E', f: r => num(r.relpe, 2)}, ...G4,
+    {k: 'need_in', h: 'In bar', t: 'entry bar = 30% × relative P/E', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'Out bar', t: 'exit bar = 25% × relative P/E', f: r => pctu(r.need_out)},
+    {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
+    {k: 'remark', h: 'Remark', l: 1, f: remarks, v: r => remarks(r).length}], rows,
+    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 2], ['EPS growth by fiscal year', 4], ['', 5]]});
+}
+function sigInit() {
+  document.getElementById('stateChips').innerHTML = STATES.map(s => `<button type="button" class="${stF.has(s) ? 'on' : ''}" data-s="${s}">${s} (${S.filter(r => r.state === s).length})</button>`).join('');
+  document.querySelectorAll('#stateChips button').forEach(b => b.addEventListener('click', () => { const s = b.dataset.s; stF.has(s) ? stF.delete(s) : stF.add(s); b.classList.toggle('on'); sigTable(); }));
+  document.getElementById('sigSector').innerHTML = '<option value="">All sectors</option>' + [...new Set(S.map(r => r.sector))].sort().map(s => `<option>${s}</option>`).join('');
+  ['sigSearch', 'sigSector'].forEach(id => document.getElementById(id).addEventListener('input', sigTable));
+  sigTiles(); sigTable();
+}
+
+/* ---------- Earnings ---------- */
+let calF = 'watch';
+function calTable() {
+  const today = D.price_date;
+  const rows = S.filter(r => calF === 'all' || (calF === 'watch' && (r.held || ['BUY', 'WATCH', 'SELL', 'SOLD'].includes(r.state))) || (calF === 'review' && r.in_review) ||
+    (calF === 'next14' && r.next_report && r.next_report >= today && (Date.parse(r.next_report) - Date.parse(today)) / 864e5 <= 14));
+  table('calTab', [
+    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state)}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`}, {k: 'name', h: 'Name', l: 1},
+    {k: 'last_report', h: 'Last rpt', f: r => r.last_report || '–'}, {k: 'days_since_report', h: 'Days since', f: r => r.days_since_report ?? '–'},
+    {k: 'in_review', h: 'Review', f: r => r.in_review ? '<b>now</b>' : '–'}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
+    {k: 'rev7', h: 'Fcst Δ7d', f: r => pct(r.rev7, 1), cls: r => cls(r.rev7)}, {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)},
+    {k: 'rev90', h: 'Fcst Δ90d', f: r => pct(r.rev90, 1), cls: r => cls(r.rev90)}, ...G4],
+    rows, {sort: 'next_report', dir: 1, click: openDetail});
+}
+function calInit() {
+  const C = [['watch', 'Holdings + signals'], ['review', 'In review window'], ['next14', 'Reporting in 14 days'], ['all', 'All']];
+  document.getElementById('calChips').innerHTML = C.map(c => `<button type="button" class="${c[0] === calF ? 'on' : ''}" data-c="${c[0]}">${c[1]}</button>`).join('');
+  document.querySelectorAll('#calChips button').forEach(b => b.addEventListener('click', () => { calF = b.dataset.c; document.querySelectorAll('#calChips button').forEach(x => x.classList.toggle('on', x === b)); calTable(); }));
+  calTable();
+}
+
+/* ---------- line chart ---------- */
+function lineChart(el, cfg) {
+  const host = document.getElementById(el); if (!host || host.offsetParent === null) return;
+  const W = cfg.w || 1100, H = cfg.h || 300, m = {l: 54, r: 14, t: 10, b: 26}, xs = cfg.x, n = xs.length;
+  const T = s => Date.parse(s + 'T00:00:00Z'), tx = xs.map(T), x0 = Math.min(...tx), x1 = Math.max(...tx);
+  const X = t => m.l + (x1 === x0 ? 0.5 : (t - x0) / (x1 - x0)) * (W - m.l - m.r);
+  let vals = []; cfg.series.forEach(s => s.v.forEach(v => v != null && vals.push(v))); (cfg.band || []).forEach(b => b.forEach(v => v != null && vals.push(v)));
+  (cfg.dots || []).forEach(d => vals.push(d.v));
+  if (!vals.length) { host.innerHTML = '<p class="cap">No data yet.</p>'; return; }
+  const f = cfg.log ? Math.log : (v => v); let lo = f(Math.min(...vals)), hi = f(Math.max(...vals)); const pad = (hi - lo) * .06 || .01; lo -= pad; hi += pad;
+  const Y = v => m.t + (1 - (f(v) - lo) / (hi - lo)) * (H - m.t - m.b);
+  let ticks = []; if (cfg.log) { [0.5,0.75,1,1.5,2,3,4,5,7.5,10,15,20,30,50,75,100].forEach(v => { if (Math.log(v) >= lo && Math.log(v) <= hi) ticks.push(v); }); }
+  else { const sp = hi - lo, raw = sp / 5, p = Math.pow(10, Math.floor(Math.log10(raw))), st = [1,2,2.5,5,10].map(k => k * p).find(k => k >= raw); for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) ticks.push(+v.toFixed(8)); }
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  ticks.forEach(v => { s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="${css('--grid')}"/><text x="${m.l - 7}" y="${Y(v) + 4}" text-anchor="end" font-size="11.5" fill="${css('--muted')}">${cfg.yfmt ? cfg.yfmt(v) : v}</text>`; });
+  const years = [...new Set(xs.map(d => d.slice(0, 4)))];
+  if (years.length <= 2) { let prev = ''; xs.forEach((d, i) => { const k = n < 40 ? d.slice(5) : d.slice(0, 7); if (k !== prev && (n < 40 ? i % Math.ceil(n / 10) === 0 : true)) { s += `<text x="${X(tx[i])}" y="${H - 7}" text-anchor="middle" font-size="11" fill="${css('--muted')}">${k}</text>`; prev = k; } }); }
+  else years.forEach(y => { const t = Date.UTC(+y, 0, 1); if (t >= x0 && t <= x1) s += `<text x="${X(t)}" y="${H - 7}" text-anchor="middle" font-size="11.5" fill="${css('--muted')}">${y}</text>`; });
+  if (cfg.band) { const [b0, b1] = cfg.band; let d = ''; b1.forEach((v, i) => d += (i ? 'L' : 'M') + X(tx[i]) + ',' + Y(v)); for (let i = n - 1; i >= 0; i--) d += 'L' + X(tx[i]) + ',' + Y(b0[i]); s += `<path d="${d}Z" fill="${css('--band')}"/>`; }
+  cfg.series.forEach(se => { let d = '', on = false; se.v.forEach((v, i) => { if (v == null) { on = false; return; } d += (on ? 'L' : 'M') + X(tx[i]).toFixed(1) + ',' + Y(v).toFixed(1); on = true; });
+    s += `<path d="${d}" fill="none" stroke="${css(se.c)}" stroke-width="${se.w || 1.8}" stroke-linejoin="round"/>`;
+    se.v.forEach((v, i) => { if (v != null && n <= 3) s += `<circle cx="${X(tx[i])}" cy="${Y(v)}" r="3.5" fill="${css(se.c)}"/>`; }); });
+  (cfg.dots || []).forEach(d => { s += `<circle cx="${X(T(d.x))}" cy="${Y(d.v)}" r="4.5" fill="${css(d.c)}" stroke="${css('--surface')}" stroke-width="2"/>`;
+    if (d.lab) s += `<text x="${X(T(d.x))}" y="${Y(d.v) - 8}" text-anchor="middle" font-size="10.5" fill="${css('--text2')}">${d.lab}</text>`; });
+  s += `<line class="xh" y1="${m.t}" y2="${H - m.b}" stroke="${css('--text2')}" visibility="hidden"/><rect class="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  host.innerHTML = s;
+  const svg = host.querySelector('svg'), tip = host.querySelector('.tip'), xh = svg.querySelector('.xh');
+  svg.querySelector('.hit').addEventListener('mousemove', ev => {
+    const rc = svg.getBoundingClientRect(), p = (ev.clientX - rc.left) / rc.width * W; let bi = 0, bd = 1e18;
+    tx.forEach((t, i) => { const dd = Math.abs(X(t) - p); if (dd < bd) { bd = dd; bi = i; } });
+    xh.setAttribute('x1', X(tx[bi])); xh.setAttribute('x2', X(tx[bi])); xh.setAttribute('visibility', 'visible');
+    tip.innerHTML = `<b>${xs[bi]}</b>` + cfg.series.map(se => se.v[bi] == null ? '' : `<div class="r"><span><i class="sw" style="background:${css(se.c)}"></i>${se.n}</span><span>${(cfg.tf || (v => v.toFixed(3)))(se.v[bi])}</span></div>`).join('') +
+      (cfg.band ? `<div class="r"><span>5th–95th pct</span><span>${cfg.tf(cfg.band[0][bi])} – ${cfg.tf(cfg.band[1][bi])}</span></div>` : '');
+    tip.style.display = 'block'; const hr = host.getBoundingClientRect(), left = X(tx[bi]) / W * hr.width;
+    tip.style.left = (left + 14 + tip.offsetWidth > hr.width ? left - tip.offsetWidth - 14 : left + 14) + 'px'; tip.style.top = '6px'; });
+  svg.querySelector('.hit').addEventListener('mouseleave', () => { tip.style.display = 'none'; xh.setAttribute('visibility', 'hidden'); });
+}
+const legend = (el, items) => document.getElementById(el).innerHTML = items.map(([n, c]) => `<span><i class="sw" style="background:${css(c)}"></i>${n}</span>`).join('');
+
+/* ---------- Stock detail ---------- */
+let detSym = null;
+function openDetail(sym) { detSym = sym; document.getElementById('detSearch').value = sym; showTab('Stock detail'); }
+function detail() {
+  const r = BY[detSym], el = document.getElementById('detBody');
+  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in Signals / Earnings / Trades.</p>'; return; }
+  let meter = '';
+  if (r.fwd != null) {
+    const mx = Math.max(r.need_in * 1.6, r.fwd, r.trail, 0.1), mn = Math.min(0, r.fwd, r.trail), P = v => ((v - mn) / (mx - mn) * 100).toFixed(1) + '%';
+    const mk = (v, c) => `<i style="left:${P(v)};background:${css(c)}"></i>`;
+    meter = `<div class="legend"><span><i class="sw" style="background:${css('--s1')}"></i>2-yr forecast ${pct(r.fwd)}</span><span><i class="sw" style="background:${css('--s3')}"></i>trailing 12m ${pct(r.trail)}</span>
+      <span><i class="sw" style="background:${css('--buy')}"></i>entry bar ${pctu(r.need_in)}</span><span><i class="sw" style="background:${css('--sell')}"></i>exit bar ${pctu(r.need_out)}</span></div>
+      <div class="meter">${mk(r.need_out, '--sell')}${mk(r.need_in, '--buy')}${mk(r.trail, '--s3')}${mk(r.fwd, '--s1')}</div>`;
+  }
+  const fy = i => r.fy ? 'FY' + r.fy[i] : '';
+  const kv = [['Signal', badge(r.state) + (r.since ? ` since ${r.since}` : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
+    ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector median · relative', `${num(r.pe)} · ${num(r.sector_pe)} · ${num(r.relpe, 2)}`],
+    ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
+    ['Remarks', remarks(r) || '–'],
+    ['Trailing 12m / 2-yr average forecast', pct(r.trail) + ' / ' + pct(r.fwd)], ['In bar / Out bar', `${pctu(r.need_in)} / ${pctu(r.need_out)}`],
+    ['Analysts (FY+1)', r.n_analysts || '–'], ['Fcst Δ 7 / 30 / 90 days', [pct(r.rev7, 1), pct(r.rev30, 1), pct(r.rev90, 1)].join(' / ')],
+    ['12m target (peak est.)', r.target != null ? `${px(r.target)} (${pct(r.upside)} upside; P/E change ${pct(r.pe_chg)}; ${r.tkind})` : '–'],
+    ['Last / next report', (r.last_report || '–') + ' / ' + (r.next_report || '–')]];
+  el.innerHTML = `<h2>${r.sym} · ${r.name}</h2><p class="cap">${r.sector}${r.ndx ? ' · Nasdaq-100' : ''}${r.sp500 ? ' · S&amp;P 500' : ''} — ${r.why || ''}</p>${meter}
+    <div class="grid2"><div><table>${kv.map(k => `<tr><td class="l">${k[0]}</td><td>${k[1]}</td></tr>`).join('')}</table></div>
+    <div><h3>Trailing 4-quarter EPS (reported) and fiscal-year EPS (actual, then consensus)</h3><div class="legend"><span><i class="sw" style="background:${css('--s1')}"></i>trailing 4-quarter EPS</span><span><i class="sw" style="background:${css('--s2')}"></i>fiscal year</span></div><div class="chart" id="detChart"></div>
+    <h3>Reported quarters</h3><table>${(r.qh || []).slice().reverse().map(q => `<tr><td class="l">${q[0]}</td><td>${q[1]}</td></tr>`).join('')}</table></div></div>`;
+  const q = r.qh || [], tt = [];
+  for (let i = 3; i < q.length; i++) tt.push([q[i][0], q[i][1] + q[i - 1][1] + q[i - 2][1] + q[i - 3][1]]);
+  const lab = ['actual', 'Cur', '+1', '+2'];
+  const dots = (r.fy_points || []).map((p, i) => ({x: p[0], v: p[1], c: '--s2', lab: lab[i]}));
+  const xs = [...new Set([...tt.map(t => t[0]), ...dots.map(p => p.x)])].sort();
+  if (xs.length) lineChart('detChart', {x: xs, series: [{n: 'trailing EPS', c: '--s1', v: xs.map(d => { const f = tt.find(t => t[0] === d); return f ? f[1] : null; })}], dots, w: 600, h: 260, tf: v => v.toFixed(2), yfmt: v => v.toFixed(2)});
+}
+
+/* ---------- Performance ---------- */
+const BCOL = {Model: '--s1', QQQ: '--s2', SPY: '--s4', NDX: '--c3', QGRW: '--c11', GLD: '--c4', IBIT: '--c5', TLT: '--c6', CHAT: '--c7', HSI: '--c8', 'BRK.B': '--c9', ALLW: '--c10'};
+let perfOn = new Set(['Model', 'QQQ', 'SPY', 'QGRW']), win = 'since 2022';
+const lastv = a => { for (let i = a.length - 1; i >= 0; i--) if (a[i] != null) return a[i]; return null; };
+function perfInit() {
+  const N = D.navs, keys = Object.keys(N).filter(k => k !== 'dates'), r = c => lastv(N[c]) - 1;
+  const t = [['Model portfolio', pct(r('Model'), 2), money(D.nav)], ['QQQ', pct(r('QQQ'), 2), 'same period'], ['Model vs QQQ', pct(r('Model') - r('QQQ'), 2), 'since ' + D.start_price_date],
+    ['Holdings', D.n_pos, 'cash ' + money(D.cash)], ['Tracked', (N.dates.length - 1) + ' days', 'from ' + D.start_price_date]];
+  document.getElementById('perfTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
+  document.getElementById('perfLeg').innerHTML = keys.map(k => `<label style="cursor:pointer"><input type="checkbox" data-k="${k}" ${perfOn.has(k) ? 'checked' : ''}> <i class="sw" style="background:${css(BCOL[k] || '--s4')}"></i>${k}</label>`).join('');
+  document.querySelectorAll('#perfLeg input').forEach(c => c.addEventListener('change', () => { c.checked ? perfOn.add(c.dataset.k) : perfOn.delete(c.dataset.k); perfChart(); }));
+  const W = Object.keys(D.risk);
+  document.getElementById('winChips').innerHTML = W.map(w => `<button type="button" class="${w === win ? 'on' : ''}" data-w="${w}">${w} (${D.risk_windows[w]})</button>`).join('');
+  document.querySelectorAll('#winChips button').forEach(b => b.addEventListener('click', () => { win = b.dataset.w; document.querySelectorAll('#winChips button').forEach(x => x.classList.toggle('on', x === b)); riskTable(); }));
+  document.getElementById('riskCap').innerHTML = "Daily returns, same convention as the Sortino dashboard: target (MAR) 4% a year. Annual return = compound annual growth; downside deviation = √252 × RMS of daily shortfalls below the 4% target; Sortino = (annualised return − 4%) ÷ downside deviation. Each series on its own trading days (HSI: Hong Kong). 'Strategy (backtest)' = the realistic backtest's median run, rebuilt daily from its month-by-month holdings (price only, so about 1%/yr understated vs the funds' total return); it ends Sep 2026, which sets the common end. 'Model (live)' appears after about 3 months, over its own life. 'Common' = the days all series exist.";
+  const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', 'equal weight, fractional shares'],
+    ['Acts on', '3–14 days after a report, or first close of each month'], ['Prices used', D.price_date + ' close']];
+  document.getElementById('setupTab').innerHTML = st.map(x => `<tr><td class="l">${x[0]}</td><td>${x[1]}</td></tr>`).join('');
+  riskTable();
+}
+function riskTable() {
+  const R = D.risk[win], rows = Object.entries(R).map(([k, m]) => Object.assign({k, name: k.startsWith('Strategy') ? 'Rule backtest, point-in-time, anchored forecasts' : k.startsWith('Model') ? 'Live paper portfolio' : (D.bench_names[k] || k)}, m || {}));
+  table('riskTab', [{k: 'k', h: 'Series', l: 1, f: r => `<b>${r.k}</b>`}, {k: 'name', h: 'What', l: 1}, {k: 'cagr', h: 'Annual return', f: r => pct(r.cagr, 1), cls: r => cls(r.cagr)},
+    {k: 'sortino', h: 'Sortino', f: r => num(r.sortino, 2)}, {k: 'ddev', h: 'Downside dev.', f: r => pctu(r.ddev, 1)}, {k: 'mdd', h: 'Max drawdown', f: r => pctu(r.mdd, 0)},
+    {k: 'from', h: 'From', f: r => r.from || '–'}, {k: 'to', h: 'To', f: r => r.to || '–'}], rows, {sort: 'sortino'});
+}
+function perfChart() { const N = D.navs; lineChart('perfChart', {x: N.dates, series: Object.keys(N).filter(k => k !== 'dates' && perfOn.has(k)).map(k => ({n: k, c: BCOL[k] || '--s4', v: N[k], w: k === 'Model' ? 2.5 : 1.6})), tf: v => v.toFixed(4), yfmt: v => v.toFixed(3)}); }
+function pfSector() {
+  const host = document.getElementById('pfSector'); if (!host || host.offsetParent === null) return;
+  const rows = Object.entries(D.sector_w), W = 560, bh = 22, H = rows.length * bh + 8, mx = Math.max(...rows.map(r => r[1]));
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}">` + rows.map(([k, v], i) => `<text x="150" y="${i * bh + 15}" text-anchor="end" font-size="11.5" fill="${css('--text2')}">${k}</text>
+    <rect x="158" y="${i * bh + 4}" width="${(W - 220) * v / mx}" height="${bh - 8}" rx="3" fill="${css('--s1')}"/><text x="${163 + (W - 220) * v / mx}" y="${i * bh + 15}" font-size="11.5" fill="${css('--text')}">${(v * 100).toFixed(1)}%</text>`).join('') + '</svg>';
+}
+
+/* ---------- Trades ---------- */
+function trInit() {
+  const rows = D.trips.map(t => Object.assign({name: (BY[t.sym] || {}).name, days: Math.round(((t.exit_date ? Date.parse(t.exit_date) : Date.parse(D.price_date)) - Date.parse(t.entry_date)) / 864e5)}, t));
+  table('tripTab', [{k: 'status', h: 'Status', l: 1, f: r => badge(r.status)}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`}, {k: 'name', h: 'Name', l: 1},
+    {k: 'entry_date', h: 'Buy date', f: r => r.entry_date, cls: r => fresh(r.entry_date) ? 'hl' : ''}, {k: 'entry_px', h: 'Buy px', f: r => px(r.entry_px)},
+    {k: 'exit_date', h: 'Sell date', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''}, {k: 'exit_px', h: 'Sell px', f: r => r.exit_px != null ? px(r.exit_px) : (r.last_px != null ? px(r.last_px) + ' (last)' : '–')},
+    {k: 'bought', h: 'Invested', f: r => money(r.bought)}, {k: 'pnl', h: 'P&L', f: r => money(r.pnl), cls: r => clsm(r.pnl)}, {k: 'pnl_pct', h: 'P&L %', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
+    {k: 'days', h: 'Days', f: r => r.days}, {k: 'entry_reason', h: 'Buy reason', l: 1, rsn: 1}, {k: 'exit_reason', h: 'Sell reason', l: 1, rsn: 1, f: r => r.exit_reason || '–'}],
+    rows, {sort: 'entry_date', click: openDetail});
+  table('trTab', [{k: 'price_date', h: 'Close of', l: 1}, {k: 'side', h: 'Side', l: 1, f: r => badge(r.side === 'BUY' ? 'BUY' : 'SELL')}, {k: 'sym', h: 'Ticker', l: 1},
+    {k: 'shares', h: 'Shares', f: r => r.shares.toFixed(3)}, {k: 'price', h: 'Price', f: r => px(r.price)}, {k: 'value', h: 'Value', f: r => money(r.value)}, {k: 'reason', h: 'Reason', l: 1, rsn: 1}],
+    D.trades.map((t, i) => Object.assign({i}, t)), {sort: 'i'});
+}
+
+/* ---------- Strategy ---------- */
+function stratInit() {
+  const B = D.backtest, A = B.sumA, Bs = B.sumB;
+  document.getElementById('ruleEx').innerHTML = 'Examples: P/E 40 in a sector at 20 → relative P/E 2.0 → needs 60% growth to enter, exits below 50%. P/E 10 in a sector at 20 → 0.5 → needs 15%, exits below 12.5%. Current sector medians: ' +
+    Object.entries(D.sector_pe).map(([k, v]) => `${k} ${v}`).join(' · ');
+  const guide = [['Entry / Entry px', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close). Highlighted for 7 days.'],
+    ['Exit', 'SELL: date the sell signal started; SOLD: date sold (stays listed 7 days, then only in Trades).'],
+    ['12m tgt / Upside', 'Expected 12-month PEAK price: last close × (1 + forecast next-12m EPS growth) × the P/E model\'s P/E change. A buy reference (how much room is left), not a sell price. Backtest (454 entries 2008–24): peak within ±20% of it 57% of the time, no bias, reached within 12 months 47% of the time; selling at it would have cut returns (+18% vs +27% holding).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
+    ['In bar / Out bar', 'Entry bar = 30% × relative P/E; exit bar = 25% × relative P/E.'],
+    ['Red year', 'A forecast year below the bar that matters for the row: the In bar for stocks not held, the Out bar for holdings.'],
+    ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
+    ['Remark badges', 'review now (in the post-report window), report Nd (report within a week), fcst ↑/↓ (consensus moved ≥ 5% in 30 days), near exit, N pts short (WATCH), low growth (qualifies mainly on a low P/E), few analysts, one-off, FY+2 n/a, target: growth only. Hover for details.'],
+    ['WATCH', 'Not held and not yet qualifying, but the weakest of trailing and forecast-year growth is at most 5 percentage points below the In bar. An early-warning list only; it does not change any decision.'],
+    ['Fcst Δ30d', 'Change of the next-year consensus EPS over the last 30 days.']];
+  document.getElementById('guide').innerHTML = guide.map(g => `<tr><td class="l"><b>${g[0]}</b></td><td class="l" style="white-space:normal">${g[1]}</td></tr>`).join('');
+  const tl = (el, t) => document.getElementById(el).innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
+  tl('btTilesA', [['Strategy, median run', pct(A.median_cagr, 1) + '/yr', `5th–95th: ${pct(A.p5_cagr, 1)} … ${pct(A.p95_cagr, 1)}`], ['QQQ', pct(A.qqq_cagr, 1) + '/yr', `SPY ${pct(A.spy_cagr, 1)}/yr`],
+    ['Worst drawdown', pctu(A.dd), `QQQ ${pctu(A.qqq_dd)}`], ['Sortino', A.sortino.toFixed(2), `QQQ ${A.qqq_sortino.toFixed(2)}`], ['Runs beating QQQ', pctu(A.beat), 'of 100 simulations']]);
+  legend('btLegA', [['Strategy (median run)', '--s1'], ['QQQ', '--s2'], ['SPY', '--s4']]);
+  document.getElementById('btYears').innerHTML = '<tr><th class="l">Year</th><th>Strategy (median)</th><th>QQQ</th><th>Difference</th></tr>' +
+    Object.entries(A.years).map(([y, v]) => `<tr><td class="l">${y}</td><td class="${cls(v.median)}">${pct(v.median, 1)}</td><td class="${cls(v.qqq)}">${pct(v.qqq, 1)}</td><td class="${cls(v.median - v.qqq)}">${pct(v.median - v.qqq, 1)}</td></tr>`).join('');
+  table('btPit', [{k: 'universe', h: 'Universe', l: 1}, {k: 'anchoring w', h: 'Weight on actual EPS (w)', f: r => r['anchoring w'].toFixed(1)}, {k: 'CAGR median', h: 'CAGR (median)'},
+    {k: '5th..95th', h: '5th…95th'}, {k: 'max DD', h: 'Max DD'}, {k: 'Sortino', h: 'Sortino'}, {k: 'stocks', h: 'Stocks held'}], B.pit, {});
+  const s = Bs.strategy, q = Bs.QQQ, e = Bs.EW;
+  tl('btTilesB', [['Strategy', pct(s.cagr, 1) + '/yr', `DD ${pctu(s.dd)}, Sortino ${s.sortino.toFixed(2)}`], ['QQQ', pct(q.cagr, 1) + '/yr', `DD ${pctu(q.dd)}, Sortino ${q.sortino.toFixed(2)}`],
+    ['Equal-weight universe', pct(e.cagr, 1) + '/yr', `DD ${pctu(e.dd)}`], ['S&P 500 (price)', pct(Bs.SP500.cagr, 1) + '/yr', `DD ${pctu(Bs.SP500.dd)}`], ['Stocks held (avg)', Bs.held.toFixed(0), 'equal weight']]);
+  legend('btLegB', [['Strategy', '--s1'], ['QQQ', '--s2'], ['Equal-weight universe', '--s3'], ['S&P 500 (price)', '--s4']]);
+  const G = B.grid, cell = (en, ex) => G.cells.find(c => Math.abs(c.entry - en) < 1e-9 && Math.abs(c.exit - ex) < 1e-9);
+  const vals = G.cells.map(c => c.sortino), lo = Math.min(...vals), hi = Math.max(...vals);
+  const col = v => { const t = (v - lo) / (hi - lo); const a = [205, 226, 251], b = [16, 66, 129]; return `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * t)).join(',')})`; };
+  document.getElementById('btGrid').innerHTML = '<tr><th class="l">Entry \\ Exit</th>' + G.exit.map(x => `<th>${pctu(x)}</th>`).join('') + '</tr>' +
+    G.entry.map(en => `<tr><td class="l" style="color:var(--text);font-weight:600">${pctu(en)}</td>` + G.exit.map(ex => { const c = cell(en, ex);
+      if (!c) return '<td></td>'; const sel = Math.abs(en - 0.3) < 1e-9 && Math.abs(ex - 0.25) < 1e-9;
+      return `<td style="background:${col(c.sortino)};${(c.sortino - lo) / (hi - lo) < 0.45 ? 'color:#0b0b0b;' : ''}${sel ? 'outline:3px solid var(--s2);outline-offset:-3px' : ''}" title="CAGR ${pct(c.cagr, 1)}, DD ${pctu(c.dd)}, ${c.held.toFixed(0)} stocks">${c.sortino.toFixed(2)}</td>`; }).join('') + '</tr>').join('');
+  document.getElementById('btVer').innerHTML = '<tr><th class="grp"></th><th class="grp" colspan="3">2022–26 realistic (100 runs, median)</th><th class="grp" colspan="3">2008–24 long run</th></tr><tr><th class="l">Rule</th><th>Return/yr</th><th>Sortino</th><th>Stocks</th><th>Return/yr</th><th>Sortino</th><th>Stocks</th></tr>' +
+    (B.versions || []).map(v => `<tr${v[0].includes('live') ? ' style="font-weight:600"' : ''}><td class="l">${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td><td>${v[3]}</td><td>${v[4]}</td><td>${v[5]}</td><td>${v[6]}</td></tr>`).join('');
+  document.getElementById('btEtf').innerHTML = '<tr><th class="l">ETF</th><th class="l">Approach</th><th class="l">Since</th><th>Return/yr</th><th>Worst DD</th></tr>' +
+    B.etfs.map(e => `<tr><td class="l"><b>${e[0]}</b></td><td class="l">${e[1]}</td><td class="l">${e[2]}</td><td>${pct(e[3], 1)}</td><td>${pctu(e[4])}</td></tr>`).join('');
+  document.getElementById('btTiming').innerHTML = '<tr><th class="l">Days since report</th><th>Median 7-day change of next-year consensus</th><th>Share moving > 1%</th></tr>' +
+    B.timing.map(t => `<tr><td class="l">${t[0]}</td><td>${pctu(t[1], 2)}</td><td>${pctu(t[2])}</td></tr>`).join('');
+}
+function stratCharts() {
+  const A = D.backtest.curveA, Bc = D.backtest.curveB;
+  lineChart('btChartA', {x: A.dates, series: [{n: 'Strategy (median run)', c: '--s1', v: A.median, w: 2.5}, {n: 'QQQ', c: '--s2', v: A.QQQ}, {n: 'SPY', c: '--s4', v: A.SPY}], band: [A.p5, A.p95], log: true, tf: v => v.toFixed(2) + '×', yfmt: v => v + '×'});
+  lineChart('btChartB', {x: Bc.dates, series: [{n: 'Strategy', c: '--s1', v: Bc.strategy, w: 2.5}, {n: 'QQQ', c: '--s2', v: Bc.QQQ}, {n: 'Equal-weight universe', c: '--s3', v: Bc.EW}, {n: 'S&P 500', c: '--s4', v: Bc.SP500}], log: true, tf: v => v.toFixed(2) + '×', yfmt: v => v + '×'});
+}
+
+function drawCharts() { perfChart(); pfSector(); stratCharts(); if (detSym) detail(); }
+document.getElementById('detList').innerHTML = S.map(r => `<option value="${r.sym}">${r.name}</option>`).join('');
+document.getElementById('detSearch').addEventListener('change', e => { detSym = e.target.value.trim().toUpperCase(); detail(); });
+document.getElementById('themeBtn').addEventListener('click', () => { const de = document.documentElement, dark = de.dataset.theme === 'dark' || (!de.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches); de.dataset.theme = dark ? 'light' : 'dark'; drawCharts(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawCharts);
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { drawCharts(); syncBars(); }, 150); });
+sigInit(); calInit(); perfInit(); trInit(); stratInit(); detail();
+let first = 'Signals'; try { first = localStorage.getItem('gt_tab') || first; } catch (e) {}
+if (location.hash) first = decodeURIComponent(location.hash.slice(1));
+showTab(TABS.includes(first) ? first : 'Signals');
+</script>
+</body>
+</html>

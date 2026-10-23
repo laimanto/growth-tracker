@@ -1,0 +1,141 @@
+{
+ "capital": 100000.0,
+ "start": "2026-10-23",
+ "price_date": "2026-10-22",
+ "trades": [
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "APH",
+   "side": "BUY",
+   "shares": 105.273131,
+   "price": 73.07,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +73% and every forecast year (weakest +1 +24%) >= entry bar 18%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "CHTR",
+   "side": "BUY",
+   "shares": 68.822651,
+   "price": 111.77,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +5% and every forecast year (weakest +1 +11%) >= entry bar 5%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "FIS",
+   "side": "BUY",
+   "shares": 200.895996,
+   "price": 38.29,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +13% and every forecast year (weakest +1 +7%) >= entry bar 7%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "FSLR",
+   "side": "BUY",
+   "shares": 44.918585,
+   "price": 171.25,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +39% and every forecast year (weakest +2 +14%) >= entry bar 11%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "FLEX",
+   "side": "BUY",
+   "shares": 100.303921,
+   "price": 76.69,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +26% and every forecast year (weakest Cur +40%) >= entry bar 23%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "GEN",
+   "side": "BUY",
+   "shares": 309.052137,
+   "price": 24.89,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +13% and every forecast year (weakest +1 +13%) >= entry bar 10%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "GPN",
+   "side": "BUY",
+   "shares": 89.57042,
+   "price": 85.88,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +9% and every forecast year (weakest Cur +12%) >= entry bar 8%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "GDDY",
+   "side": "BUY",
+   "shares": 67.047047,
+   "price": 114.73,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +27% and every forecast year (weakest Cur +19%) >= entry bar 15%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "JBL",
+   "side": "BUY",
+   "shares": 28.765969,
+   "price": 267.41,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +34% and every forecast year (weakest +1 +25%) >= entry bar 22%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "NVDA",
+   "side": "BUY",
+   "shares": 36.248564,
+   "price": 212.21,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +97% and every forecast year (weakest +2 +39%) >= entry bar 33%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "STX",
+   "side": "BUY",
+   "shares": 11.979175,
+   "price": 642.14,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +92% and every forecast year (weakest +1 +57%) >= entry bar 45%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "LUV",
+   "side": "BUY",
+   "shares": 183.019455,
+   "price": 42.03,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +171% and every forecast year (weakest +2 +22%) >= entry bar 19%"
+  },
+  {
+   "date": "2026-10-23",
+   "price_date": "2026-10-22",
+   "sym": "WDC",
+   "side": "BUY",
+   "shares": 21.718026,
+   "price": 354.19,
+   "value": 7692.31,
+   "reason": "initial portfolio: trailing +99% and every forecast year (weakest +1 +61%) >= entry bar 29%"
+  }
+ ],
+ "runs": [
+  "2026-10-23"
+ ],
+ "last_close": "2026-10-22"
+}

@@ -1,0 +1,83 @@
+name: Growth Tracker daily update & publish
+
+# Downloads only what changed (growth/update.py), recomputes the signals and 12-month targets, updates the
+# simulated paper portfolio, commits data/ + docs/ and publishes docs/index.html to GitHub Pages.
+on:
+  schedule:
+    # ONE primary slot: cron has no DST awareness. 21:35 UTC is after the 16:00 ET close in both
+    # seasons (EDT 17:35, EST 16:35 ET).
+    - cron: "35 21 * * 1-5"
+    # Retry slot next morning (GitHub's schedule trigger sometimes skips a slot). The `check` job only
+    # lets it work when nothing was published in the last 14 hours.
+    - cron: "30 3 * * 2-6"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: growth-tracker
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+    steps:
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "${{ github.event.schedule }}" != "30 3 * * 2-6" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          since="$(date -u -d '14 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
+          n=$(gh api --method GET "repos/$REPO/commits" -f sha=main -f since="$since" -f per_page=50 \
+              --jq '[.[] | select(.commit.message | startswith("Daily update"))] | length') || n=0
+          if [ "${n:-0}" -gt 0 ]; then echo "should_run=false" >> "$GITHUB_OUTPUT"; else echo "should_run=true" >> "$GITHUB_OUTPUT"; fi
+
+  update-build-deploy:
+    needs: check
+    if: needs.check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update data, signals, portfolio and page
+        run: python growth/run.py
+
+      - name: Commit refreshed data + page
+        run: |
+          git config user.name "growth-tracker-bot"
+          git config user.email "growth-tracker-bot@users.noreply.github.com"
+          git add data docs
+          git diff --cached --quiet || git commit -m "Daily update $(date -u +%F)"
+          git push || (git pull --rebase -X theirs origin main && git push)
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp docs/index.html _site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
