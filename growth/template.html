@@ -81,7 +81,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 <section data-tab="Signals">
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
-    <p class="cap">Rules and timing: see the Strategy tab. PEG / PEG bar = the stock’s PEG and its limit (buy, or keep for holdings); In bar / Out bar = the growth a stock needs at today’s price to buy / keep. <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
+    <p class="cap">Rules and timing: see the Strategy tab. PEG = P/E ÷ growth of the weakest forecast year; PEG in / PEG out = the buy / sell limits for its sector. G in / G out = the growth a stock needs at today’s price to buy / keep (both rules combined). <span class="badge SELL">Red</span> cells = forecast years below G in (G out for holdings); Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
     <div class="ctrl"><div class="chips" id="stateChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
 </section>
@@ -162,7 +162,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
   <div class="card"><h2>Backtest 2: Jan 2008 to Sep 2024, long run</h2>
     <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; trades 3 trading days after each report; log scale. 10 fixed slots, swaps and quarterly sales by 12m upside (below 10%), spare slots in T-bills. One simulation shown.</p>
     <div class="tiles" id="btTilesB"></div><div class="legend" id="btLegB"></div><div class="chart" id="btChartB"></div></div>
-  <div class="card"><h2>Why PEG bars of sector P/E ÷ 30 / ÷ 25: threshold grid</h2><p class="cap">Sortino of every buy × sell setting (2008–2024, 20%/30% forecast errors). A setting of 30 means the PEG bar is sector P/E ÷ 30, the same as needing growth of 30% × P/E ÷ sector P/E. A smooth plateau at buy 25–35, sell 15–25; the chosen cell (30 / 25) is outlined. Tested on an earlier rule version without the growth floor.</p>
+  <div class="card"><h2>Why PEG in / out of sector P/E ÷ 30 / ÷ 25: threshold grid</h2><p class="cap">Sortino of every buy × sell setting (2008–2024, 20%/30% forecast errors). A setting of 30 means the PEG bar is sector P/E ÷ 30, the same as needing growth of 30% × P/E ÷ sector P/E. A smooth plateau at buy 25–35, sell 15–25; the chosen cell (30 / 25) is outlined. Tested on an earlier rule version without the growth floor.</p>
     <div class="tscroll"><table class="heat" id="btGrid"></table></div></div>
   <div class="card"><h2>Real ETFs with related ideas</h2><p class="cap">None beat QQQ by more than ~2%/yr over its life. QGRW (+1.7%/yr vs QQQ since Dec 2022) is the best; FFTY (reported growth + consensus + price strength, ~1,960% turnover) lost badly.</p><table id="btEtf"></table></div>
   <div class="card note"><h2>More detail</h2><ul>
@@ -288,11 +288,12 @@ function sigTable() {
     {k: 'exit_date', h: 'Exit', t: 'SELL: date the sell signal started; SOLD: date sold', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
     {k: 'peg', h: 'PEG', t: 'P/E ÷ growth (%) of the weakest forecast year', f: r => num(pegOf(r), 2), v: r => pegOf(r) ?? 99, cls: r => pegOf(r) != null && pegBar(r) != null && pegOf(r) > pegBar(r) ? 'below' : ''},
-    {k: 'pegbar', h: 'PEG bar', t: 'PEG limit: sector P/E ÷ 30 to buy, ÷ 25 to keep (holdings)', f: r => num(pegBar(r), 2), v: r => pegBar(r) ?? 99}, ...G4,
-    {k: 'need_in', h: 'In bar', t: 'growth needed to buy at today’s price: the stricter of the EPS growth floor and the PEG bar', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'Out bar', t: 'growth needed to keep a holding: the stricter of the keep floor and the PEG sell bar', f: r => pctu(r.need_out)},
+    {k: 'pegin', h: 'PEG in', t: 'PEG buy limit = sector P/E ÷ 30 (buy only if every year’s PEG is at or below it)', f: r => num(r.sector_pe / 30, 2), v: r => r.sector_pe ?? 99},
+    {k: 'pegout', h: 'PEG out', t: 'PEG sell limit = sector P/E ÷ 25 (a holding is sold once any year’s PEG is above it)', f: r => num(r.sector_pe / 25, 2), v: r => r.sector_pe ?? 99}, ...G4,
+    {k: 'need_in', h: 'G in', t: 'growth needed to buy at today’s price: the higher of the buy floor and the growth that brings PEG down to PEG in', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'G out', t: 'growth needed to keep a holding: the higher of the keep floor and the growth that keeps PEG at or below PEG out', f: r => pctu(r.need_out)},
     {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
     {k: 'remark', h: 'Remark', l: 1, f: remarks, v: r => remarks(r).length}], rows,
-    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 3], ['EPS growth by fiscal year', 4], ['', 5]]});
+    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 4], ['EPS growth by fiscal year', 4], ['', 5]]});
 }
 function sigInit() {
   const allOn = () => STATES.every(s => stF.has(s));
@@ -389,10 +390,10 @@ function detail() {
   }
   const fy = i => r.fy ? 'FY' + r.fy[i] : '';
   const kv = [['Signal', badge(r.state) + (r.since ? ` since ${r.since}` : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
-    ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector P/E', `${num(r.pe)} · ${num(r.sector_pe)}`], ['PEG (weakest year) · PEG bar buy / keep', `${num(pegOf(r), 2)} · ${num(r.sector_pe / 30, 2)} / ${num(r.sector_pe / 25, 2)}`],
+    ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector P/E', `${num(r.pe)} · ${num(r.sector_pe)}`], ['PEG (weakest year) · PEG in / out', `${num(pegOf(r), 2)} · ${num(r.sector_pe / 30, 2)} / ${num(r.sector_pe / 25, 2)}`],
     ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
     ['Remarks', remarks(r) || '–'],
-    ['Trailing 12m / 2-yr average forecast', pct(r.trail) + ' / ' + pct(r.fwd)], ['In bar / Out bar', `${pctu(r.need_in)} / ${pctu(r.need_out)}`],
+    ['Trailing 12m / 2-yr average forecast', pct(r.trail) + ' / ' + pct(r.fwd)], ['G in / G out', `${pctu(r.need_in)} / ${pctu(r.need_out)}`],
     ['Analysts (FY+1)', r.n_analysts || '–'], ['Fcst Δ 7 / 30 / 90 days', [pct(r.rev7, 1), pct(r.rev30, 1), pct(r.rev90, 1)].join(' / ')],
     ['12m target (peak est.)', r.target != null ? `${px(r.target)} (${pct(r.upside)} upside; P/E change ${pct(r.pe_chg)}; ${r.tkind})` : '–'],
     ['Last / next report', (r.last_report || '–') + ' / ' + (r.next_report || '–')]];
@@ -478,11 +479,12 @@ function stratInit() {
   const guide = [['Entry / Entry px', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close). Highlighted for 7 days.'],
     ['Exit', 'SELL: date the sell signal started; SOLD: date sold (stays listed 7 days, then only in Trades).'],
     ['12m tgt / Upside', 'Expected 12-month PEAK price: last close × (1 + forecast next-12m EPS growth) × the P/E model\'s P/E change. A buy reference (how much room is left), not a sell price. Backtest (454 entries 2008–24): peak within ±20% of it 57% of the time, no bias, reached within 12 months 47% of the time; selling at it would have cut returns (+18% vs +27% holding).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
-    ['In bar / Out bar', 'The growth a stock needs at today’s price to pass both rules: In = max(growth floor, P/E ÷ PEG buy bar), Out = max(keep floor, P/E ÷ PEG sell bar). Same as 30% / 25% × P/E ÷ sector P/E, never below the floors.'],
-    ['Red year', 'A forecast year below the bar that matters for the row: the In bar for stocks not held, the Out bar for holdings.'],
+    ['PEG in / PEG out', 'PEG limits for the stock’s sector: buy only if every year’s PEG ≤ sector P/E ÷ 30 (PEG in); sell once any forecast year’s PEG > sector P/E ÷ 25 (PEG out).'],
+    ['G in / G out', 'The growth a stock needs at today’s price to pass both rules: G in = max(buy floor, P/E ÷ PEG in), G out = max(keep floor, P/E ÷ PEG out). Red years are below the one that matters for the row.'],
+    ['Red year', 'A forecast year below the growth that matters for the row: G in for stocks not held, G out for holdings.'],
     ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
     ['Remark badges', 'review now (in the post-report window), report Nd (report within a week), fcst ↑/↓ (consensus moved ≥ 5% in 30 days), near exit, N pts short (WATCH), low growth (qualifies mainly on a low P/E), few analysts, one-off, FY+2 n/a, target: growth only. Hover for details.'],
-    ['WATCH', 'Not held and not yet qualifying, but the weakest of trailing and forecast-year growth is at most 5 percentage points below the In bar. An early-warning list only; it does not change any decision.'],
+    ['WATCH', 'Not held and not yet qualifying, but the weakest of trailing and forecast-year growth is at most 5 percentage points below G in. An early-warning list only; it does not change any decision.'],
     ['Fcst Δ30d', 'Change of the next-year consensus EPS over the last 30 days.']];
   document.getElementById('guide').innerHTML = guide.map(g => `<tr><td class="l"><b>${g[0]}</b></td><td class="l" style="white-space:normal">${g[1]}</td></tr>`).join('');
   const tl = (el, t) => document.getElementById(el).innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
