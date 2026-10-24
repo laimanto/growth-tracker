@@ -227,6 +227,12 @@
    "eps_fetched": 0,
    "trades": 0,
    "secs": 14
+  },
+  {
+   "utc": "2026-10-24 09:45",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 53
   }
  ]
 }
