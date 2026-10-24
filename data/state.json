@@ -173,6 +173,36 @@
    "eps_fetched": 0,
    "trades": 0,
    "secs": 40
+  },
+  {
+   "utc": "2026-10-24 05:19",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 13
+  },
+  {
+   "utc": "2026-10-24 05:32",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 13
+  },
+  {
+   "utc": "2026-10-24 05:43",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 12
+  },
+  {
+   "utc": "2026-10-24 05:48",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 12
+  },
+  {
+   "utc": "2026-10-24 05:48",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 15
   }
  ]
 }
