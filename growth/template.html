@@ -139,15 +139,24 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
     </div>
-    <div class="rule"><b>Universe</b> S&amp;P 500 + Nasdaq-100 (bought only while a member); FUTU shown as a watch-only extra.</div>
+    <div class="rule"><b>Universe</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li>S&amp;P 500 + Nasdaq-100; a stock is bought only while it is a member.</li>
+      <li>FUTU is shown as a watch-only extra (never bought).</li></ul></div>
     <div class="rule"><b>Terms</b><ul style="margin:4px 0 0;padding-left:18px">
       <li><b>G</b> = expected EPS growth per year: current, next and year-after fiscal years (and the last 12 months for buys).</li>
       <li><b>P/E</b> = price ÷ EPS of the last 4 reported quarters.</li>
       <li><b>PEG</b> = P/E ÷ G in %.</li>
       <li><b>Sector P/E</b> = median P/E of the stock’s sector in the S&amp;P 500 / Nasdaq-100.</li>
       <li><b>Market P/E</b> = median P/E of the whole universe; its 2002–26 average is 19. <span id="floorNow"></span></li></ul></div>
-    <div class="rule"><b>Buy</b> In <b>every</b> forecast year and over the last 12 months: <b>G ≥ 15% × market P/E ÷ 19</b> and <b>PEG ≤ sector P/E ÷ 30</b>, and <b>at least 10 analysts</b> forecasting next fiscal year (fewer means a less reliable forecast; such stocks show as WATCH).</div>
-    <div class="rule"><b>Sell</b> In <b>any</b> forecast year: <b>G &lt; 10% × market P/E ÷ 19</b> or <b>PEG &gt; sector P/E ÷ 25</b> (growth forecasts drop, or the price runs ahead). Also sold: the lowest-upside holding when a clearly stronger stock needs its slot, and at each quarter every holding with less than 10% upside left (see Portfolio). The last, already reported year is shown but not required.</div>
+    <div class="rule"><b>Buy: all of these, in every forecast year and over the last 12 months</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li><b>G ≥ 15% × market P/E ÷ 19</b> (EPS growth rule)</li>
+      <li><b>PEG ≤ sector P/E ÷ 30</b> (PEG rule)</li>
+      <li><b>At least 10 analysts</b> forecasting next fiscal year (otherwise WATCH)</li></ul></div>
+    <div class="rule"><b>Sell: any of these</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li>In any forecast year, <b>G &lt; 10% × market P/E ÷ 19</b> or <b>PEG &gt; sector P/E ÷ 25</b> (growth forecasts drop, or the price runs ahead)</li>
+      <li>All slots full and a stock with ≥ 5 points more 12m upside needs the slot (the lowest-upside holding is replaced)</li>
+      <li>First close of each quarter: 12m upside &lt; 10%</li>
+      <li>The last, already reported year is shown but not used.</li></ul></div>
     <div class="rule"><b>Timing</b><ul style="margin:4px 0 0;padding-left:18px">
       <li>Decisions 3–14 days after each stock’s report, or at the first close of each month (monthly sweep).</li>
       <li>Only when the stock’s data is <b>ready</b>: forecasts settled (≤ 10% of analysts revised next year in 7 days, or consensus moved &lt; 1%; decided anyway from day 12); fiscal year rolled over at Yahoo; ≥ 3 next-year forecasts; year-after forecasts aligned; data fresh. Otherwise the page shows “waiting”.</li>
@@ -157,7 +166,10 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li>Sale: the whole slot waits in cash (empty slot) for the next qualifying stock, which gets all of it.</li>
       <li>All slots full: a new buy replaces the holding with the lowest 12m upside if its own upside is ≥ 5 points higher.</li>
       <li>First close of each quarter: every holding with &lt; 10% upside is sold.</li></ul></div>
-    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Upside = target ÷ price − 1: a guide to the room left, not a sell price; used for swaps and the quarterly sale (&lt; 10%).</div>
+    <div class="rule"><b>12m target</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li>Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change.</li>
+      <li>Upside = target ÷ price − 1: a guide to the room left, not a sell price.</li>
+      <li>Used for swaps and the quarterly sale (upside &lt; 10%).</li></ul></div>
     <p class="cap" id="ruleEx"></p>
     <h3>Column guide</h3><table id="guide"></table></div>
   <div class="card"><h2>Backtest 1: Jan 2022 to Sep 2026, realistic set-up</h2>
