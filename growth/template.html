@@ -269,7 +269,7 @@ const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
 let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
 function sigTiles() {
   const c = s => S.filter(r => r.state === s).length;
-  const t = [['BUY', c('BUY'), 'qualify, not held'], ['SELL', c('SELL'), 'held, EPS growth or PEG rule failed'], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
+  const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.wait).length; return w ? `qualify, not held · ${w} waiting for settled forecasts` : 'qualify, not held'; })()], ['SELL', c('SELL'), 'held, EPS growth or PEG rule failed'], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
     ['HOLD', c('HOLD'), 'held, still qualify'], ['WATCH', c('WATCH'), '≤ 5 pts short of entry'], ['Prices', D.price_date, 'last close used']];
   document.getElementById('sigTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
 }
@@ -278,7 +278,7 @@ function sigTable() {
   const rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
   const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
   table('sigTab', [
-    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state), v: r => -ord[r.state], tt: r => r.why || ''}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state) + (r.wait && ['BUY', 'SELL'].includes(r.state) ? ' <span class="rb y">waiting</span>' : ''), v: r => -ord[r.state], tt: r => (r.wait && ['BUY', 'SELL'].includes(r.state) ? 'Passes the rules, but no trade until the data is ready: ' + r.wait + '. ' : '') + (r.why || '')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
     {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
     {k: 'entry_date', h: 'Entry', t: 'buy date (BUY/WATCH: date the signal started)', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
     {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
