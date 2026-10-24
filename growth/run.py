@@ -45,6 +45,9 @@ def main():
     log = []
     say = lambda m: (print(m, flush=True), log.append(m))
     U = update.universe(log=say) if not a.offline else update.jload(C.UNIVERSE)
+    for s, v in C.EXTRA.items():                              # watch-only extra tickers
+        U["stocks"].setdefault(s, {"name": v["name"], "sector": v["sector"], "sp500": False, "sp500_added": None, "ndx": False})
+        U["stocks"][s]["extra"] = True
     syms = sorted(U["stocks"])
     if a.offline:
         closes = pd.read_csv(C.CLOSES, index_col=0, parse_dates=True)
@@ -102,7 +105,7 @@ def main():
         if r["sym"] in sold_recent and not r["held"]:
             st = "SOLD"
         h = H.get(r["sym"], {})
-        x = {k: clean(r.get(k)) for k in ("sym", "name", "sector", "ndx", "sp500", "held", "why", "price", "pe", "sector_pe", "relpe", "trail", "fwd",
+        x = {k: clean(r.get(k)) for k in ("sym", "name", "sector", "ndx", "sp500", "extra", "held", "why", "price", "pe", "sector_pe", "relpe", "trail", "fwd",
                                           "gLast", "lastFlag", "oneoff", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
                                           "last_report", "next_report", "days_since_report", "in_review")}
         x["fy"] = r.get("fy") if isinstance(r.get("fy"), list) else None

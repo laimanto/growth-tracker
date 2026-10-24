@@ -33,6 +33,9 @@ RESET_MONTHS = (1, 4, 7, 10)
 # second share classes use the main class's EPS data (same company, one consensus); only the price is their own.
 # Yahoo covers the second class thinly and inconsistently (GOOG 2026-10: 8 analysts for FY26 and quarters on another basis)
 SHARE_CLASS = {"GOOG": "GOOGL", "FOX": "FOXA", "NWS": "NWSA"}
+# extra US tickers outside the S&P 500 / Nasdaq-100 (user requests): shown with the same rules, tagged 'watchlist';
+# never bought by the model portfolio and left out of the sector / market P/E medians
+EXTRA = {"FUTU": {"name": "Futu Holdings (ADR)", "sector": "Financial Services"}}
 
 # refresh policy (delta updates)
 EPS_MAX_AGE = 7                   # every stock's Yahoo consensus at least weekly (spread over the week)

@@ -118,6 +118,7 @@ def compute(U, recs, closes, held=(), today=None):
         rec = recs.get(s) or {}
         y, n = rec.get("yahoo") or {}, rec.get("nasdaq")
         row = {"sym": s, "name": info["name"], "sector": info["sector"], "ndx": info["ndx"], "sp500": info["sp500"], "held": s in held,
+               "extra": bool(info.get("extra")),
                "oneoff": rec.get("oneoff")}
         col = closes[s].loc[:last_close].dropna() if s in closes else pd.Series(dtype=float)
         row["price"] = float(col.iloc[-1]) if len(col) else None
@@ -172,7 +173,7 @@ def compute(U, recs, closes, held=(), today=None):
             row["fwd"] = math.exp((c[m_now + pd.offsets.MonthEnd(24)] - c[m_now]) / 2) - 1
         rows.append(row)
     D = pd.DataFrame(rows)
-    ok = D.pe.notna() & (D.pe > 0)
+    ok = D.pe.notna() & (D.pe > 0) & ~D.extra                # watch-only extras do not move the medians
     med = D[ok].groupby("sector").pe.median()
     D["sector_pe"] = D.sector.map(med)
     D["relpe"] = D.pe / D.sector_pe

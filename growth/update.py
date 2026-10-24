@@ -228,5 +228,18 @@ def refresh_prices(syms, start_universe, log=print):
             a.columns = [f"{x}_TR" for x in a.columns]
             c = pd.concat([c, a], axis=1)
         out[path] = _merge(path, settled(c))
+        if path == C.CLOSES:                                     # tickers new to the file: fetch their full history
+            new_t = [t for t in tick if t not in out[path] or out[path][t].notna().sum() < 10]
+            if new_t and len(new_t) < len(tick):
+                c2, _ = fetch.closes(new_t, first)
+                c2 = settled(c2)
+                R = out[path]
+                for t in c2.columns:
+                    s2 = c2[t].reindex(R.index.union(c2.index))
+                    R = R.reindex(R.index.union(c2.index))
+                    R[t] = s2.combine_first(R[t]) if t in R else s2
+                R.round(4).to_csv(path, date_format="%Y-%m-%d")
+                out[path] = R
+                log(f"prices: backfilled {len(c2.columns)} new tickers from {first}: {' '.join(c2.columns[:10])}")
         log(f"prices: {os.path.basename(path)} {start} -> {out[path].index.max().date()} ({len(c)} new rows fetched)")
     return out[C.CLOSES], out[C.BENCHF]

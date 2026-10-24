@@ -56,7 +56,7 @@ def _upside(up, s):
 
 
 def init(S, d, up=None):
-    buys = S[S.state == "BUY"]
+    buys = S[(S.state == "BUY") & ~S.get("extra", False)]
     buys = buys.assign(_u=[_upside(up, s) for s in buys.sym]).sort_values("_u", ascending=False).head(C.MAX_HOLD)
     pd_ = S.attrs["price_date"]
     L = {"capital": C.CAPITAL, "start": d, "price_date": pd_, "trades": [], "runs": [d], "last_close": pd_}
@@ -84,7 +84,7 @@ def update(L, S, d, up=None):
             _trade(L, d, sym, "SELL", pos[sym], x.price, x.why + tag, px_date)
             cash += pos.pop(sym) * x.price
             done.append(("SELL", sym))
-    new = [s for s, x in sig.iterrows() if x.state == "BUY" and (bool(x.get("in_review")) or month_sweep) and s not in pos]
+    new = [s for s, x in sig.iterrows() if x.state == "BUY" and not bool(x.get("extra")) and (bool(x.get("in_review")) or month_sweep) and s not in pos]
     new.sort(key=lambda s: -_upside(up, s))                  # most upside first
     for s in new:
         nav = cash + sum(pos[k] * px[k] for k in pos)

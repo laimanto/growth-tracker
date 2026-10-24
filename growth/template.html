@@ -81,7 +81,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 <section data-tab="Signals">
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
-    <p class="cap">Enter: trailing 12-month EPS growth <b>and every forecast year (Cur, +1, +2)</b> ≥ 30% × relative P/E, never below the growth floor (In bar). Exit: <b>any forecast year</b> &lt; 25% × relative P/E or below the exit floor (Out bar). Floors move with the market P/E (see Strategy). <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
+    <p class="cap"><b>Buy</b>: in every forecast year (Cur, +1, +2) and the last 12 months, EPS growth ≥ the growth floor <b>and</b> PEG ≤ sector P/E ÷ 30. <b>Sell</b>: in any forecast year, growth below the keep floor <b>or</b> PEG above sector P/E ÷ 25 (see Strategy). In bar / Out bar = the growth a stock needs at today’s price to pass both rules. <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
     <div class="ctrl"><div class="chips" id="stateChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
 </section>
@@ -120,8 +120,8 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
     <div class="intro">
       <div><h3>What it does</h3><ul>
         <li>A dashboard that recommends stocks from the S&amp;P 500 and Nasdaq-100 based on their expected earnings growth (<b>EPS growth</b>) and valuation (<b>P/E</b>).</li>
-        <li>It picks a stock when its expected growth is high enough for its price: the more expensive the share compared with similar companies, the faster it must grow. Cheaper shares need less, but must still be real growers, and the growth must hold up in each of the next 2–3 years.</li>
-        <li>It sells when the forecast growth for the coming 2 years slows down below what its price needs.</li>
+        <li>It buys a stock when it passes two tests in each of the next 2–3 years: an <b>EPS growth</b> test (expected growth of at least about 15% a year) and a <b>PEG</b> test (P/E ÷ growth low enough compared with similar companies).</li>
+        <li>It sells when either test fails in any of the coming 2 years: growth forecasts drop, or the price runs ahead so the PEG gets too high.</li>
         <li>It holds at most 10 stocks. When a new stock qualifies and all slots are full, it replaces the holding whose price has already run furthest ahead (lowest 12m upside), taking profit where little room is left.</li>
         <li>Recommendations are made within 1–2 weeks after each quarterly earnings report, when analysts publish their new EPS forecasts.</li></ul></div>
       <div><h3>How it performed in tests</h3><ul>
@@ -140,12 +140,12 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
     </div>
     <div class="rule"><b>Universe</b> S&amp;P 500 + Nasdaq-100, bought only once a stock is in either index.</div>
-    <div class="rule"><b>Measure</b> Relative P/E = P/E (price ÷ last 4 quarters' EPS) ÷ median P/E of its sector. A cheap stock needs less growth, an expensive one more.</div>
-    <div class="rule"><b>Enter</b> Trailing 12-month EPS growth ≥ <b>30% × relative P/E</b> and <b>each</b> forecast fiscal year (current, next, year after) ≥ <b>30% × relative P/E</b>, and never below the <b>entry floor</b> (15% × market P/E ÷ 19).</div>
-    <div class="rule"><b>Exit</b> <b>Any</b> forecast fiscal year &lt; <b>25% × relative P/E</b>, or below the <b>exit floor</b> (10% × market P/E ÷ 19). The floor (added Oct 2026) keeps very cheap, slow-growing stocks out; it scales with the median P/E of the whole universe against its 2002–26 average (19), so it rises in expensive markets (≈20% in 2021) and falls in cheap ones (≈12% in 2008–09). Backtests 2008–24 and 2022–26 both improved with no extra drawdown. <span id="floorNow"></span> The last, already reported year is shown but not required (requiring it made results worse).</div>
+    <div class="rule"><b>EPS growth rule</b> Expected EPS growth must be at least the <b>growth floor</b> in every forecast fiscal year (current, next, year after), and over the last 12 months when buying. Buy floor = 15% × market P/E ÷ 19; keep floor = 10% × market P/E ÷ 19 (19 = the market’s 2002–26 average P/E), so the floor rises when the whole market is expensive and falls when it is cheap. <span id="floorNow"></span></div>
+    <div class="rule"><b>PEG rule</b> PEG = P/E (price ÷ last 4 quarters’ EPS) ÷ expected growth in %, worked out for each forecast year (and the last 12 months when buying). Buy only if <b>every</b> PEG ≤ <b>sector P/E ÷ 30</b>; sell once <b>any</b> forecast-year PEG &gt; <b>sector P/E ÷ 25</b> (sector P/E = median of its sector). Pricier sectors tolerate higher PEGs; the gap between 30 and 25 stops small wobbles from flipping a stock in and out. Current bars below.</div>
+    <div class="rule"><b>Buy / sell</b> <b>Buy</b> when both rules pass. <b>Sell</b> when either fails in any forecast year: growth forecasts drop, or the price runs ahead so the PEG gets too high. The last, already reported year is shown but not required (requiring it made results worse). Both rules together equal “growth ≥ 30% × P/E ÷ sector P/E, never below the floor”, the form used in the backtests.</div>
     <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report (consensus revisions cluster there) or at the first close of each month (monthly sweep).</div>
     <div class="rule"><b>Portfolio</b> At most <b>10 stocks</b>, equal weight. A new buy with a free slot is paid for from cash, then by trimming the largest holdings. When all 10 slots are full, a new buy replaces the holding with the lowest 12m upside, but only if its own upside is at least 5 points higher (one sale, one buy); otherwise it waits. Money from sales stays in cash until the next buy. Full equal-weight reset at the first close of each quarter.</div>
-    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Also used to choose which holding to replace when all 10 slots are full; stocks are otherwise sold only when their growth outlook falls below the exit level.</div>
+    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Also used to choose which holding to replace when all 10 slots are full; stocks are otherwise sold only when the EPS growth or PEG rule fails.</div>
     <p class="cap" id="ruleEx"></p>
     <h3>Column guide</h3><table id="guide"></table></div>
   <div class="card"><h2>Backtest 1: Jan 2022 to Sep 2026, realistic set-up</h2>
@@ -236,6 +236,7 @@ function remarks(r) {
   if (r.state === 'WATCH' && r.room != null) b.push(rb(-r.room < 0.001 ? 'just short' : `${(-r.room * 100).toFixed(1)} pts short`, r.why || '', 'y'));
   if (weak != null && weak < 0.15 && r.need_in != null && r.need_in < 0.15 && ['BUY', 'HOLD', 'WATCH'].includes(r.state)) b.push(rb('low growth', `Weakest forecast year only ${pct(weak)}: it qualifies mainly because its P/E (${num(r.pe)}) is far below its sector median (${num(r.sector_pe)}).`));
   if (r.n_analysts && r.n_analysts < 5) b.push(rb('few analysts', `Only ${r.n_analysts} analysts cover next year: the forecast is less reliable.`));
+  if (r.extra) b.push(rb('watchlist', 'Added on request: outside the S&P 500 / Nasdaq-100. Same rules, but never bought by the model portfolio and not counted in the sector P/E medians.', 'b'));
   if (r.lastFlag) b.push(rb('one-off', r.lastFlag));
   if (r.oneoff) b.push(rb('one-off qtr', 'One-off quarter(s) replaced by the analysts’ estimate for P/E, trailing growth and the fiscal-year growth that contains them: ' + r.oneoff.join('; ')));
   if (r.g2 == null && r.g1 != null) b.push(rb('FY+2 n/a', 'No FY+2 consensus at Nasdaq (fewer than 3 analysts): +2 is taken equal to +1.'));
@@ -450,13 +451,14 @@ function trInit() {
 /* ---------- Strategy ---------- */
 function stratInit() {
   const B = D.backtest, A = B.sumA, Bs = B.sumB;
-  document.getElementById('ruleEx').innerHTML = 'Examples: P/E 40 in a sector at 20 → relative P/E 2.0 → needs 60% growth to enter, exits below 50%. P/E 10 in a sector at 20 → 0.5 → 15% / 12.5%, but never below the floors. Current sector medians: ' +
-    Object.entries(D.sector_pe).map(([k, v]) => `${k} ${v}`).join(' · ');
-  if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market median P/E ${D.floor.mkt_pe} → entry floor <b>${pctu(D.floor.in, 1)}</b>, exit floor <b>${pctu(D.floor.out, 1)}</b>.`;
+  document.getElementById('ruleEx').innerHTML = '<b>PEG bars now</b> (buy if PEG below / sell if above; sector median P/E in brackets): ' +
+    Object.entries(D.sector_pe).sort((x, y) => y[1] - x[1]).map(([k, v]) => `${k} (${v}) ${(v / 30).toFixed(2)} / ${(v / 25).toFixed(2)}`).join(' · ') +
+    '. Example: a tech stock with P/E 26 and 40% growth has PEG 0.65, below the 0.87 buy bar; if its price rose 60% with the same forecasts, PEG 1.04 would reach the sell bar.';
+  if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market median P/E ${D.floor.mkt_pe} → buy floor <b>${pctu(D.floor.in, 1)}</b>, keep floor <b>${pctu(D.floor.out, 1)}</b>.`;
   const guide = [['Entry / Entry px', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close). Highlighted for 7 days.'],
     ['Exit', 'SELL: date the sell signal started; SOLD: date sold (stays listed 7 days, then only in Trades).'],
     ['12m tgt / Upside', 'Expected 12-month PEAK price: last close × (1 + forecast next-12m EPS growth) × the P/E model\'s P/E change. A buy reference (how much room is left), not a sell price. Backtest (454 entries 2008–24): peak within ±20% of it 57% of the time, no bias, reached within 12 months 47% of the time; selling at it would have cut returns (+18% vs +27% holding).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
-    ['In bar / Out bar', 'Entry bar = 30% × relative P/E, at least the entry floor; exit bar = 25% × relative P/E, at least the exit floor (floors: 15% / 10% × market median P/E ÷ 19).'],
+    ['In bar / Out bar', 'The growth a stock needs at today’s price to pass both rules: In = max(growth floor, P/E ÷ PEG buy bar), Out = max(keep floor, P/E ÷ PEG sell bar). Same as 30% / 25% × P/E ÷ sector P/E, never below the floors.'],
     ['Red year', 'A forecast year below the bar that matters for the row: the In bar for stocks not held, the Out bar for holdings.'],
     ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
     ['Remark badges', 'review now (in the post-report window), report Nd (report within a week), fcst ↑/↓ (consensus moved ≥ 5% in 30 days), near exit, N pts short (WATCH), low growth (qualifies mainly on a low P/E), few analysts, one-off, FY+2 n/a, target: growth only. Hover for details.'],
