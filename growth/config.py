@@ -36,7 +36,7 @@ PRUNE_N = None                    # None = every holding below PRUNE_UPSIDE (Par
 PRUNE_UPSIDE = 0.10
 # readiness to act (v1.9): a stock is only bought / sold once its data is mature
 SETTLE_SHARE = 0.10               # forecasts settled when <= 10% of analysts (min 1) revised next year in the last 7 days ...
-SETTLE_MOVE = 0.01                # ... or the next-year consensus moved < 1% in 7 days; decided anyway at the end of REVIEW
+SETTLE_MOVE = 0.01                # ... or the next-year consensus moved < 1% in 7 days; decided anyway from day 12 of REVIEW
 MIN_ANALYSTS = 10                 # at least 10 analysts on next fiscal year's forecast to buy (v1.10, Research Part 24m)
 ROLLOVER_MIN = 3                  # after a fiscal-year rollover, wait until at least 3 next-year forecasts exist
 START_FILL = False                # start-up: leave empty slots in cash (True = fill with the closest near-misses)

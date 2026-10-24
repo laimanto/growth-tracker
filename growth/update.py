@@ -158,7 +158,7 @@ def refresh_eps(syms, workers=6, log=print):
 
     with ThreadPoolExecutor(workers) as ex:
         list(ex.map(work, jobs))
-    bad = [s for s in syms if load_stock(s).get("retry_y")]
+    bad = [s for s in syms if s not in C.SHARE_CLASS and load_stock(s).get("retry_y")]
     if bad:
         log(f"EPS: {len(bad)} still incomplete, retried tomorrow: {' '.join(bad[:30])}")
     return len(jobs)

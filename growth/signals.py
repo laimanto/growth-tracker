@@ -167,7 +167,7 @@ def compute(U, recs, closes, held=(), today=None):
         if dsr is not None and dsr <= C.REVIEW[1]:
             if dsr < C.REVIEW[0]:
                 wait.append("just reported: analysts still revising")
-            elif dsr < C.REVIEW[1]:
+            elif dsr < C.REVIEW[1] - 2:                      # from day 12 decide anyway (day 14 may fall on a weekend)
                 rv = (y.get("revs") or {}).get("+1y") or {}
                 n7 = (rv.get("upLast7days") or 0) + (rv.get("downLast7Days") or rv.get("downLast7days") or 0)
                 busy_n = bool(rv) and n7 > max(1, C.SETTLE_SHARE * max(row["n_analysts"], 1))
@@ -231,18 +231,18 @@ def compute(U, recs, closes, held=(), today=None):
         if x.held:
             room = weak_v - x.need_out
             st = "SELL" if exit_ else "HOLD"
-            why = (f"{weak_k} year {weak_v:+.1%} < exit bar {x.need_out:.1%}" if exit_ else f"weakest forecast year ({weak_k}) {weak_v:+.1%} >= exit bar {x.need_out:.1%}")
+            why = (f"{weak_k} year {weak_v:+.1%} < G out {x.need_out:.1%}" if exit_ else f"weakest forecast year ({weak_k}) {weak_v:+.1%} >= G out {x.need_out:.1%}")
         else:
             lows = {"trailing": x.trail, **yrs}
             lk, lv = min(lows.items(), key=lambda kv: kv[1])
             room = lv - x.need_in
             if enter:
-                st, why = "BUY", f"trailing {x.trail:+.0%} and every forecast year (weakest {weak_k} {weak_v:+.1%}) >= entry bar {x.need_in:.1%}"
+                st, why = "BUY", f"trailing {x.trail:+.0%} and every forecast year (weakest {weak_k} {weak_v:+.1%}) >= G in {x.need_in:.1%}"
             elif room >= 0:                                  # passes both rules but too few analysts
                 st, why = "WATCH", f"passes both rules, but only {int(x.n_analysts)} analysts forecast next year (minimum {C.MIN_ANALYSTS})"
             else:
                 st = "WATCH" if room >= -C.WATCH and not exit_ else "OUT"
-                why = f"{lk} {lv:+.1%} is {-room * 100:.1f} pts short of the entry bar {x.need_in:.1%}"
+                why = f"{lk} {lv:+.1%} is {-room * 100:.1f} pts short of G in {x.need_in:.1%}"
         D.at[i, "state"], D.at[i, "why"], D.at[i, "room"] = st, why, room
     D.attrs["price_date"] = str(last_close.date())
     D.attrs["curves"] = curves
