@@ -9,15 +9,18 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 `dashboard/` is git-ignored and also keeps the archived `growth_tracker_v1.0.html`.
 
 ## The rule
-* relative P/E = P/E (last close / last 4 reported quarters' EPS) / median P/E of the stock's sector
-* **enter** when trailing 12-month EPS growth **and each** forecast fiscal year (current, next, year after) are >= 30% x relative P/E (never below the floor: 15% x universe median P/E / 18.96, its 2002-26 average)
-* **exit** when **any** forecast fiscal year < 25% x relative P/E or below the exit floor (10% x the same P/E ratio) (v1.2; floor v1.6, Research Part 23/23b; the last reported year is shown, not required)
+* **EPS growth rule:** expected EPS growth in every forecast fiscal year (current, next, year after), and over the last 12 months
+  when buying, must be at least the growth floor: 15% (buy) / 10% (keep) x universe median P/E / 18.96 (its 2002-26 average)
+* **PEG rule:** PEG = P/E (last close / last 4 reported quarters' EPS) / growth in %, per year. Buy only if every PEG <= sector median
+  P/E / 30; sell once any forecast-year PEG > sector median P/E / 25
+* **buy** when both rules pass; **sell** when either fails. Together this equals growth >= max(30% x P/E / sector P/E, floor) to enter
+  and < max(25% x P/E / sector P/E, keep floor) to exit (v1.2; floor v1.6, Research Part 23/23b; the last reported year is shown, not required)
 * **12m target** (buy reference, not a sell price) = last close x (1 + forecast next-12m EPS growth) x P/E-model change; the P/E model is the Sortino project's pe28 (data/models/, needs scikit-learn 1.9.0), with the growth-only pe28g for stocks without 24 months of P/E history. Backtest: unbiased estimate of the 12-month peak (Research Part 22)
 * act 3-14 days after each report (when analysts revise) or at the first close of each month (monthly sweep)
-* **portfolio (v1.7):** at most 10 stocks, equal weight. A new BUY with a free slot is funded from cash, then by trimming the largest
-  holdings; when full it replaces the holding with the lowest 12m-target upside if its own upside is >= 5 points higher (one sale,
-  one buy). Sale proceeds stay in cash; full equal-weight reset at the first close of each quarter (`config.MAX_HOLD`, `SWAP_BUFFER`,
-  `RESET_MONTHS`; Research Part 24d-g)
+* **portfolio (v1.8):** 10 fixed slots of equal start size; each stock keeps its own money (no trims, no rebalancing). A sale's
+  whole value waits in cash for the next qualifier; when full, a new BUY replaces the lowest-12m-upside holding if its own upside is
+  >= 5 points higher; at the first close of each quarter up to 2 holdings with upside below 10% are sold. Start-up fills empty slots
+  with the closest near-misses (upside >= 10%). (`config.MAX_HOLD`, `SWAP_BUFFER`, `PRUNE_*`; Research Part 24h-i)
 
 ## Daily update (delta only)
 `python growth/run.py`, run by `.github/workflows/update.yml` at 21:30 UTC Mon-Fri. Downloads only what is due:

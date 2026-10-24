@@ -122,12 +122,12 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>A dashboard that recommends stocks from the S&amp;P 500 and Nasdaq-100 based on their expected earnings growth (<b>EPS growth</b>) and valuation (<b>P/E</b>).</li>
         <li>It buys a stock when it passes two tests in each of the next 2–3 years: an <b>EPS growth</b> test (expected growth of at least about 15% a year) and a <b>PEG</b> test (P/E ÷ growth low enough compared with similar companies).</li>
         <li>It sells when either test fails in any of the coming 2 years: growth forecasts drop, or the price runs ahead so the PEG gets too high.</li>
-        <li>It holds at most 10 stocks. When a new stock qualifies and all slots are full, it replaces the holding whose price has already run furthest ahead (lowest 12m upside), taking profit where little room is left.</li>
+        <li>It holds up to 10 stocks, each in its own slot of money. A stronger new stock replaces the holding with the least room left (lowest 12m upside), and each quarter up to 2 holdings with less than 10% upside left are sold, taking profit where little room is left.</li>
         <li>Recommendations are made within 1–2 weeks after each quarterly earnings report, when analysts publish their new EPS forecasts.</li></ul></div>
       <div><h3>How it performed in tests</h3><ul>
-        <li>2008–2022 (15 years): beat QQQ by about <b>13% a year</b>, with a similar worst fall in the 2008 crash (−44% vs −46%). It shone in 2022: about +2% while QQQ fell 33%, because it had already left expensive tech.</li>
-        <li>Since 2023 the lead grew: about <b>37% a year</b> ahead of QQQ and <b>36% a year</b> ahead of QGRW (an ETF built on a similar growth idea), with a worst fall <b>6–7 points smaller</b> (−17% vs −23% / −24%). It rode the AI and memory-chip profit boom (Nvidia, then Seagate, Western Digital, Micron). The one soft spot: 2023 itself, when it trailed QQQ’s sharp rebound (+36% vs +55%).</li>
-        <li>These figures already use the 10-stock limit and assume it only buys or sells about 3 trading days after each report, once analysts have updated (waiting costs about 3–4% a year).</li></ul></div>
+        <li>2008–2022 (15 years): beat QQQ by about <b>12% a year</b>, with a worst fall <b>20 points smaller</b> (−26% vs −46%): when few stocks qualified, the empty slots sat in cash. It shone in 2022: flat while QQQ fell 33%, because it had already left expensive tech.</li>
+        <li>Since 2023 the lead grew: about <b>37% a year</b> ahead of QQQ and <b>36% a year</b> ahead of QGRW (an ETF built on a similar growth idea), with a similar worst fall (−22% vs −23% / −24%). It rode the AI and memory-chip profit boom (Nvidia, then Seagate, Western Digital, Micron). The one soft spot: 2023 itself, when it trailed QQQ’s sharp rebound (+34% vs +55%).</li>
+        <li>These figures already use the 10 fixed slots and assume it only buys or sells about 3 trading days after each report, once analysts have updated (waiting costs about 3–4% a year).</li></ul></div>
       <div><h3>Things to be aware of</h3><ul>
         <li>Past analyst forecasts are not available, so the tests used companies’ actual later profits with a 30% random error as the “forecast”. Even with 50% random errors the results stayed far ahead of QQQ. The bigger risk is analysts being wrong all together, for example all missing a boom or a bust, which the tests cannot fully capture.</li>
         <li>Timing: most analysts update their forecasts within days of a report (about 80% of stocks within 2 weeks), so the dashboard picks up most changes in time. Share prices move faster: by the time forecasts are raised, the share is already about 2.5% ahead of the market (about 3% behind when cut). The tests allow for this.</li>
@@ -135,7 +135,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <div><h3>How to use it</h3><ul>
         <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
         <li>Act on stocks tagged “review now” (just reported, forecasts updated). Everything is also re-checked at the start of each month.</li>
-        <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but when the portfolio is full the holding with the least upside makes way for a stronger new buy.</li>
+        <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but holdings with little upside left make way for stronger new buys, and below 10% they are sold at the quarterly review.</li>
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
     </div>
@@ -144,20 +144,20 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
     <div class="rule"><b>PEG rule</b> PEG = P/E (price ÷ last 4 quarters’ EPS) ÷ expected growth in %, worked out for each forecast year (and the last 12 months when buying). Buy only if <b>every</b> PEG ≤ <b>sector P/E ÷ 30</b>; sell once <b>any</b> forecast-year PEG &gt; <b>sector P/E ÷ 25</b> (sector P/E = median of its sector). Pricier sectors tolerate higher PEGs; the gap between 30 and 25 stops small wobbles from flipping a stock in and out. Current bars below.</div>
     <div class="rule"><b>Buy / sell</b> <b>Buy</b> when both rules pass. <b>Sell</b> when either fails in any forecast year: growth forecasts drop, or the price runs ahead so the PEG gets too high. The last, already reported year is shown but not required (requiring it made results worse). Both rules together equal “growth ≥ 30% × P/E ÷ sector P/E, never below the floor”, the form used in the backtests.</div>
     <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report (consensus revisions cluster there) or at the first close of each month (monthly sweep).</div>
-    <div class="rule"><b>Portfolio</b> At most <b>10 stocks</b>, equal weight. A new buy with a free slot is paid for from cash, then by trimming the largest holdings. When all 10 slots are full, a new buy replaces the holding with the lowest 12m upside, but only if its own upside is at least 5 points higher (one sale, one buy); otherwise it waits. Money from sales stays in cash until the next buy. Full equal-weight reset at the first close of each quarter.</div>
-    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Also used to choose which holding to replace when all 10 slots are full; stocks are otherwise sold only when the EPS growth or PEG rule fails.</div>
+    <div class="rule"><b>Portfolio</b> <b>10 slots</b>, each started with an equal share; every stock keeps its own money (no trims, no rebalancing). When a stock is sold, its whole value waits in cash for the next stock that qualifies, which gets all of it. When all 10 slots are full, a new buy replaces the holding with the lowest 12m upside, but only if its own upside is at least 5 points higher. At the first close of each quarter, up to 2 holdings with less than 10% upside left are sold (target nearly reached or growth fading).</div>
+    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Also used to choose which holding to replace when all 10 slots are full, and for the quarterly prune (upside below 10%).</div>
     <p class="cap" id="ruleEx"></p>
     <h3>Column guide</h3><table id="guide"></table></div>
   <div class="card"><h2>Backtest 1: Jan 2022 to Sep 2026, realistic set-up</h2>
-    <p class="cap">Point-in-time universe (a stock is a candidate only after joining the S&amp;P 500 / Nasdaq-100). Forecast = actual EPS leaning 40% on recent growth (as analysts anchor), plus a 30% random error; 100 simulations. Trades happen 3 trading days after each earnings report (once analysts have updated), on actual daily prices. Max 10 stocks; when full, a newcomer replaces the weakest holding (growth margin) only if at least 5 points stronger; quarterly reset. After Sep 2026 today's consensus is used. Shaded: 5th to 95th percentile of the runs.</p>
+    <p class="cap">Point-in-time universe (a stock is a candidate only after joining the S&amp;P 500 / Nasdaq-100). Forecast = actual EPS leaning 40% on recent growth (as analysts anchor), plus a 30% random error; 100 simulations. Trades happen 3 trading days after each earnings report (once analysts have updated), on actual daily prices. 10 fixed slots (start full, closest near-misses fill), whole-slot swaps when a newcomer is at least 5 points stronger (growth margin), quarterly sale of up to 2 holdings below their buy bar; spare slots earn the T-bill rate. After Sep 2026 today's consensus is used. Shaded: 5th to 95th percentile of the runs.</p>
     <div class="tiles" id="btTilesA"></div><div class="legend" id="btLegA"></div><div class="chart" id="btChartA"></div>
     <h3>By calendar year (median run vs QQQ)</h3><table id="btYears"></table>
     <h3>Sensitivity: universe and forecast quality (30% error, median of 100 runs)</h3><table id="btPit"></table></div>
   <div class="card"><h2>Rule versions compared</h2><p class="cap">Same set-ups as the two backtests, but trading at month ends (before the report delay, which costs about 3–4 points a year). v1.6 (live) requires every forecast year to clear the bar, with a growth floor that moves with the market P/E. The sensitivity table uses v1.6; the threshold grid was run on the earlier 2-year-average version.</p><table id="btVer"></table></div>
   <div class="card"><h2>Backtest 2: Jan 2008 to Sep 2024, long run</h2>
-    <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; trades 3 trading days after each report; log scale. Max 10 stocks, swaps by 12m upside, quarterly reset. One simulation shown.</p>
+    <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; trades 3 trading days after each report; log scale. 10 fixed slots, swaps and quarterly sales by 12m upside (below 10%), spare slots in T-bills. One simulation shown.</p>
     <div class="tiles" id="btTilesB"></div><div class="legend" id="btLegB"></div><div class="chart" id="btChartB"></div></div>
-  <div class="card"><h2>Why 30% / 25%: threshold grid</h2><p class="cap">Sortino of every entry × exit combination (2008–2024, 20%/30% forecast errors). A smooth plateau at entry 25–35%, exit 15–25%; the chosen cell is outlined.</p>
+  <div class="card"><h2>Why PEG bars of sector P/E ÷ 30 / ÷ 25: threshold grid</h2><p class="cap">Sortino of every buy × sell setting (2008–2024, 20%/30% forecast errors). A setting of 30 means the PEG bar is sector P/E ÷ 30, the same as needing growth of 30% × P/E ÷ sector P/E. A smooth plateau at buy 25–35, sell 15–25; the chosen cell (30 / 25) is outlined. Tested on an earlier rule version without the growth floor.</p>
     <div class="tscroll"><table class="heat" id="btGrid"></table></div></div>
   <div class="card"><h2>Real ETFs with related ideas</h2><p class="cap">None beat QQQ by more than ~2%/yr over its life. QGRW (+1.7%/yr vs QQQ since Dec 2022) is the best; FFTY (reported growth + consensus + price strength, ~1,960% turnover) lost badly.</p><table id="btEtf"></table></div>
   <div class="card note"><h2>More detail</h2><ul>
@@ -224,6 +224,9 @@ function table(el, cols, rows, opt = {}) {
 const fyTip = (r, i, lab) => r.fy ? `FY${r.fy[i]} ${lab}` : '';
 const ic = s => `<span class="ic" title="${s.replace(/"/g, '&quot;')}">ⓘ</span>`;
 const lastG = r => r.lastFlag ? r.trail : r.gLast;
+const weakF = r => { const w = [r.gCur, r.g1, r.g2 ?? r.g1].filter(v => v != null); return w.length ? Math.min(...w) : null; };
+const pegOf = r => { const w = weakF(r); return r.pe > 0 && w > 0 ? r.pe / (w * 100) : null; };
+const pegBar = r => r.sector_pe ? r.sector_pe / (r.held || r.state === 'SOLD' ? 25 : 30) : null;
 const rb = (txt, tip, c = '') => `<span class="rb ${c}" title="${tip.replace(/"/g, '&quot;')}">${txt}</span>`;
 function remarks(r) {
   const b = [], wk = [r.gCur, r.g1, r.g2 ?? r.g1].filter(v => v != null);
@@ -234,7 +237,7 @@ function remarks(r) {
   if (r.rev30 != null && r.rev30 <= -0.05) b.push(rb('fcst ↓', `Next-year consensus EPS down ${pct(r.rev30, 1)} in 30 days.`, 'r'));
   if (r.held && r.state !== 'SELL' && weak != null && r.need_out != null && weak - r.need_out < 0.03) b.push(rb('near exit', `Weakest forecast year ${pct(weak)} is within 3 pts of the exit bar ${pctu(r.need_out)}.`, 'r'));
   if (r.state === 'WATCH' && r.room != null) b.push(rb(-r.room < 0.001 ? 'just short' : `${(-r.room * 100).toFixed(1)} pts short`, r.why || '', 'y'));
-  if (weak != null && weak < 0.15 && r.need_in != null && r.need_in < 0.15 && ['BUY', 'HOLD', 'WATCH'].includes(r.state)) b.push(rb('low growth', `Weakest forecast year only ${pct(weak)}: it qualifies mainly because its P/E (${num(r.pe)}) is far below its sector median (${num(r.sector_pe)}).`));
+  if (weak != null && weak < 0.15 && r.need_in != null && r.need_in < 0.15 && ['BUY', 'HOLD', 'WATCH'].includes(r.state)) b.push(rb('low growth', `Weakest forecast year only ${pct(weak)}: it qualifies mainly on a low PEG (P/E ${num(r.pe)} vs sector ${num(r.sector_pe)}).`));
   if (r.n_analysts && r.n_analysts < 5) b.push(rb('few analysts', `Only ${r.n_analysts} analysts cover next year: the forecast is less reliable.`));
   if (r.extra) b.push(rb('watchlist', 'Added on request: outside the S&P 500 / Nasdaq-100. Same rules, but never bought by the model portfolio and not counted in the sector P/E medians.', 'b'));
   if (r.lastFlag) b.push(rb('one-off', r.lastFlag));
@@ -259,7 +262,7 @@ const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
 let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
 function sigTiles() {
   const c = s => S.filter(r => r.state === s).length;
-  const t = [['BUY', c('BUY'), 'qualify, not held'], ['SELL', c('SELL'), 'held, forecast below exit bar'], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
+  const t = [['BUY', c('BUY'), 'qualify, not held'], ['SELL', c('SELL'), 'held, EPS growth or PEG rule failed'], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
     ['HOLD', c('HOLD'), 'held, still qualify'], ['WATCH', c('WATCH'), '≤ 5 pts short of entry'], ['Prices', D.price_date, 'last close used']];
   document.getElementById('sigTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
 }
@@ -277,11 +280,12 @@ function sigTable() {
     {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
     {k: 'exit_date', h: 'Exit', t: 'SELL: date the sell signal started; SOLD: date sold', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
-    {k: 'relpe', h: 'Rel P/E', t: 'P/E ÷ sector median P/E', f: r => num(r.relpe, 2)}, ...G4,
-    {k: 'need_in', h: 'In bar', t: 'entry bar = 30% × relative P/E, at least the entry floor', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'Out bar', t: 'exit bar = 25% × relative P/E, at least the exit floor', f: r => pctu(r.need_out)},
+    {k: 'peg', h: 'PEG', t: 'P/E ÷ growth (%) of the weakest forecast year', f: r => num(pegOf(r), 2), v: r => pegOf(r) ?? 99, cls: r => pegOf(r) != null && pegBar(r) != null && pegOf(r) > pegBar(r) ? 'below' : ''},
+    {k: 'pegbar', h: 'PEG bar', t: 'PEG limit: sector P/E ÷ 30 to buy, ÷ 25 to keep (holdings)', f: r => num(pegBar(r), 2), v: r => pegBar(r) ?? 99}, ...G4,
+    {k: 'need_in', h: 'In bar', t: 'growth needed to buy at today’s price: the stricter of the EPS growth floor and the PEG bar', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'Out bar', t: 'growth needed to keep a holding: the stricter of the keep floor and the PEG sell bar', f: r => pctu(r.need_out)},
     {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
     {k: 'remark', h: 'Remark', l: 1, f: remarks, v: r => remarks(r).length}], rows,
-    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 2], ['EPS growth by fiscal year', 4], ['', 5]]});
+    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 3], ['EPS growth by fiscal year', 4], ['', 5]]});
 }
 function sigInit() {
   document.getElementById('stateChips').innerHTML = STATES.map(s => `<button type="button" class="${stF.has(s) ? 'on' : ''}" data-s="${s}">${s} (${S.filter(r => r.state === s).length})</button>`).join('');
@@ -367,7 +371,7 @@ function detail() {
   }
   const fy = i => r.fy ? 'FY' + r.fy[i] : '';
   const kv = [['Signal', badge(r.state) + (r.since ? ` since ${r.since}` : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
-    ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector median · relative', `${num(r.pe)} · ${num(r.sector_pe)} · ${num(r.relpe, 2)}`],
+    ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector P/E', `${num(r.pe)} · ${num(r.sector_pe)}`], ['PEG (weakest year) · PEG bar buy / keep', `${num(pegOf(r), 2)} · ${num(r.sector_pe / 30, 2)} / ${num(r.sector_pe / 25, 2)}`],
     ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
     ['Remarks', remarks(r) || '–'],
     ['Trailing 12m / 2-yr average forecast', pct(r.trail) + ' / ' + pct(r.fwd)], ['In bar / Out bar', `${pctu(r.need_in)} / ${pctu(r.need_out)}`],
@@ -400,7 +404,7 @@ function holdInit() {
     ['Backtest 2008–24 (one simulation)', Bh && n1(Bh.held), Bh && mo(Bh.hold_months_mean), Bh && n0(Bh.new_per_year), tr(Bh)]];
   document.getElementById('holdTab').innerHTML = '<tr><th class="l"></th><th>Stocks held (avg)</th><th>Holding period (avg)</th><th>New positions / yr</th><th>Trades / yr</th></tr>' +
     rows.map(r => `<tr><td class="l">${r[0]}</td>${r.slice(1).map(v => `<td>${v ?? '–'}</td>`).join('')}</tr>`).join('');
-  document.getElementById('holdCap').innerHTML = 'Max 10 stocks. Trades = every buy or sell, including trims to fund new buys and the quarterly equal-weight reset. The backtests simulate analyst forecasts with random errors that move far more from month to month than the real consensus (simulated ~3–10% a month vs a real median of ~0.6%), so they overstate turnover: expect the live portfolio to hold positions longer than the backtest’s few months.';
+  document.getElementById('holdCap').innerHTML = '10 fixed slots: trades are whole stocks in or out (no trims or rebalancing). The backtests simulate analyst forecasts with random errors that move far more from month to month than the real consensus (simulated ~3–10% a month vs a real median of ~0.6%), so they overstate turnover: expect the live portfolio to hold positions longer than the backtest’s few months.';
 }
 
 function perfInit() {
@@ -415,7 +419,7 @@ function perfInit() {
   document.getElementById('winChips').innerHTML = W.map(w => `<button type="button" class="${w === win ? 'on' : ''}" data-w="${w}">${w} (${D.risk_windows[w]})</button>`).join('');
   document.querySelectorAll('#winChips button').forEach(b => b.addEventListener('click', () => { win = b.dataset.w; document.querySelectorAll('#winChips button').forEach(x => x.classList.toggle('on', x === b)); riskTable(); }));
   document.getElementById('riskCap').innerHTML = "Daily returns, same convention as the Sortino dashboard: target (MAR) 4% a year. Annual return = compound annual growth; downside deviation = √252 × RMS of daily shortfalls below the 4% target; Sortino = (annualised return − 4%) ÷ downside deviation. Each series on its own trading days (HSI: Hong Kong). 'Strategy (backtest)' = the realistic backtest's median run, rebuilt daily from its month-by-month holdings (price only, so about 1%/yr understated vs the funds' total return); it ends Sep 2026, which sets the common end. 'Model (live)' appears after about 3 months, over its own life. 'Common' = the days all series exist.";
-  const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', 'max 10 stocks, equal weight (quarterly reset), fractional shares'],
+  const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', '10 slots of equal start size, no rebalancing; a sale’s money funds the next buy; fractional shares'],
     ['Acts on', '3–14 days after a report, or first close of each month'], ['Prices used', D.price_date + ' close']];
   document.getElementById('setupTab').innerHTML = st.map(x => `<tr><td class="l">${x[0]}</td><td>${x[1]}</td></tr>`).join('');
   riskTable();
@@ -480,8 +484,8 @@ function stratInit() {
   const G = B.grid, cell = (en, ex) => G.cells.find(c => Math.abs(c.entry - en) < 1e-9 && Math.abs(c.exit - ex) < 1e-9);
   const vals = G.cells.map(c => c.sortino), lo = Math.min(...vals), hi = Math.max(...vals);
   const col = v => { const t = (v - lo) / (hi - lo); const a = [205, 226, 251], b = [16, 66, 129]; return `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * t)).join(',')})`; };
-  document.getElementById('btGrid').innerHTML = '<tr><th class="l">Entry \\ Exit</th>' + G.exit.map(x => `<th>${pctu(x)}</th>`).join('') + '</tr>' +
-    G.entry.map(en => `<tr><td class="l" style="color:var(--text);font-weight:600">${pctu(en)}</td>` + G.exit.map(ex => { const c = cell(en, ex);
+  document.getElementById('btGrid').innerHTML = '<tr><th class="l">Buy \\ Sell (sector P/E ÷)</th>' + G.exit.map(x => `<th>${x > 0 ? (x * 100).toFixed(0) : '–'}</th>`).join('') + '</tr>' +
+    G.entry.map(en => `<tr><td class="l" style="color:var(--text);font-weight:600">${(en * 100).toFixed(0)}</td>` + G.exit.map(ex => { const c = cell(en, ex);
       if (!c) return '<td></td>'; const sel = Math.abs(en - 0.3) < 1e-9 && Math.abs(ex - 0.25) < 1e-9;
       return `<td style="background:${col(c.sortino)};${(c.sortino - lo) / (hi - lo) < 0.45 ? 'color:#0b0b0b;' : ''}${sel ? 'outline:3px solid var(--s2);outline-offset:-3px' : ''}" title="CAGR ${pct(c.cagr, 1)}, DD ${pctu(c.dd)}, ${c.held.toFixed(0)} stocks">${c.sortino.toFixed(2)}</td>`; }).join('') + '</tr>').join('');
   document.getElementById('btVer').innerHTML = '<tr><th class="grp"></th><th class="grp" colspan="3">2022–26 realistic (100 runs, median)</th><th class="grp" colspan="3">2008–24 long run</th></tr><tr><th class="l">Rule</th><th>Return/yr</th><th>Sortino</th><th>Stocks</th><th>Return/yr</th><th>Sortino</th><th>Stocks</th></tr>' +

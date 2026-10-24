@@ -1,6 +1,8 @@
 """The rule (Research/Cisco_2026-10-23 Parts 14-21), on the per-stock data files.
 
   relPE   = P/E (last close / last 4 reported quarters' EPS) / median P/E of the stock's sector (positive EPS only)
+  (shown on the page as two tests: EPS growth >= floor AND PEG = P/E / growth% <= sector P/E / 30 to buy;
+   sell when growth < keep floor OR PEG > sector P/E / 25 - identical to the bars below)
   trail   = trailing EPS growth over the last 12 months (last 4 quarters vs the 4 before)
   fwd     = average yearly EPS growth over the next 24 months, read off the fiscal-year consensus curve
             (last FY actual -> current FY -> FY+1 from Yahoo -> FY+2 = FY+1 x Nasdaq FY+2/FY+1; monthly
