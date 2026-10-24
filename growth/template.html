@@ -64,6 +64,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 .rule{border-left:4px solid var(--s1);padding:6px 12px;background:var(--chip);border-radius:6px;margin:6px 0}
 .rule>b:first-child{display:inline-block;min-width:66px}
 .meter{position:relative;height:10px;background:var(--chip);border-radius:5px;margin:4px 0 12px}.meter i{position:absolute;top:-3px;width:2px;height:16px}
+.sub{font-size:11px;color:var(--text2)}
 .note{font-size:12px;color:var(--text2)}.note li{margin:3px 0}
 .intro{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 18px;margin-bottom:12px}.intro h3{margin:4px 0}.intro ul{margin:4px 0;padding-left:18px}.intro li{margin:3px 0}
 .heat td{text-align:center;color:#fff;font-weight:600;min-width:48px}
@@ -102,6 +103,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
     <div class="ctrl"><div class="chips" id="winChips"></div></div><div class="topbar" data-for="riskWrap"><div></div></div><div class="tscroll" id="riskWrap"><table id="riskTab"></table></div></div>
   <div class="card"><h2>Model portfolio since the start (rebased to 1)</h2><p class="cap">Total return for funds; NDX and HSI are index levels (price only), HSI in HKD (last close carried on US days). Cash earns 0%.</p>
     <div class="legend" id="perfLeg"></div><div class="chart" id="perfChart"></div></div>
+  <div class="card"><h2>Holdings and turnover</h2><p class="cap" id="holdCap"></p><table id="holdTab"></table></div>
   <div class="grid2">
     <div class="card"><h2>Weights by sector</h2><div class="chart" id="pfSector"></div></div>
     <div class="card"><h2>Model portfolio set-up</h2><table id="setupTab"></table></div></div>
@@ -120,19 +122,20 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>A dashboard that recommends stocks from the S&amp;P 500 and Nasdaq-100 based on their expected earnings growth (<b>EPS growth</b>) and valuation (<b>P/E</b>).</li>
         <li>It picks a stock when its expected growth is high enough for its price: the more expensive the share compared with similar companies, the faster it must grow. Cheaper shares need less, but must still be real growers, and the growth must hold up in each of the next 2–3 years.</li>
         <li>It sells when the forecast growth for the coming 2 years slows down below what its price needs.</li>
+        <li>It holds at most 10 stocks. When a new stock qualifies and all slots are full, it replaces the holding whose price has already run furthest ahead (lowest 12m upside), taking profit where little room is left.</li>
         <li>Recommendations are made within 1–2 weeks after each quarterly earnings report, when analysts publish their new EPS forecasts.</li></ul></div>
       <div><h3>How it performed in tests</h3><ul>
-        <li>2008–2022 (15 years): beat QQQ by about <b>14% a year</b>, with a worst fall <b>9 points smaller</b> (−36% vs −45%). It shone in 2022: flat while QQQ fell 33%, because it had already left expensive tech.</li>
-        <li>Since 2023 the lead grew: about <b>31% a year</b> ahead of QQQ and <b>30% a year</b> ahead of QGRW (an ETF built on a similar growth idea), with a similar worst fall (−21% vs −23% / −24%). It rode the AI and memory-chip profit boom (Nvidia, then Seagate, Western Digital, Micron). The one soft spot: 2023 itself, when it trailed QQQ’s sharp rebound (+36% vs +55%).</li>
-        <li>These figures already assume it only buys or sells about 3 trading days after each report, once analysts have updated; waiting costs about 3–4% a year.</li></ul></div>
+        <li>2008–2022 (15 years): beat QQQ by about <b>13% a year</b>, with a similar worst fall in the 2008 crash (−44% vs −46%). It shone in 2022: about +2% while QQQ fell 33%, because it had already left expensive tech.</li>
+        <li>Since 2023 the lead grew: about <b>37% a year</b> ahead of QQQ and <b>36% a year</b> ahead of QGRW (an ETF built on a similar growth idea), with a worst fall <b>6–7 points smaller</b> (−17% vs −23% / −24%). It rode the AI and memory-chip profit boom (Nvidia, then Seagate, Western Digital, Micron). The one soft spot: 2023 itself, when it trailed QQQ’s sharp rebound (+36% vs +55%).</li>
+        <li>These figures already use the 10-stock limit and assume it only buys or sells about 3 trading days after each report, once analysts have updated (waiting costs about 3–4% a year).</li></ul></div>
       <div><h3>Things to be aware of</h3><ul>
         <li>Past analyst forecasts are not available, so the tests used companies’ actual later profits with a 30% random error as the “forecast”. Even with 50% random errors the results stayed far ahead of QQQ. The bigger risk is analysts being wrong all together, for example all missing a boom or a bust, which the tests cannot fully capture.</li>
         <li>Timing: most analysts update their forecasts within days of a report (about 80% of stocks within 2 weeks), so the dashboard picks up most changes in time. Share prices move faster: by the time forecasts are raised, the share is already about 2.5% ahead of the market (about 3% behind when cut). The tests allow for this.</li>
-        <li>Holds about 10–20 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
+        <li>Holds up to 10 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
       <div><h3>How to use it</h3><ul>
         <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
         <li>Act on stocks tagged “review now” (just reported, forecasts updated). Everything is also re-checked at the start of each month.</li>
-        <li><b>Upside</b> (12m target) shows how much room may be left when buying. It is not a sell target.</li>
+        <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but when the portfolio is full the holding with the least upside makes way for a stronger new buy.</li>
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
     </div>
@@ -140,19 +143,19 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
     <div class="rule"><b>Measure</b> Relative P/E = P/E (price ÷ last 4 quarters' EPS) ÷ median P/E of its sector. A cheap stock needs less growth, an expensive one more.</div>
     <div class="rule"><b>Enter</b> Trailing 12-month EPS growth ≥ <b>30% × relative P/E</b> and <b>each</b> forecast fiscal year (current, next, year after) ≥ <b>30% × relative P/E</b>, and never below the <b>entry floor</b> (15% × market P/E ÷ 19).</div>
     <div class="rule"><b>Exit</b> <b>Any</b> forecast fiscal year &lt; <b>25% × relative P/E</b>, or below the <b>exit floor</b> (10% × market P/E ÷ 19). The floor (added Oct 2026) keeps very cheap, slow-growing stocks out; it scales with the median P/E of the whole universe against its 2002–26 average (19), so it rises in expensive markets (≈20% in 2021) and falls in cheap ones (≈12% in 2008–09). Backtests 2008–24 and 2022–26 both improved with no extra drawdown. <span id="floorNow"></span> The last, already reported year is shown but not required (requiring it made results worse).</div>
-    <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report (consensus revisions cluster there) or at the first close of each month (monthly sweep, which also resets equal weights).</div>
-    <div class="rule"><b>Portfolio</b> Equal weight across all stocks that qualify; cash if none.</div>
-    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Not used to sell.</div>
+    <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report (consensus revisions cluster there) or at the first close of each month (monthly sweep).</div>
+    <div class="rule"><b>Portfolio</b> At most <b>10 stocks</b>, equal weight. A new buy with a free slot is paid for from cash, then by trimming the largest holdings. When all 10 slots are full, a new buy replaces the holding with the lowest 12m upside, but only if its own upside is at least 5 points higher (one sale, one buy); otherwise it waits. Money from sales stays in cash until the next buy. Full equal-weight reset at the first close of each quarter.</div>
+    <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Also used to choose which holding to replace when all 10 slots are full; stocks are otherwise sold only when their growth outlook falls below the exit level.</div>
     <p class="cap" id="ruleEx"></p>
     <h3>Column guide</h3><table id="guide"></table></div>
   <div class="card"><h2>Backtest 1: Jan 2022 to Sep 2026, realistic set-up</h2>
-    <p class="cap">Point-in-time universe (a stock is a candidate only after joining the S&amp;P 500 / Nasdaq-100). Forecast = actual EPS leaning 40% on recent growth (as analysts anchor), plus a 30% random error; 100 simulations. Trades happen 3 trading days after each earnings report (once analysts have updated), on actual daily prices. After Sep 2026 today's consensus is used. Shaded: 5th to 95th percentile of the runs.</p>
+    <p class="cap">Point-in-time universe (a stock is a candidate only after joining the S&amp;P 500 / Nasdaq-100). Forecast = actual EPS leaning 40% on recent growth (as analysts anchor), plus a 30% random error; 100 simulations. Trades happen 3 trading days after each earnings report (once analysts have updated), on actual daily prices. Max 10 stocks; when full, a newcomer replaces the weakest holding (growth margin) only if at least 5 points stronger; quarterly reset. After Sep 2026 today's consensus is used. Shaded: 5th to 95th percentile of the runs.</p>
     <div class="tiles" id="btTilesA"></div><div class="legend" id="btLegA"></div><div class="chart" id="btChartA"></div>
     <h3>By calendar year (median run vs QQQ)</h3><table id="btYears"></table>
     <h3>Sensitivity: universe and forecast quality (30% error, median of 100 runs)</h3><table id="btPit"></table></div>
   <div class="card"><h2>Rule versions compared</h2><p class="cap">Same set-ups as the two backtests, but trading at month ends (before the report delay, which costs about 3–4 points a year). v1.6 (live) requires every forecast year to clear the bar, with a growth floor that moves with the market P/E. The sensitivity table uses v1.6; the threshold grid was run on the earlier 2-year-average version.</p><table id="btVer"></table></div>
   <div class="card"><h2>Backtest 2: Jan 2008 to Sep 2024, long run</h2>
-    <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; trades 3 trading days after each report; log scale. One simulation shown: the worst fall (2008–09) ranges from −24% to −43% across simulations, average −36% (QQQ −45%).</p>
+    <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; trades 3 trading days after each report; log scale. Max 10 stocks, swaps by 12m upside, quarterly reset. One simulation shown.</p>
     <div class="tiles" id="btTilesB"></div><div class="legend" id="btLegB"></div><div class="chart" id="btChartB"></div></div>
   <div class="card"><h2>Why 30% / 25%: threshold grid</h2><p class="cap">Sortino of every entry × exit combination (2008–2024, 20%/30% forecast errors). A smooth plateau at entry 25–35%, exit 15–25%; the chosen cell is outlined.</p>
     <div class="tscroll"><table class="heat" id="btGrid"></table></div></div>
@@ -386,7 +389,21 @@ function detail() {
 const BCOL = {Model: '--s1', QQQ: '--s2', SPY: '--s4', NDX: '--c3', QGRW: '--c11', GLD: '--c4', IBIT: '--c5', TLT: '--c6', CHAT: '--c7', HSI: '--c8', 'BRK.B': '--c9', ALLW: '--c10'};
 let perfOn = new Set(['Model', 'QQQ', 'SPY', 'QGRW']), win = 'since 2023';
 const lastv = a => { for (let i = a.length - 1; i >= 0; i--) if (a[i] != null) return a[i]; return null; };
+function holdInit() {
+  const B = D.backtest || {}, A = (B.sumA || {}).hold, Bh = (B.sumB || {}).hold, L = D.live_hold || {};
+  const mo = v => v == null ? '–' : v.toFixed(1) + ' months', n0 = v => v == null ? '–' : v.toFixed(0), n1 = v => v == null ? '–' : v.toFixed(1);
+  const tr = h => h ? n0(h.buys + h.sells + h.trims + h.reset) + ` <span class="sub">(${n0(h.buys)} buys, ${n0(h.sells)} sells, ${n0(h.trims)} trims, ${n0(h.reset)} reset)</span>` : '–';
+  const rows = [
+    ['Live model portfolio', L.held, L.avg_days == null ? '–' : (L.avg_days / 30.44).toFixed(1) + ' months so far', '–', L.trades_per_year == null ? `${L.trades} since start (${L.days} days)` : n0(L.trades_per_year)],
+    ['Backtest 2022–26 (median of 100 runs)', A && n1(A.held), A && mo(A.hold_months_mean), A && n0(A.new_per_year), tr(A)],
+    ['Backtest 2008–24 (one simulation)', Bh && n1(Bh.held), Bh && mo(Bh.hold_months_mean), Bh && n0(Bh.new_per_year), tr(Bh)]];
+  document.getElementById('holdTab').innerHTML = '<tr><th class="l"></th><th>Stocks held (avg)</th><th>Holding period (avg)</th><th>New positions / yr</th><th>Trades / yr</th></tr>' +
+    rows.map(r => `<tr><td class="l">${r[0]}</td>${r.slice(1).map(v => `<td>${v ?? '–'}</td>`).join('')}</tr>`).join('');
+  document.getElementById('holdCap').innerHTML = 'Max 10 stocks. Trades = every buy or sell, including trims to fund new buys and the quarterly equal-weight reset. The backtests simulate analyst forecasts with random errors that move far more from month to month than the real consensus (simulated ~3–10% a month vs a real median of ~0.6%), so they overstate turnover: expect the live portfolio to hold positions longer than the backtest’s few months.';
+}
+
 function perfInit() {
+  holdInit();
   const N = D.navs, keys = Object.keys(N).filter(k => k !== 'dates'), r = c => lastv(N[c]) - 1;
   const t = [['Model portfolio', pct(r('Model'), 2), money(D.nav)], ['QQQ', pct(r('QQQ'), 2), 'same period'], ['Model vs QQQ', pct(r('Model') - r('QQQ'), 2), 'since ' + D.start_price_date],
     ['Holdings', D.n_pos, 'cash ' + money(D.cash)], ['Tracked', (N.dates.length - 1) + ' days', 'from ' + D.start_price_date]];
@@ -397,7 +414,7 @@ function perfInit() {
   document.getElementById('winChips').innerHTML = W.map(w => `<button type="button" class="${w === win ? 'on' : ''}" data-w="${w}">${w} (${D.risk_windows[w]})</button>`).join('');
   document.querySelectorAll('#winChips button').forEach(b => b.addEventListener('click', () => { win = b.dataset.w; document.querySelectorAll('#winChips button').forEach(x => x.classList.toggle('on', x === b)); riskTable(); }));
   document.getElementById('riskCap').innerHTML = "Daily returns, same convention as the Sortino dashboard: target (MAR) 4% a year. Annual return = compound annual growth; downside deviation = √252 × RMS of daily shortfalls below the 4% target; Sortino = (annualised return − 4%) ÷ downside deviation. Each series on its own trading days (HSI: Hong Kong). 'Strategy (backtest)' = the realistic backtest's median run, rebuilt daily from its month-by-month holdings (price only, so about 1%/yr understated vs the funds' total return); it ends Sep 2026, which sets the common end. 'Model (live)' appears after about 3 months, over its own life. 'Common' = the days all series exist.";
-  const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', 'equal weight, fractional shares'],
+  const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', 'max 10 stocks, equal weight (quarterly reset), fractional shares'],
     ['Acts on', '3–14 days after a report, or first close of each month'], ['Prices used', D.price_date + ' close']];
   document.getElementById('setupTab').innerHTML = st.map(x => `<tr><td class="l">${x[0]}</td><td>${x[1]}</td></tr>`).join('');
   riskTable();

@@ -13,7 +13,11 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 * **enter** when trailing 12-month EPS growth **and each** forecast fiscal year (current, next, year after) are >= 30% x relative P/E (never below the floor: 15% x universe median P/E / 18.96, its 2002-26 average)
 * **exit** when **any** forecast fiscal year < 25% x relative P/E or below the exit floor (10% x the same P/E ratio) (v1.2; floor v1.6, Research Part 23/23b; the last reported year is shown, not required)
 * **12m target** (buy reference, not a sell price) = last close x (1 + forecast next-12m EPS growth) x P/E-model change; the P/E model is the Sortino project's pe28 (data/models/, needs scikit-learn 1.9.0), with the growth-only pe28g for stocks without 24 months of P/E history. Backtest: unbiased estimate of the 12-month peak (Research Part 22)
-* act 3-14 days after each report (when analysts revise) or at the first close of each month (monthly sweep, equal-weight reset)
+* act 3-14 days after each report (when analysts revise) or at the first close of each month (monthly sweep)
+* **portfolio (v1.7):** at most 10 stocks, equal weight. A new BUY with a free slot is funded from cash, then by trimming the largest
+  holdings; when full it replaces the holding with the lowest 12m-target upside if its own upside is >= 5 points higher (one sale,
+  one buy). Sale proceeds stay in cash; full equal-weight reset at the first close of each quarter (`config.MAX_HOLD`, `SWAP_BUFFER`,
+  `RESET_MONTHS`; Research Part 24d-g)
 
 ## Daily update (delta only)
 `python growth/run.py`, run by `.github/workflows/update.yml` at 21:30 UTC Mon-Fri. Downloads only what is due:

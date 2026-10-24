@@ -71,11 +71,13 @@ def main():
     L = portfolio.load()
     held = set(portfolio.positions(L)[0]) if L else set()
     S = signals.compute(U, recs, closes, held=held)
+    TG = pemodel.targets(S, recs, closes_m, S.attrs["curves"], today)   # 12m upside also ranks buys / swaps
+    up = TG.upside.to_dict()
     if L is None:
-        L = portfolio.init(S, today)
-        done = [("BUY", s) for s in S[S.state == "BUY"].sym]
+        L = portfolio.init(S, today, up)
+        done = [("BUY", t["sym"]) for t in L["trades"]]
     else:
-        done = portfolio.update(L, S, today)
+        done = portfolio.update(L, S, today, up)
     say(f"model trades: {done or 'none'}")
     held = set(portfolio.positions(L)[0])
     S = signals.compute(U, recs, closes, held=held)
@@ -88,7 +90,6 @@ def main():
             H[r.sym] = {"state": r.state, "since": S.attrs["price_date"], "px": r.price}
     update.jsave(C.SIGHIST, H, indent=0)
 
-    TG = pemodel.targets(S, recs, closes_m, S.attrs["curves"], today)
     say(f"12m targets: {len(TG)} stocks ({(TG.kind == 'P/E model').sum()} P/E model, {(TG.kind != 'P/E model').sum()} growth-only)")
     last_px = S.set_index("sym").price.to_dict()
     T = portfolio.trips(L, last_px)
@@ -145,9 +146,16 @@ def main():
         sec = U["stocks"].get(s, {}).get("sector", "Unknown")
         weights[sec] = weights.get(sec, 0) + sh * last_px[s]
     navv = cash + sum(weights.values())
+    pdt = pd.Timestamp(S.attrs["price_date"])
+    spans = [((pd.Timestamp(t["exit_date"]) if t["status"] == "closed" else pdt) - pd.Timestamp(t["entry_date"])).days for t in T]
+    life_yrs = max((pdt - pd.Timestamp(L["price_date"])).days / 365.25, 1e-9)
+    n_tr = len(L["trades"]) - sum(1 for t in L["trades"] if t["reason"].startswith("initial portfolio"))
+    live_hold = {"held": len(pos), "positions": len(T), "closed": sum(1 for t in T if t["status"] == "closed"),
+                 "avg_days": float(np.mean(spans)) if spans else None, "trades": n_tr, "days": int((pdt - pd.Timestamp(L["price_date"])).days),
+                 "trades_per_year": n_tr / life_yrs if life_yrs >= 0.25 else None}
     D = {"updated_utc": now.strftime("%Y-%m-%d %H:%M"), "updated_hk": (now + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M"),
          "price_date": S.attrs["price_date"], "start": L["start"], "start_price_date": L["price_date"], "capital": L["capital"],
-         "cash": cash, "nav": navv, "n_pos": len(pos), "sector_pe": S.attrs["sector_pe"], "floor": S.attrs["floor"],
+         "cash": cash, "nav": navv, "n_pos": len(pos), "live_hold": live_hold, "sector_pe": S.attrs["sector_pe"], "floor": S.attrs["floor"],
          "rules": {"entry": C.ENTRY, "exit": C.EXIT, "watch": C.WATCH, "review": C.REVIEW, "highlight": C.HIGHLIGHT_DAYS},
          "signals": rows, "trips": [{k: clean(v) for k, v in t.items()} for t in T], "trades": L["trades"], "today": done,
          "navs": navs, "risk": risk, "risk_windows": wlab, "sector_w": {k: v / navv for k, v in sorted(weights.items(), key=lambda z: -z[1])},

@@ -25,6 +25,11 @@ WATCH = 0.05                      # WATCH = not held, weakest of trailing / fore
 REVIEW = (3, 14)                  # act 3-14 days after a report (consensus revisions cluster there)
 HIGHLIGHT_DAYS = 7                # new entries / exits stay highlighted (and SOLD rows listed) for a week
 CAPITAL = 100_000.0
+# portfolio policy (v1.7, Research Part 24d-f): at most MAX_HOLD stocks, equal weight, full reset in RESET_MONTHS only;
+# a new BUY when full replaces the holding with the lowest 12m-target upside if its own upside is >= SWAP_BUFFER higher
+MAX_HOLD = 10
+SWAP_BUFFER = 0.05
+RESET_MONTHS = (1, 4, 7, 10)
 # second share classes use the main class's EPS data (same company, one consensus); only the price is their own.
 # Yahoo covers the second class thinly and inconsistently (GOOG 2026-10: 8 analysts for FY26 and quarters on another basis)
 SHARE_CLASS = {"GOOG": "GOOGL", "FOX": "FOXA", "NWS": "NWSA"}

@@ -1,8 +1,11 @@
 """Model (paper) portfolio: a ledger of trades that follows the signals. No orders are ever sent anywhere.
 
   update  once per new market close: a SELL is executed / a BUY bought at that close when the stock is in its
-          post-report review window (3-14 days after reporting) or at the first close of a new month (monthly
-          sweep, which also resets equal weights). Buys are funded from cash, then by trimming the others.
+          post-report review window (3-14 days after reporting) or at the first close of a new month (monthly sweep).
+          At most C.MAX_HOLD stocks. A new BUY with a free slot gets an equal share, funded from cash first, then by
+          trimming the largest holdings. When full, it replaces the holding with the lowest 12m-target upside if its own
+          upside is at least C.SWAP_BUFFER higher (one sale, one buy); otherwise it waits. Sale proceeds stay in cash
+          until the next buy; full equal-weight reset at the first close of each quarter (C.RESET_MONTHS).
   trips   one row per position (first buy -> position closed), with P&L
   nav     daily value (cash earns 0)
 """
@@ -47,8 +50,14 @@ def _trade(L, d, sym, side, shares, price, reason, px_date):
                         "price": round(price, 4), "value": round(shares * price, 2), "reason": reason})
 
 
-def init(S, d):
+def _upside(up, s):
+    v = (up or {}).get(s)
+    return v if v is not None and v == v else -9.0
+
+
+def init(S, d, up=None):
     buys = S[S.state == "BUY"]
+    buys = buys.assign(_u=[_upside(up, s) for s in buys.sym]).sort_values("_u", ascending=False).head(C.MAX_HOLD)
     pd_ = S.attrs["price_date"]
     L = {"capital": C.CAPITAL, "start": d, "price_date": pd_, "trades": [], "runs": [d], "last_close": pd_}
     w = C.CAPITAL / len(buys)
@@ -58,11 +67,12 @@ def init(S, d):
     return L
 
 
-def update(L, S, d):
+def update(L, S, d, up=None):
     px_date = S.attrs["price_date"]
     if px_date <= L.get("last_close", L["price_date"]):
         return []                                            # no new close since the last decision round
     month_sweep = px_date[:7] != L.get("last_close", L["price_date"])[:7]
+    quarter_reset = month_sweep and int(px_date[5:7]) in C.RESET_MONTHS
     sig = S.set_index("sym")
     px = sig.price
     pos, cash = positions(L)
@@ -75,19 +85,43 @@ def update(L, S, d):
             cash += pos.pop(sym) * x.price
             done.append(("SELL", sym))
     new = [s for s, x in sig.iterrows() if x.state == "BUY" and (bool(x.get("in_review")) or month_sweep) and s not in pos]
-    if new or month_sweep:
-        names = list(pos) + new
-        nav = cash + sum(pos[s] * px[s] for s in pos)
-        target = nav / len(names) if names else 0
-        for s in list(pos):
-            diff = target / px[s] - pos[s]
-            if month_sweep and abs(diff * px[s]) > 1:
-                _trade(L, d, s, "BUY" if diff > 0 else "SELL", abs(diff), px[s], "monthly equal-weight rebalance", px_date)
-            elif not month_sweep and diff < 0 and new:
-                _trade(L, d, s, "SELL", -diff, px[s], "trim to make room for new buys", px_date)
-        for s in new:
-            _trade(L, d, s, "BUY", target / px[s], px[s], sig.loc[s].why + tag, px_date)
-            done.append(("BUY", s))
+    new.sort(key=lambda s: -_upside(up, s))                  # most upside first
+    for s in new:
+        nav = cash + sum(pos[k] * px[k] for k in pos)
+        if len(pos) < C.MAX_HOLD:                            # free slot: equal share, cash first, then trim the largest
+            tgt = nav / (len(pos) + 1)
+            for k in sorted(pos, key=lambda k: -pos[k] * px[k]):
+                if cash >= tgt - 1:
+                    break
+                over = pos[k] * px[k] - tgt
+                if over > 1:
+                    take = min(over, tgt - cash)
+                    _trade(L, d, k, "SELL", take / px[k], px[k], f"trim to fund {s}", px_date)
+                    pos[k] -= take / px[k]; cash += take
+            amt = min(tgt, cash)
+            if amt > 1:
+                _trade(L, d, s, "BUY", amt / px[s], px[s], sig.loc[s].why + tag, px_date)
+                pos[s] = amt / px[s]; cash -= amt
+                done.append(("BUY", s))
+        else:                                                # full: replace the lowest-upside holding if clearly weaker
+            w = min(pos, key=lambda k: _upside(up, k))
+            if _upside(up, s) >= _upside(up, w) + C.SWAP_BUFFER:
+                val = pos[w] * px[w]
+                _trade(L, d, w, "SELL", pos.pop(w), px[w],
+                       f"replaced by {s}: 12m upside {_upside(up, w):+.0%} vs {_upside(up, s):+.0%}" + tag, px_date)
+                cash += val
+                amt = min(val, cash)
+                _trade(L, d, s, "BUY", amt / px[s], px[s], sig.loc[s].why + f"; replaces {w} (upside {_upside(up, s):+.0%} vs {_upside(up, w):+.0%})" + tag, px_date)
+                pos[s] = amt / px[s]; cash -= amt
+                done += [("SELL", w), ("BUY", s)]
+    if quarter_reset and pos:                                # quarterly equal-weight reset
+        nav = cash + sum(pos[k] * px[k] for k in pos)
+        tgt = nav / len(pos)
+        for k in list(pos):
+            diff = tgt / px[k] - pos[k]
+            if abs(diff * px[k]) > 1:
+                _trade(L, d, k, "BUY" if diff > 0 else "SELL", abs(diff), px[k], "quarterly equal-weight reset", px_date)
+                pos[k] += diff
     L["runs"].append(d)
     L["last_close"] = px_date
     save(L)
