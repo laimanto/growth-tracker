@@ -79,7 +79,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 <section data-tab="Signals">
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
-    <p class="cap">Enter: trailing 12-month EPS growth <b>and every forecast year (Cur, +1, +2)</b> ≥ 30% × relative P/E (In bar). Exit: <b>any forecast year</b> &lt; 25% × relative P/E (Out bar). <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
+    <p class="cap">Enter: trailing 12-month EPS growth <b>and every forecast year (Cur, +1, +2)</b> ≥ 30% × relative P/E, never below the growth floor (In bar). Exit: <b>any forecast year</b> &lt; 25% × relative P/E or below the exit floor (Out bar). Floors move with the market P/E (see Strategy). <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
     <div class="ctrl"><div class="chips" id="stateChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
 </section>
@@ -116,8 +116,8 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
   <div class="card"><h2>The strategy</h2>
     <div class="rule"><b>Universe</b> S&amp;P 500 + Nasdaq-100, bought only once a stock is in either index.</div>
     <div class="rule"><b>Measure</b> Relative P/E = P/E (price ÷ last 4 quarters' EPS) ÷ median P/E of its sector. A cheap stock needs less growth, an expensive one more.</div>
-    <div class="rule"><b>Enter</b> Trailing 12-month EPS growth ≥ <b>30% × relative P/E</b> and <b>each</b> forecast fiscal year (current, next, year after) ≥ <b>30% × relative P/E</b>.</div>
-    <div class="rule"><b>Exit</b> <b>Any</b> forecast fiscal year &lt; <b>25% × relative P/E</b>. The last, already reported year is shown but not required (requiring it made results worse).</div>
+    <div class="rule"><b>Enter</b> Trailing 12-month EPS growth ≥ <b>30% × relative P/E</b> and <b>each</b> forecast fiscal year (current, next, year after) ≥ <b>30% × relative P/E</b>, and never below the <b>entry floor</b> (15% × market P/E ÷ 19).</div>
+    <div class="rule"><b>Exit</b> <b>Any</b> forecast fiscal year &lt; <b>25% × relative P/E</b>, or below the <b>exit floor</b> (10% × market P/E ÷ 19). The floor (added Oct 2026) keeps very cheap, slow-growing stocks out; it scales with the median P/E of the whole universe against its 2002–26 average (19), so it rises in expensive markets (≈20% in 2021) and falls in cheap ones (≈12% in 2008–09). Backtests 2008–24 and 2022–26 both improved with no extra drawdown. <span id="floorNow"></span> The last, already reported year is shown but not required (requiring it made results worse).</div>
     <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report (consensus revisions cluster there) or at the first close of each month (monthly sweep, which also resets equal weights).</div>
     <div class="rule"><b>Portfolio</b> Equal weight across all stocks that qualify; cash if none.</div>
     <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Not used to sell.</div>
@@ -211,9 +211,10 @@ function remarks(r) {
   if (r.rev30 != null && r.rev30 <= -0.05) b.push(rb('fcst ↓', `Next-year consensus EPS down ${pct(r.rev30, 1)} in 30 days.`, 'r'));
   if (r.held && r.state !== 'SELL' && weak != null && r.need_out != null && weak - r.need_out < 0.03) b.push(rb('near exit', `Weakest forecast year ${pct(weak)} is within 3 pts of the exit bar ${pctu(r.need_out)}.`, 'r'));
   if (r.state === 'WATCH' && r.room != null) b.push(rb(-r.room < 0.001 ? 'just short' : `${(-r.room * 100).toFixed(1)} pts short`, r.why || '', 'y'));
-  if (weak != null && weak < 0.15 && ['BUY', 'HOLD', 'WATCH'].includes(r.state)) b.push(rb('low growth', `Weakest forecast year only ${pct(weak)}: it qualifies mainly because its P/E (${num(r.pe)}) is far below its sector median (${num(r.sector_pe)}).`));
+  if (weak != null && weak < 0.15 && r.need_in != null && r.need_in < 0.15 && ['BUY', 'HOLD', 'WATCH'].includes(r.state)) b.push(rb('low growth', `Weakest forecast year only ${pct(weak)}: it qualifies mainly because its P/E (${num(r.pe)}) is far below its sector median (${num(r.sector_pe)}).`));
   if (r.n_analysts && r.n_analysts < 5) b.push(rb('few analysts', `Only ${r.n_analysts} analysts cover next year: the forecast is less reliable.`));
   if (r.lastFlag) b.push(rb('one-off', r.lastFlag));
+  if (r.oneoff) b.push(rb('one-off qtr', 'One-off quarter(s) replaced by the analysts’ estimate for P/E, trailing growth and the fiscal-year growth that contains them: ' + r.oneoff.join('; ')));
   if (r.g2 == null && r.g1 != null) b.push(rb('FY+2 n/a', 'No FY+2 consensus at Nasdaq (fewer than 3 analysts): +2 is taken equal to +1.'));
   if (r.tkind && r.tkind !== 'P/E model') b.push(rb('target: growth only', 'Not enough P/E history (24 months): the 12m target uses the growth-only model.'));
   return b.join('') || '';
@@ -253,7 +254,7 @@ function sigTable() {
     {k: 'exit_date', h: 'Exit', t: 'SELL: date the sell signal started; SOLD: date sold', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
     {k: 'relpe', h: 'Rel P/E', t: 'P/E ÷ sector median P/E', f: r => num(r.relpe, 2)}, ...G4,
-    {k: 'need_in', h: 'In bar', t: 'entry bar = 30% × relative P/E', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'Out bar', t: 'exit bar = 25% × relative P/E', f: r => pctu(r.need_out)},
+    {k: 'need_in', h: 'In bar', t: 'entry bar = 30% × relative P/E, at least the entry floor', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'Out bar', t: 'exit bar = 25% × relative P/E, at least the exit floor', f: r => pctu(r.need_out)},
     {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
     {k: 'remark', h: 'Remark', l: 1, f: remarks, v: r => remarks(r).length}], rows,
     {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 2], ['EPS growth by fiscal year', 4], ['', 5]]});
@@ -363,7 +364,7 @@ function detail() {
 
 /* ---------- Performance ---------- */
 const BCOL = {Model: '--s1', QQQ: '--s2', SPY: '--s4', NDX: '--c3', QGRW: '--c11', GLD: '--c4', IBIT: '--c5', TLT: '--c6', CHAT: '--c7', HSI: '--c8', 'BRK.B': '--c9', ALLW: '--c10'};
-let perfOn = new Set(['Model', 'QQQ', 'SPY', 'QGRW']), win = 'since 2022';
+let perfOn = new Set(['Model', 'QQQ', 'SPY', 'QGRW']), win = 'since 2023';
 const lastv = a => { for (let i = a.length - 1; i >= 0; i--) if (a[i] != null) return a[i]; return null; };
 function perfInit() {
   const N = D.navs, keys = Object.keys(N).filter(k => k !== 'dates'), r = c => lastv(N[c]) - 1;
@@ -412,12 +413,13 @@ function trInit() {
 /* ---------- Strategy ---------- */
 function stratInit() {
   const B = D.backtest, A = B.sumA, Bs = B.sumB;
-  document.getElementById('ruleEx').innerHTML = 'Examples: P/E 40 in a sector at 20 → relative P/E 2.0 → needs 60% growth to enter, exits below 50%. P/E 10 in a sector at 20 → 0.5 → needs 15%, exits below 12.5%. Current sector medians: ' +
+  document.getElementById('ruleEx').innerHTML = 'Examples: P/E 40 in a sector at 20 → relative P/E 2.0 → needs 60% growth to enter, exits below 50%. P/E 10 in a sector at 20 → 0.5 → 15% / 12.5%, but never below the floors. Current sector medians: ' +
     Object.entries(D.sector_pe).map(([k, v]) => `${k} ${v}`).join(' · ');
+  if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market median P/E ${D.floor.mkt_pe} → entry floor <b>${pctu(D.floor.in, 1)}</b>, exit floor <b>${pctu(D.floor.out, 1)}</b>.`;
   const guide = [['Entry / Entry px', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close). Highlighted for 7 days.'],
     ['Exit', 'SELL: date the sell signal started; SOLD: date sold (stays listed 7 days, then only in Trades).'],
     ['12m tgt / Upside', 'Expected 12-month PEAK price: last close × (1 + forecast next-12m EPS growth) × the P/E model\'s P/E change. A buy reference (how much room is left), not a sell price. Backtest (454 entries 2008–24): peak within ±20% of it 57% of the time, no bias, reached within 12 months 47% of the time; selling at it would have cut returns (+18% vs +27% holding).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
-    ['In bar / Out bar', 'Entry bar = 30% × relative P/E; exit bar = 25% × relative P/E.'],
+    ['In bar / Out bar', 'Entry bar = 30% × relative P/E, at least the entry floor; exit bar = 25% × relative P/E, at least the exit floor (floors: 15% / 10% × market median P/E ÷ 19).'],
     ['Red year', 'A forecast year below the bar that matters for the row: the In bar for stocks not held, the Out bar for holdings.'],
     ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
     ['Remark badges', 'review now (in the post-report window), report Nd (report within a week), fcst ↑/↓ (consensus moved ≥ 5% in 30 days), near exit, N pts short (WATCH), low growth (qualifies mainly on a low P/E), few analysts, one-off, FY+2 n/a, target: growth only. Hover for details.'],

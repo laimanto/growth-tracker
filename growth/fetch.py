@@ -40,31 +40,65 @@ def yahoo(sym):
     ts = lambda k: str(pd.Timestamp(i[k], unit="s").date()) if i.get(k) else None
     out.update(currency=i.get("currency"), fcur=i.get("financialCurrency"), sector=i.get("sector"),
                lastFye=ts("lastFiscalYearEnd"), nextFye=ts("nextFiscalYearEnd"), mrq=ts("mostRecentQuarter"))
-    try:
-        ee = t.earnings_estimate
-        out["est"] = {p: {k: (None if pd.isna(ee.loc[p, k]) else float(ee.loc[p, k]))
-                          for k in ("avg", "low", "high", "yearAgoEps", "numberOfAnalysts") if k in ee.columns}
-                      for p in ("0q", "+1q", "0y", "+1y") if p in ee.index}
-    except Exception:
-        out["est"] = {}
-    try:
-        ed = t.get_earnings_dates(limit=32)
+    missing = []
+
+    def part(name, f, tries=3):
+        """One Yahoo call, retried; an exception or empty answer after all tries -> listed in out["missing"]
+        (update.py keeps the previous good copy and retries the stock on the next daily run)."""
+        for k in range(tries):
+            try:
+                r = f()
+                if r is not None and len(r):
+                    return r
+            except Exception:
+                pass
+            if k < tries - 1:
+                time.sleep(1 + 2 * k)
+        missing.append(name)
+        return None
+
+    ee = part("est", lambda: t.earnings_estimate)
+    out["est"] = {} if ee is None else {p: {k: (None if pd.isna(ee.loc[p, k]) else float(ee.loc[p, k]))
+                                             for k in ("avg", "low", "high", "yearAgoEps", "numberOfAnalysts") if k in ee.columns}
+                                         for p in ("0q", "+1q", "0y", "+1y") if p in ee.index}
+    ed = part("qh", lambda: t.get_earnings_dates(limit=32))
+    out["qh"] = []
+    if ed is not None:
         idx = pd.to_datetime(ed.index, utc=True).tz_convert("America/New_York").tz_localize(None)
         ed.index = idx
-        rep = ed.dropna(subset=["Reported EPS"]).sort_index()
-        rep = rep[~rep.index.duplicated()]
-        out["qh"] = [[str(d), float(v)] for d, v in rep["Reported EPS"].iloc[-24:].items()]
-        fut = ed[ed["Reported EPS"].isna() & (ed.index > pd.Timestamp.now())].sort_index()
+        ed = ed[~ed.index.duplicated()].sort_index()
+        rep = ed.dropna(subset=["Reported EPS"])
+        qh = {d: float(v) for d, v in rep["Reported EPS"].items()}
+        qe = {d: float(v) for d, v in rep["EPS Estimate"].dropna().items()} if "EPS Estimate" in rep else {}
+        # Yahoo's calendar sometimes lists a past report date without its EPS (AVGO / HPE / NTAP, Sep 2026);
+        # earnings_history (last 4 quarters, same basis) usually has it -> fill those dates from it
+        gaps = ed[ed["Reported EPS"].isna() & (ed.index <= pd.Timestamp.now())].index
+        if len(gaps):
+            try:
+                eh = t.earnings_history
+                for qend, a in eh["epsActual"].dropna().items():
+                    qend = pd.Timestamp(qend)
+                    if any(qend < d <= qend + pd.Timedelta(days=100) for d in qh):
+                        continue
+                    d = next((d for d in gaps if qend < d <= qend + pd.Timedelta(days=100)), None)
+                    if d is not None:
+                        qh[d] = float(a)
+                        e = eh["epsEstimate"].get(qend) if "epsEstimate" in eh else None
+                        if e is not None and pd.notna(e):
+                            qe[d] = float(e)
+            except Exception:
+                pass
+        out["qh"] = [[str(d), v] for d, v in sorted(qh.items())][-24:]
+        out["qe"] = [[str(d), qe[d]] for d, _ in sorted(qh.items())[-24:] if d in qe]   # consensus estimate per reported quarter
+        fut = ed[ed["Reported EPS"].isna() & (ed.index > pd.Timestamp.now())]
         if len(fut):
             out["next"] = str(fut.index[0].date())
-    except Exception:
-        out["qh"] = []
-    try:
-        tr = t.eps_trend
+    tr = part("trend", lambda: t.eps_trend)
+    if tr is not None:
         out["trend"] = {p: {k: (None if pd.isna(tr.loc[p, k]) else float(tr.loc[p, k])) for k in tr.columns if k != "currency"}
                         for p in ("0y", "+1y") if p in tr.index}
-    except Exception:
-        pass
+    if missing:
+        out["missing"] = missing
     if "next" not in out:
         try:
             d = (t.calendar or {}).get("Earnings Date")

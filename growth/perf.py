@@ -5,7 +5,7 @@ DAILY returns, target (MAR) = 4% a year (the risk-free rate):
   Sortino            (annualised arithmetic return - 4%) / downside dev.
   max drawdown       on daily closes
 Each series uses its own trading days (HSI: Hong Kong calendar). Windows (common end = the last day of the backtest):
-  since 2022 | common (from the latest start of all series) | 2 years | 1 year.
+  since 2023 (QGRW, the main benchmark, starts Dec 2022) | common (from the latest start of all series) | 2 years | 1 year.
 The live model portfolio is shown over its own life once it has 63 trading days (about 3 months).
 """
 import numpy as np
@@ -30,7 +30,7 @@ def table(series, live=None):
     """series: {name: daily returns}; live: {name: daily returns} shown over their own life. -> ({window: {name: metrics}}, labels)"""
     end = min(s.index.max() for s in series.values())
     common = max(s.index.min() for s in series.values())
-    W = {"since 2022": pd.Timestamp("2022-01-01"), "common": common, "2 years": end - pd.DateOffset(years=2), "1 year": end - pd.DateOffset(years=1)}
+    W = {"since 2023": pd.Timestamp("2023-01-01"), "common": common, "2 years": end - pd.DateOffset(years=2), "1 year": end - pd.DateOffset(years=1)}
     out = {}
     for w, a in W.items():
         out[w] = {k: metrics(s.loc[a:end]) for k, s in series.items()}

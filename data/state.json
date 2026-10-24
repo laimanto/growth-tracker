@@ -95,6 +95,48 @@
    "eps_fetched": 0,
    "trades": 0,
    "secs": 28
+  },
+  {
+   "utc": "2026-10-24 02:59",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 19
+  },
+  {
+   "utc": "2026-10-24 03:07",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 12
+  },
+  {
+   "utc": "2026-10-24 04:14",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 22
+  },
+  {
+   "utc": "2026-10-24 04:20",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 14
+  },
+  {
+   "utc": "2026-10-24 04:20",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 14
+  },
+  {
+   "utc": "2026-10-24 04:39",
+   "eps_fetched": 0,
+   "trades": 9,
+   "secs": 67
+  },
+  {
+   "utc": "2026-10-24 04:41",
+   "eps_fetched": 0,
+   "trades": 0,
+   "secs": 12
   }
  ]
 }

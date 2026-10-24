@@ -55,6 +55,18 @@ def main():
         closes, bench = update.refresh_prices(syms, "2026-09-01", log=say)
     closes_m = update.refresh_monthly(syms, closes, log=say)
     recs = {s: update.load_stock(s) for s in syms}
+    for s2, s1 in C.SHARE_CLASS.items():
+        if s2 in recs and recs.get(s1):
+            recs[s2] = recs[s1]
+    oneoff = {}
+    for s, r in recs.items():
+        if r.get("yahoo"):
+            y, notes = signals.one_offs(r["yahoo"])
+            if y is not r["yahoo"]:
+                recs[s] = dict(r, yahoo=y, oneoff=notes or None)
+                if notes:
+                    oneoff[s] = notes
+    say(f"one-off quarters (last 8) replaced by their estimate: {', '.join(oneoff) or 'none'}")
 
     L = portfolio.load()
     held = set(portfolio.positions(L)[0]) if L else set()
@@ -90,7 +102,7 @@ def main():
             st = "SOLD"
         h = H.get(r["sym"], {})
         x = {k: clean(r.get(k)) for k in ("sym", "name", "sector", "ndx", "sp500", "held", "why", "price", "pe", "sector_pe", "relpe", "trail", "fwd",
-                                          "gLast", "lastFlag", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
+                                          "gLast", "lastFlag", "oneoff", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
                                           "last_report", "next_report", "days_since_report", "in_review")}
         x["fy"] = r.get("fy") if isinstance(r.get("fy"), list) else None
         x["fy_points"], x["qh"] = r.get("fy_points"), r.get("qh")
@@ -135,7 +147,7 @@ def main():
     navv = cash + sum(weights.values())
     D = {"updated_utc": now.strftime("%Y-%m-%d %H:%M"), "updated_hk": (now + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M"),
          "price_date": S.attrs["price_date"], "start": L["start"], "start_price_date": L["price_date"], "capital": L["capital"],
-         "cash": cash, "nav": navv, "n_pos": len(pos), "sector_pe": S.attrs["sector_pe"],
+         "cash": cash, "nav": navv, "n_pos": len(pos), "sector_pe": S.attrs["sector_pe"], "floor": S.attrs["floor"],
          "rules": {"entry": C.ENTRY, "exit": C.EXIT, "watch": C.WATCH, "review": C.REVIEW, "highlight": C.HIGHLIGHT_DAYS},
          "signals": rows, "trips": [{k: clean(v) for k, v in t.items()} for t in T], "trades": L["trades"], "today": done,
          "navs": navs, "risk": risk, "risk_windows": wlab, "sector_w": {k: v / navv for k, v in sorted(weights.items(), key=lambda z: -z[1])},

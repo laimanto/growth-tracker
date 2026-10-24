@@ -2,6 +2,7 @@
   universe     Wikipedia S&P 500 + Nasdaq-100 lists, monthly
   eps/<sym>    Yahoo consensus + quarters + revisions + next report date:
                  never fetched / a report since the last fetch / every 2 days in the post-report window /
+                 daily while the last download failed or came back incomplete, or the latest quarter is missing /
                  otherwise weekly, spread over the week (stable hash of the ticker -> weekday)
                Nasdaq FY+2: every 2 weeks, and after a report
   closes.csv   universe closes: only the days after the last stored date (re-fetching the last 3 for revisions)
@@ -98,8 +99,13 @@ def due(sym, rec):
     last_rep = max((q[0][:10] for q in y.get("qh") or []), default=None)
     nxt = (y.get("next") or "")[:10]
     why_y = why_n = None
+    rep_age = (date.today() - date.fromisoformat(last_rep)).days if last_rep else None
     if not ya:
         why_y = "new"
+    elif rec.get("retry_y") and _age(ya) >= 1:
+        why_y = "retry: last download failed or incomplete"
+    elif rep_age is not None and 120 < rep_age < 400 and _age(ya) >= 1:
+        why_y = "retry: latest reported quarter missing"
     elif nxt and ya < nxt <= today:
         why_y = "reported since last fetch"
     elif last_rep and C.REVIEW[0] - 3 <= (date.today() - date.fromisoformat(last_rep)).days <= C.REVIEW[1] and _age(ya) >= C.EPS_REVIEW_AGE:
@@ -108,7 +114,7 @@ def due(sym, rec):
         why_y = "weekly refresh"
     if "." in sym or sym.startswith("^"):
         pass
-    elif not n.get("asof") or _age(n.get("asof")) >= C.NASDAQ_MAX_AGE or (why_y == "reported since last fetch"):
+    elif not n.get("asof") or rec.get("retry_n") or _age(n.get("asof")) >= C.NASDAQ_MAX_AGE or (why_y == "reported since last fetch"):
         why_n = "FY+2 refresh"
     return why_y, why_n
 
@@ -116,27 +122,45 @@ def due(sym, rec):
 def refresh_eps(syms, workers=6, log=print):
     jobs = []
     for s in syms:
+        if s in C.SHARE_CLASS:                              # second share class: uses the main class's file
+            continue
         rec = load_stock(s)
         wy, wn = due(s, rec)
         if wy or wn:
             jobs.append((s, rec, wy, wn))
     log(f"EPS: {len(jobs)} of {len(syms)} stocks due ({sum(1 for j in jobs if j[2])} Yahoo, {sum(1 for j in jobs if j[3])} Nasdaq)")
+    n_retry = sum(1 for j in jobs if (j[2] or "").startswith("retry"))
+    if n_retry:
+        log(f"EPS: {n_retry} of them are retries of failed / incomplete downloads")
 
     def work(job):
         s, rec, wy, wn = job
         if wy:
-            y = fetch.yahoo(s)
+            y, old = fetch.yahoo(s), rec.get("yahoo") or {}
             if y:
+                for k in y.get("missing", []):              # keep the last good copy of a part that failed today
+                    if old.get(k):
+                        y[k] = old[k]
+                        if k == "qh" and old.get("next") and not y.get("next"):
+                            y["next"] = old["next"]
                 rec["yahoo"] = y
+            rec["retry_y"] = not y or bool(y.get("missing"))  # -> fetched again on the next daily run
         if wn:
             n = fetch.nasdaq(s)
             if n:
                 rec["nasdaq"] = n
+            rec["retry_n"] = not n
+        for k in ("retry_y", "retry_n"):
+            if not rec.get(k):
+                rec.pop(k, None)
         jsave(eps_path(s), rec)
         return s
 
     with ThreadPoolExecutor(workers) as ex:
         list(ex.map(work, jobs))
+    bad = [s for s in syms if load_stock(s).get("retry_y")]
+    if bad:
+        log(f"EPS: {len(bad)} still incomplete, retried tomorrow: {' '.join(bad[:30])}")
     return len(jobs)
 
 
