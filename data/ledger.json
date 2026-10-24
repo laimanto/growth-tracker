@@ -6,16 +6,6 @@
   {
    "date": "2026-10-24",
    "price_date": "2026-10-23",
-   "sym": "CSGP",
-   "side": "BUY",
-   "shares": 294.811321,
-   "price": 33.92,
-   "value": 10000.0,
-   "reason": "initial portfolio: trailing +36% and every forecast year (weakest +1 +30.3%) >= entry bar 26.9%"
-  },
-  {
-   "date": "2026-10-24",
-   "price_date": "2026-10-23",
    "sym": "AVGO",
    "side": "BUY",
    "shares": 31.086794,
@@ -46,26 +36,6 @@
   {
    "date": "2026-10-24",
    "price_date": "2026-10-23",
-   "sym": "FLEX",
-   "side": "BUY",
-   "shares": 130.633573,
-   "price": 76.55,
-   "value": 10000.0,
-   "reason": "initial portfolio: trailing +26% and every forecast year (weakest Cur +40.2%) >= entry bar 24.5%"
-  },
-  {
-   "date": "2026-10-24",
-   "price_date": "2026-10-23",
-   "sym": "WDC",
-   "side": "BUY",
-   "shares": 29.097681,
-   "price": 343.67,
-   "value": 10000.0,
-   "reason": "initial portfolio: trailing +99% and every forecast year (weakest +1 +59.1%) >= entry bar 30.3%"
-  },
-  {
-   "date": "2026-10-24",
-   "price_date": "2026-10-23",
    "sym": "GDDY",
    "side": "BUY",
    "shares": 88.660342,
@@ -82,31 +52,17 @@
    "price": 74.09,
    "value": 10000.0,
    "reason": "initial portfolio: trailing +73% and every forecast year (weakest +1 +24.0%) >= entry bar 19.8%"
-  },
-  {
-   "date": "2026-10-24",
-   "price_date": "2026-10-23",
-   "sym": "JBL",
-   "side": "BUY",
-   "shares": 36.500347,
-   "price": 273.97,
-   "value": 10000.0,
-   "reason": "initial portfolio: trailing +34% and every forecast year (weakest +1 +25.3%) >= entry bar 24.1%"
-  },
-  {
-   "date": "2026-10-24",
-   "price_date": "2026-10-23",
-   "sym": "LUV",
-   "side": "BUY",
-   "shares": 239.520958,
-   "price": 41.75,
-   "value": 10000.0,
-   "reason": "initial portfolio: start-up fill (closest near-miss): +2 +22.1% is 0.8 pts short of the entry bar 22.9%"
   }
  ],
  "runs": [
   "2026-10-24"
  ],
  "last_close": "2026-10-23",
- "free": []
+ "free": [
+  10000.0,
+  10000.0,
+  10000.0,
+  10000.0,
+  10000.0
+ ]
 }

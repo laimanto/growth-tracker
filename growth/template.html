@@ -81,14 +81,14 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 <section data-tab="Signals">
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
-    <p class="cap"><b>Buy</b>: in every forecast year (Cur, +1, +2) and the last 12 months, EPS growth ≥ the growth floor <b>and</b> PEG ≤ sector P/E ÷ 30. <b>Sell</b>: in any forecast year, growth below the keep floor <b>or</b> PEG above sector P/E ÷ 25 (see Strategy). In bar / Out bar = the growth a stock needs at today’s price to pass both rules. <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
+    <p class="cap">Rules and timing: see the Strategy tab. PEG / PEG bar = the stock’s PEG and its limit (buy, or keep for holdings); In bar / Out bar = the growth a stock needs at today’s price to buy / keep. <span class="badge SELL">Red</span> cells = forecast years below the bar that matters for the row; Last is information only. Hover over a signal, an ⓘ or a remark badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates are new (≤ 7 days): pick your timing. Sold positions stay listed (SOLD) for a week, then move to Trades. Click a row for detail.</p>
     <div class="ctrl"><div class="chips" id="stateChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
 </section>
 
 <section data-tab="Earnings">
   <div class="card"><h2>Earnings calendar</h2>
-    <p class="cap">"Review" = the 3–14 day window after a report, when analysts revise and the model portfolio acts. Fcst Δ = change of the next-year consensus EPS over 7 / 30 / 90 days.</p>
+    <p class="cap"><b>In review window</b> = reported 3–14 days ago: analysts are revising and the model may act once the forecasts have settled. <b>Reporting in 14 days</b> = the next report is coming up (heads-up only; nothing happens until 3 days after it). <b>Analysts</b> = number forecasting next fiscal year; <b>Revised 7d / 30d</b> = how many of them changed that forecast (up / down) in the last 7 / 30 days, so a month after a report you can see how many have already updated. <b>Forecasts</b> = settled (model can act) or waiting (still revising, new fiscal year, stale data). Fcst Δ = change of the next-year consensus EPS.</p>
     <div class="ctrl"><div class="chips" id="calChips"></div></div>
     <div class="topbar" data-for="calWrap"><div></div></div><div class="tscroll" id="calWrap"><table id="calTab"></table></div></div>
 </section>
@@ -140,11 +140,16 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
     </div>
     <div class="rule"><b>Universe</b> S&amp;P 500 + Nasdaq-100, bought only once a stock is in either index.</div>
-    <div class="rule"><b>EPS growth rule</b> Expected EPS growth must be at least the <b>growth floor</b> in every forecast fiscal year (current, next, year after), and over the last 12 months when buying. Buy floor = 15% × market P/E ÷ 19; keep floor = 10% × market P/E ÷ 19 (19 = the market’s 2002–26 average P/E), so the floor rises when the whole market is expensive and falls when it is cheap. <span id="floorNow"></span></div>
-    <div class="rule"><b>PEG rule</b> PEG = P/E (price ÷ last 4 quarters’ EPS) ÷ expected growth in %, worked out for each forecast year (and the last 12 months when buying). Buy only if <b>every</b> PEG ≤ <b>sector P/E ÷ 30</b>; sell once <b>any</b> forecast-year PEG &gt; <b>sector P/E ÷ 25</b> (sector P/E = median of its sector). Pricier sectors tolerate higher PEGs; the gap between 30 and 25 stops small wobbles from flipping a stock in and out. Current bars below.</div>
-    <div class="rule"><b>Buy / sell</b> <b>Buy</b> when both rules pass. <b>Sell</b> when either fails in any forecast year: growth forecasts drop, or the price runs ahead so the PEG gets too high. The last, already reported year is shown but not required (requiring it made results worse). Both rules together equal “growth ≥ 30% × P/E ÷ sector P/E, never below the floor”, the form used in the backtests.</div>
-    <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report, once its forecasts have settled (at most about 10% of analysts revised next year in the last 7 days, or the consensus moved less than 1%; decided anyway by day 14), or at the first close of each month (monthly sweep). No trades while a stock's data is not ready: fiscal year still rolling over at Yahoo, fewer than 3 next-year forecasts, year-after forecasts not yet aligned, or stale / incomplete data. A buy also needs at least 3 analysts. Holdings that leave the indexes stay tracked until the rules sell them; a delisted or acquired holding is sold at its last close.</div>
-    <div class="rule"><b>Portfolio</b> <b>10 slots</b>, each started with an equal share; every stock keeps its own money (no trims, no rebalancing). When a stock is sold, its whole value waits in cash for the next stock that qualifies, which gets all of it. When all 10 slots are full, a new buy replaces the holding with the lowest 12m upside, but only if its own upside is at least 5 points higher. At the first close of each quarter, every holding with less than 10% upside left is sold (target nearly reached or growth fading).</div>
+    <div class="rule"><b>Terms</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li><b>G</b> = expected EPS growth per year: current, next and year-after fiscal years (and the last 12 months for buys).</li>
+      <li><b>P/E</b> = price ÷ EPS of the last 4 reported quarters.</li>
+      <li><b>PEG</b> = P/E ÷ G in %.</li>
+      <li><b>Sector P/E</b> = median P/E of the stock’s sector in the S&amp;P 500 / Nasdaq-100.</li>
+      <li><b>Market P/E</b> = median P/E of the whole universe; its 2002–26 average is 19. <span id="floorNow"></span></li></ul></div>
+    <div class="rule"><b>Buy</b> In <b>every</b> forecast year and over the last 12 months: <b>G ≥ 15% × market P/E ÷ 19</b> and <b>PEG ≤ sector P/E ÷ 30</b>. Also at least 10 analysts forecasting next fiscal year (fewer means a less reliable forecast).</div>
+    <div class="rule"><b>Sell</b> In <b>any</b> forecast year: <b>G &lt; 10% × market P/E ÷ 19</b> or <b>PEG &gt; sector P/E ÷ 25</b> (growth forecasts drop, or the price runs ahead). Also sold: the lowest-upside holding when a clearly stronger stock needs its slot, and at each quarter every holding with less than 10% upside left (see Portfolio). The last, already reported year is shown but not required.</div>
+    <div class="rule"><b>Timing</b> Act 3–14 days after each stock's earnings report, once its forecasts have settled (at most about 10% of analysts revised next year in the last 7 days, or the consensus moved less than 1%; decided anyway by day 14), or at the first close of each month (monthly sweep). No trades while a stock's data is not ready: fiscal year still rolling over at Yahoo, fewer than 3 next-year forecasts after a new fiscal year starts, year-after forecasts not yet aligned, or stale / incomplete data. A buy also needs at least 10 analysts. Holdings that leave the indexes stay tracked until the rules sell them; a delisted or acquired holding is sold at its last close.</div>
+    <div class="rule"><b>Portfolio</b> <b>10 slots</b> of equal start size (a slot without a qualifying stock waits in cash); every stock keeps its own money (no trims, no rebalancing). When a stock is sold, its whole value waits in cash for the next stock that qualifies, which gets all of it. When all 10 slots are full, a new buy replaces the holding with the lowest 12m upside, but only if its own upside is at least 5 points higher. At the first close of each quarter, every holding with less than 10% upside left is sold (target nearly reached or growth fading).</div>
     <div class="rule"><b>12m target</b> Expected 12-month peak = last close × (1 + forecast next-12m EPS growth) × P/E-model change. Shown as Upside, to judge how much room is left when buying. Also used to choose which holding to replace when all 10 slots are full, and for the quarterly prune (upside below 10%).</div>
     <p class="cap" id="ruleEx"></p>
     <h3>Column guide</h3><table id="guide"></table></div>
@@ -290,8 +295,15 @@ function sigTable() {
     {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 3], ['EPS growth by fiscal year', 4], ['', 5]]});
 }
 function sigInit() {
-  document.getElementById('stateChips').innerHTML = STATES.map(s => `<button type="button" class="${stF.has(s) ? 'on' : ''}" data-s="${s}">${s} (${S.filter(r => r.state === s).length})</button>`).join('');
-  document.querySelectorAll('#stateChips button').forEach(b => b.addEventListener('click', () => { const s = b.dataset.s; stF.has(s) ? stF.delete(s) : stF.add(s); b.classList.toggle('on'); sigTable(); }));
+  const allOn = () => STATES.every(s => stF.has(s));
+  document.getElementById('stateChips').innerHTML = `<button type="button" class="${allOn() ? 'on' : ''}" data-s="ALL">All (${S.length})</button>` +
+    STATES.map(s => `<button type="button" class="${stF.has(s) ? 'on' : ''}" data-s="${s}">${s} (${S.filter(r => r.state === s).length})</button>`).join('');
+  document.querySelectorAll('#stateChips button').forEach(b => b.addEventListener('click', () => {
+    const s = b.dataset.s;
+    if (s === 'ALL') { const on = !allOn(); STATES.forEach(x => on ? stF.add(x) : stF.delete(x)); }
+    else stF.has(s) ? stF.delete(s) : stF.add(s);
+    document.querySelectorAll('#stateChips button').forEach(x => x.classList.toggle('on', x.dataset.s === 'ALL' ? allOn() : stF.has(x.dataset.s)));
+    sigTable(); }));
   document.getElementById('sigSector').innerHTML = '<option value="">All sectors</option>' + [...new Set(S.map(r => r.sector))].sort().map(s => `<option>${s}</option>`).join('');
   ['sigSearch', 'sigSector'].forEach(id => document.getElementById(id).addEventListener('input', sigTable));
   sigTiles(); sigTable();
@@ -307,6 +319,10 @@ function calTable() {
     {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state)}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`}, {k: 'name', h: 'Name', l: 1},
     {k: 'last_report', h: 'Last rpt', f: r => r.last_report || '–'}, {k: 'days_since_report', h: 'Days since', f: r => r.days_since_report ?? '–'},
     {k: 'in_review', h: 'Review', f: r => r.in_review ? '<b>now</b>' : '–'}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
+    {k: 'n_analysts', h: 'Analysts', t: 'analysts forecasting next fiscal year', f: r => r.n_analysts || '–'},
+    {k: 'rev_n7', h: 'Revised 7d', t: 'analysts who changed next year’s forecast in the last 7 days (up / down)', f: r => r.rev_up7 == null ? '–' : `${r.rev_up7 + r.rev_dn7} <span class="sub">(${r.rev_up7}↑ ${r.rev_dn7}↓)</span>`, v: r => r.rev_up7 == null ? -1 : r.rev_up7 + r.rev_dn7},
+    {k: 'rev_n30', h: 'Revised 30d', t: 'analysts who changed next year’s forecast in the last 30 days (up / down)', f: r => r.rev_up30 == null ? '–' : `${r.rev_up30 + r.rev_dn30} <span class="sub">(${r.rev_up30}↑ ${r.rev_dn30}↓)</span>`, v: r => r.rev_up30 == null ? -1 : r.rev_up30 + r.rev_dn30},
+    {k: 'ready', h: 'Forecasts', l: 1, t: 'settled = the model can act; waiting = data not mature yet', f: r => r.wait ? `<span class="rb y" title="${r.wait.replace(/"/g, '&quot;')}">waiting</span>` : (r.in_review ? '<span class="rb g">settled</span>' : '–'), v: r => r.wait ? 2 : (r.in_review ? 1 : 0)},
     {k: 'rev7', h: 'Fcst Δ7d', f: r => pct(r.rev7, 1), cls: r => cls(r.rev7)}, {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)},
     {k: 'rev90', h: 'Fcst Δ90d', f: r => pct(r.rev90, 1), cls: r => cls(r.rev90)}, ...G4],
     rows, {sort: 'next_report', dir: 1, click: openDetail});
@@ -457,10 +473,8 @@ function trInit() {
 /* ---------- Strategy ---------- */
 function stratInit() {
   const B = D.backtest, A = B.sumA, Bs = B.sumB;
-  document.getElementById('ruleEx').innerHTML = '<b>PEG bars now</b> (buy if PEG below / sell if above; sector median P/E in brackets): ' +
-    Object.entries(D.sector_pe).sort((x, y) => y[1] - x[1]).map(([k, v]) => `${k} (${v}) ${(v / 30).toFixed(2)} / ${(v / 25).toFixed(2)}`).join(' · ') +
-    '. Example: a tech stock with P/E 26 and 40% growth has PEG 0.65, below the 0.87 buy bar; if its price rose 60% with the same forecasts, PEG 1.04 would reach the sell bar.';
-  if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market median P/E ${D.floor.mkt_pe} → buy floor <b>${pctu(D.floor.in, 1)}</b>, keep floor <b>${pctu(D.floor.out, 1)}</b>.`;
+  document.getElementById('ruleEx').innerHTML = 'Example: a tech stock with P/E 26 and 40% growth has PEG 0.65; with the tech sector at P/E 26 its buy limit is 26 ÷ 30 = 0.87, so it passes. If its price rose 60% with the same forecasts, PEG 1.04 would reach the sell limit 26 ÷ 25 = 1.04. Each stock’s current PEG and limit are in the Signals table.';
+  if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market P/E ${D.floor.mkt_pe} → G must be at least <b>${pctu(D.floor.in, 1)}</b> to buy and <b>${pctu(D.floor.out, 1)}</b> to keep.`;
   const guide = [['Entry / Entry px', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close). Highlighted for 7 days.'],
     ['Exit', 'SELL: date the sell signal started; SOLD: date sold (stays listed 7 days, then only in Trades).'],
     ['12m tgt / Upside', 'Expected 12-month PEAK price: last close × (1 + forecast next-12m EPS growth) × the P/E model\'s P/E change. A buy reference (how much room is left), not a sell price. Backtest (454 entries 2008–24): peak within ±20% of it 57% of the time, no bias, reached within 12 months 47% of the time; selling at it would have cut returns (+18% vs +27% holding).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],

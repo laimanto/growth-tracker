@@ -37,7 +37,9 @@ PRUNE_UPSIDE = 0.10
 # readiness to act (v1.9): a stock is only bought / sold once its data is mature
 SETTLE_SHARE = 0.10               # forecasts settled when <= 10% of analysts (min 1) revised next year in the last 7 days ...
 SETTLE_MOVE = 0.01                # ... or the next-year consensus moved < 1% in 7 days; decided anyway at the end of REVIEW
-MIN_ANALYSTS = 3                  # at least 3 analysts on next year's forecast to buy
+MIN_ANALYSTS = 10                 # at least 10 analysts on next fiscal year's forecast to buy (v1.10, Research Part 24m)
+ROLLOVER_MIN = 3                  # after a fiscal-year rollover, wait until at least 3 next-year forecasts exist
+START_FILL = False                # start-up: leave empty slots in cash (True = fill with the closest near-misses)
 STALE_DAYS = 8                    # no trades on Yahoo data older than this (or flagged incomplete)
 DELISTED_DAYS = 7                 # a holding without a price for this many days is sold at its last close
 # second share classes use the main class's EPS data (same company, one consensus); only the price is their own.

@@ -60,9 +60,9 @@ def init(S, d, up=None):
     """C.MAX_HOLD equal slots: the BUY stocks (most upside first); if fewer qualify, the closest near-misses that still
     pass the exit bar and have upside >= C.PRUNE_UPSIDE fill the rest (start-up only)."""
     ok = S[~S.get("extra", False) & S.price.notna()]
-    buys = ok[ok.state == "BUY"].assign(_u=lambda x: [_upside(up, s) for s in x.sym]).sort_values("_u", ascending=False).head(C.MAX_HOLD)
+    buys = ok[(ok.state == "BUY") & ok.get("ready", True).astype(bool)].assign(_u=lambda x: [_upside(up, s) for s in x.sym]).sort_values("_u", ascending=False).head(C.MAX_HOLD)
     picks = list(buys.itertuples())
-    if len(picks) < C.MAX_HOLD:
+    if len(picks) < C.MAX_HOLD and C.START_FILL:
         near = ok[ok.state.isin(["WATCH", "OUT"]) & ok.room.notna()].copy()
         wk = near[["gCur", "g1"]].min(axis=1).combine(near.g2.fillna(near.g1), min)
         near = near[(wk >= near.need_out) & (near.sym.map(lambda s: _upside(up, s)) >= C.PRUNE_UPSIDE)]   # not prunable at once

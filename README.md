@@ -19,12 +19,12 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 * act 3-14 days after each report (when analysts revise) or at the first close of each month (monthly sweep)
 * **readiness (v1.9):** a stock trades only when its data is mature: forecasts settled after a report (<= 10% of analysts revised next
   year in 7 days, or consensus moved < 1%; decided anyway by day 14), fiscal year rolled at Yahoo, >= 3 next-year forecasts, FY+2 aligned,
-  Yahoo data fresh (<= 8 days, complete). A buy needs >= 3 analysts. Held stocks that leave the indexes stay tracked (no new buys);
+  Yahoo data fresh (<= 8 days, complete). A buy needs >= 10 analysts on the next fiscal year (v1.10, Research Part 24m; >= 3 after a fiscal-year rollover to be 'ready'). Held stocks that leave the indexes stay tracked (no new buys);
   a holding without a price for 7 days (delisted / acquired) is sold at its last close. Page tags: "waiting", "left index"
 * **portfolio (v1.8):** 10 fixed slots of equal start size; each stock keeps its own money (no trims, no rebalancing). A sale's
   whole value waits in cash for the next qualifier; when full, a new BUY replaces the lowest-12m-upside holding if its own upside is
-  >= 5 points higher; at the first close of each quarter every holding with upside below 10% is sold. Start-up fills empty slots
-  with the closest near-misses (upside >= 10%). (`config.MAX_HOLD`, `SWAP_BUFFER`, `PRUNE_*`; Research Part 24h-i)
+  >= 5 points higher; at the first close of each quarter every holding with upside below 10% is sold. Empty slots wait in cash
+  until a stock qualifies (no near-miss fill since v1.10). (`config.MAX_HOLD`, `SWAP_BUFFER`, `PRUNE_*`; Research Part 24h-i)
 
 ## Daily update (delta only)
 `python growth/run.py`, run by `.github/workflows/update.yml` at 21:30 UTC Mon-Fri. Downloads only what is due:

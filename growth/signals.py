@@ -158,6 +158,10 @@ def compute(U, recs, closes, held=(), today=None):
         row["fy_points"] = [[str(pd.Timestamp(d).date()), round(float(v), 4)] for d, v in (pts or [])]
         row["qh"] = [[str(d.date()), v] for d, v in q][-12:]
         row["n_analysts"] = int(e1.get("numberOfAnalysts") or 0)
+        rvv = (y.get("revs") or {}).get("+1y") or {}
+        if rvv:
+            row["rev_up7"], row["rev_dn7"] = rvv.get("upLast7days"), rvv.get("downLast7Days", rvv.get("downLast7days"))
+            row["rev_up30"], row["rev_dn30"] = rvv.get("upLast30days"), rvv.get("downLast30days")
         # readiness to act (v1.9): settled forecasts after a report, fiscal-year rollover, fresh data
         wait, dsr = [], row.get("days_since_report")
         if dsr is not None and dsr <= C.REVIEW[1]:
@@ -173,7 +177,7 @@ def compute(U, recs, closes, held=(), today=None):
                                 f"forecasts settling (next-year consensus {row['rev7']:+.1%} in 7 days)")
                 if y.get("nextFye") and last_rep is not None and last_rep > pd.Timestamp(y["nextFye"]) + pd.Timedelta(days=20):
                     wait.append("fiscal year rolling over: Yahoo still shows the year just reported")
-                elif 0 < row["n_analysts"] < C.MIN_ANALYSTS:
+                elif 0 < row["n_analysts"] < C.ROLLOVER_MIN:
                     wait.append(f"new fiscal year: only {row['n_analysts']} next-year forecasts so far")
                 rows_n = (n or {}).get("rows") or []
                 if y.get("nextFye") and rows_n:

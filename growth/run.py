@@ -113,7 +113,7 @@ def main():
             st = "SOLD"
         h = H.get(r["sym"], {})
         x = {k: clean(r.get(k)) for k in ("sym", "name", "sector", "ndx", "sp500", "extra", "held", "why", "price", "pe", "sector_pe", "relpe", "trail", "fwd",
-                                          "gLast", "lastFlag", "oneoff", "wait", "ready", "left_index", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
+                                          "gLast", "lastFlag", "oneoff", "wait", "ready", "left_index", "rev_up7", "rev_dn7", "rev_up30", "rev_dn30", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
                                           "last_report", "next_report", "days_since_report", "in_review")}
         x["fy"] = r.get("fy") if isinstance(r.get("fy"), list) else None
         x["fy_points"], x["qh"] = r.get("fy_points"), r.get("qh")
