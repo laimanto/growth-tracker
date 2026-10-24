@@ -5,6 +5,8 @@ Research and backtests: `Sortino/Research/Cisco_2026-10-23` (README Parts 13-23)
 (bought at the 2026-10-23 close, $100,000 notional, equal weight; reset while the rule was being tuned - v1.6 floor, one-off quarters).
 
 **Page:** `docs/index.html`. It is self-contained; open it locally or serve `docs/` with GitHub Pages.
+Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git pull` updates `docs/index.html` after the daily CI run).
+`dashboard/` is git-ignored and also keeps the archived `growth_tracker_v1.0.html`.
 
 ## The rule
 * relative P/E = P/E (last close / last 4 reported quarters' EPS) / median P/E of the stock's sector

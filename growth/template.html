@@ -62,9 +62,10 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 .tip .r{display:flex;justify-content:space-between;gap:12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:900px){.grid2{grid-template-columns:1fr}}
 .rule{border-left:4px solid var(--s1);padding:6px 12px;background:var(--chip);border-radius:6px;margin:6px 0}
-.rule b{display:inline-block;min-width:66px}
+.rule>b:first-child{display:inline-block;min-width:66px}
 .meter{position:relative;height:10px;background:var(--chip);border-radius:5px;margin:4px 0 12px}.meter i{position:absolute;top:-3px;width:2px;height:16px}
 .note{font-size:12px;color:var(--text2)}.note li{margin:3px 0}
+.intro{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 18px;margin-bottom:12px}.intro h3{margin:4px 0}.intro ul{margin:4px 0;padding-left:18px}.intro li{margin:3px 0}
 .heat td{text-align:center;color:#fff;font-weight:600;min-width:48px}
 .themebtn{margin-left:auto;font:inherit;font-size:11.5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:6px;padding:2px 8px;cursor:pointer}
 .hide{display:none}
@@ -114,6 +115,26 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 
 <section data-tab="Strategy">
   <div class="card"><h2>The strategy</h2>
+    <div class="intro">
+      <div><h3>What it does</h3><ul>
+        <li>Picks S&amp;P 500 and Nasdaq-100 companies whose profit per share is expected to grow fast (<b>EPS growth</b>) in <b>each</b> of the next 2–3 years.</li>
+        <li>The growth needed depends on how expensive the share is (<b>P/E</b>, compared with similar companies): pricier shares must grow faster, cheaper ones need less, but never under about 15% a year.</li>
+        <li>Sells as soon as the expected growth fades, so it rides fast growers and steps aside when the story changes.</li></ul></div>
+      <div><h3>How it performed in tests</h3><ul>
+        <li>Over almost 5 years (2022–2026): beat QQQ by about <b>35% a year</b>, with a worst fall <b>8 points smaller</b> (−18% vs −26%).</li>
+        <li>Over 17 years (2008–2024): beat QQQ by about <b>20% a year</b>, with a worst fall <b>7 points smaller</b>.</li>
+        <li>Since 2023: beat QGRW, an ETF built on a similar growth idea, by about <b>33% a year</b>, with a slightly smaller worst fall (−22% vs −24%).</li>
+        <li>It shone in 2022: flat while QQQ fell 33%, because it had already left expensive tech. The one exception: 2023, when it trailed QQQ’s sharp rebound (+36% vs +55%).</li></ul></div>
+      <div><h3>Things to be aware of</h3><ul>
+        <li>Past analyst forecasts are not available, so the tests used companies’ actual later profits with a 30% random error as the “forecast”. Real forecasts can miss more when trends turn, so expect live results below the tests; the margin over QQQ leaves plenty of room for that.</li>
+        <li>Analyst numbers come from Yahoo and refresh weekly (every 2 days right after earnings), so signals follow analysts’ updates with a short delay.</li>
+        <li>Holds about 10–20 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
+      <div><h3>How to use it</h3><ul>
+        <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
+        <li>Best moment to act: 3–14 days after a company reports (“review now” tag), once analysts have updated, or at the start of each month.</li>
+        <li><b>Upside</b> (12m target) shows how much room may be left when buying. It is not a sell target.</li>
+        <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
+    </div>
     <div class="rule"><b>Universe</b> S&amp;P 500 + Nasdaq-100, bought only once a stock is in either index.</div>
     <div class="rule"><b>Measure</b> Relative P/E = P/E (price ÷ last 4 quarters' EPS) ÷ median P/E of its sector. A cheap stock needs less growth, an expensive one more.</div>
     <div class="rule"><b>Enter</b> Trailing 12-month EPS growth ≥ <b>30% × relative P/E</b> and <b>each</b> forecast fiscal year (current, next, year after) ≥ <b>30% × relative P/E</b>, and never below the <b>entry floor</b> (15% × market P/E ÷ 19).</div>
@@ -128,19 +149,17 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
     <div class="tiles" id="btTilesA"></div><div class="legend" id="btLegA"></div><div class="chart" id="btChartA"></div>
     <h3>By calendar year (median run vs QQQ)</h3><table id="btYears"></table>
     <h3>Sensitivity: universe and forecast quality (30% error, median of 100 runs)</h3><table id="btPit"></table></div>
-  <div class="card"><h2>Rule versions compared</h2><p class="cap">Same set-ups as the two backtests. v1.2 (live) requires every forecast year to clear the bar. The threshold grid and the sensitivity table were run on the earlier 2-year-average version.</p><table id="btVer"></table></div>
+  <div class="card"><h2>Rule versions compared</h2><p class="cap">Same set-ups as the two backtests. v1.6 (live) requires every forecast year to clear the bar, with a growth floor that moves with the market P/E. The sensitivity table uses v1.6; the threshold grid was run on the earlier 2-year-average version.</p><table id="btVer"></table></div>
   <div class="card"><h2>Backtest 2: Jan 2008 to Sep 2024, long run</h2>
     <p class="cap">Today's index members (survivors: the equal-weight universe itself beats the S&amp;P 500, so compare with it); forecast = actual EPS ± 20% / 30% random error; monthly; log scale.</p>
     <div class="tiles" id="btTilesB"></div><div class="legend" id="btLegB"></div><div class="chart" id="btChartB"></div></div>
   <div class="card"><h2>Why 30% / 25%: threshold grid</h2><p class="cap">Sortino of every entry × exit combination (2008–2024, 20%/30% forecast errors). A smooth plateau at entry 25–35%, exit 15–25%; the chosen cell is outlined.</p>
     <div class="tscroll"><table class="heat" id="btGrid"></table></div></div>
   <div class="card"><h2>Real ETFs with related ideas</h2><p class="cap">None beat QQQ by more than ~2%/yr over its life. QGRW (+1.7%/yr vs QQQ since Dec 2022) is the best; FFTY (reported growth + consensus + price strength, ~1,960% turnover) lost badly.</p><table id="btEtf"></table></div>
-  <div class="card note"><h2>Caveats</h2><ul>
-    <li>Backtests use actual EPS plus simulated errors as the "forecast". Real consensus errs most at turning points; with strong anchoring the 2022–26 result drops to ~23%/yr (QQQ 14.6%).</li>
-    <li>Stocks removed from the indexes since 2022 are missing from the data (mostly losers), which flatters the backtests somewhat.</li>
-    <li>No minimum growth: very cheap stocks (low relative P/E) can qualify on modest growth.</li>
-    <li>v1.2 holds fewer stocks (about 18 in 2022–26, about 9 in the long run), so single names matter more.</li>
-    <li>This is a paper model portfolio for tracking the rule live. It does not place orders.</li></ul>
+  <div class="card note"><h2>More detail</h2><ul>
+    <li>Backtest 2 uses today’s index members only; Backtest 1 adds a stock only once it joined an index. Stocks that left the indexes are missing from both.</li>
+    <li>From Sep 2026 Backtest 1 uses today’s analyst forecasts, which already reflect the recent memory-chip boom.</li>
+    <li>This is a paper model portfolio for tracking the rule live (started 24 Oct 2026). It does not place orders.</li></ul>
     <h3>Forecast revisions vs days since the last report (217 stocks, 23 Oct 2026)</h3><table id="btTiming"></table></div>
 </section>
 </div>

@@ -14,6 +14,7 @@ BENCHF = os.path.join(DATA, "bench.csv")            # benchmark daily closes / t
 BACKTEST = os.path.join(DATA, "backtest.json")
 NDX_SNAP = os.path.join(DATA, "ndx_snapshots.json")
 OUT_HTML = os.path.join(ROOT, "docs", "index.html")
+LOCAL_HTML = os.path.join(ROOT, "dashboard", "growth_tracker.html")   # local copy (git-ignored), written on local runs only
 TEMPLATE = os.path.join(ROOT, "growth", "template.html")
 
 # the rule (Research/Cisco_2026-10-23 Parts 14-21; v1.2 each forecast year must clear the bar - year_by_year_rule.py)

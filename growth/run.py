@@ -155,6 +155,9 @@ def main():
     html = open(C.TEMPLATE, encoding="utf-8").read().replace("/*DATA*/null", json.dumps(D, separators=(",", ":"), default=clean))
     os.makedirs(os.path.dirname(C.OUT_HTML), exist_ok=True)
     open(C.OUT_HTML, "w", encoding="utf-8").write(html)
+    if not os.environ.get("GITHUB_ACTIONS"):                  # local runs: also refresh the local dashboard copy
+        os.makedirs(os.path.dirname(C.LOCAL_HTML), exist_ok=True)
+        open(C.LOCAL_HTML, "w", encoding="utf-8").write(html)
     st = update.jload(C.STATE, {"runs": []}) or {"runs": []}
     st["runs"] = (st["runs"] + [{"utc": now.strftime("%Y-%m-%d %H:%M"), "eps_fetched": n_eps, "trades": len(done), "secs": round(time.time() - t0)}])[-60:]
     update.jsave(C.STATE, st, indent=1)
