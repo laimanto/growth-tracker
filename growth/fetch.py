@@ -97,6 +97,13 @@ def yahoo(sym):
     if tr is not None:
         out["trend"] = {p: {k: (None if pd.isna(tr.loc[p, k]) else float(tr.loc[p, k])) for k in tr.columns if k != "currency"}
                         for p in ("0y", "+1y") if p in tr.index}
+    try:                                                     # analysts revising in the last 7 / 30 days (readiness check)
+        rv = t.eps_revisions
+        if rv is not None and len(rv):
+            out["revs"] = {p: {k: (None if pd.isna(rv.loc[p, k]) else int(rv.loc[p, k])) for k in rv.columns if k != "currency"}
+                           for p in ("0y", "+1y") if p in rv.index}
+    except Exception:
+        pass
     if missing:
         out["missing"] = missing
     if "next" not in out:

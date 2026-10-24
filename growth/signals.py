@@ -120,10 +120,11 @@ def compute(U, recs, closes, held=(), today=None):
         rec = recs.get(s) or {}
         y, n = rec.get("yahoo") or {}, rec.get("nasdaq")
         row = {"sym": s, "name": info["name"], "sector": info["sector"], "ndx": info["ndx"], "sp500": info["sp500"], "held": s in held,
-               "extra": bool(info.get("extra")),
+               "extra": bool(info.get("extra")), "left_index": bool(info.get("left_index")),
                "oneoff": rec.get("oneoff")}
         col = closes[s].loc[:last_close].dropna() if s in closes else pd.Series(dtype=float)
         row["price"] = float(col.iloc[-1]) if len(col) else None
+        gone = bool(s in held and len(col) and (last_close - col.index[-1]).days > C.DELISTED_DAYS)
         q = qtr(y.get("qh"))
         last_rep = q[-1][0].normalize() if q else None
         row["last_report"] = None if last_rep is None else str(last_rep.date())
@@ -157,9 +158,39 @@ def compute(U, recs, closes, held=(), today=None):
         row["fy_points"] = [[str(pd.Timestamp(d).date()), round(float(v), 4)] for d, v in (pts or [])]
         row["qh"] = [[str(d.date()), v] for d, v in q][-12:]
         row["n_analysts"] = int(e1.get("numberOfAnalysts") or 0)
+        # readiness to act (v1.9): settled forecasts after a report, fiscal-year rollover, fresh data
+        wait, dsr = [], row.get("days_since_report")
+        if dsr is not None and dsr <= C.REVIEW[1]:
+            if dsr < C.REVIEW[0]:
+                wait.append("just reported: analysts still revising")
+            elif dsr < C.REVIEW[1]:
+                rv = (y.get("revs") or {}).get("+1y") or {}
+                n7 = (rv.get("upLast7days") or 0) + (rv.get("downLast7Days") or rv.get("downLast7days") or 0)
+                busy_n = bool(rv) and n7 > max(1, C.SETTLE_SHARE * max(row["n_analysts"], 1))
+                busy_c = row["rev7"] is not None and abs(row["rev7"]) >= C.SETTLE_MOVE
+                if (busy_n and busy_c) if rv else busy_c:
+                    wait.append(f"forecasts settling ({n7} of {row['n_analysts']} analysts revised next year in 7 days)" if rv else
+                                f"forecasts settling (next-year consensus {row['rev7']:+.1%} in 7 days)")
+                if y.get("nextFye") and last_rep is not None and last_rep > pd.Timestamp(y["nextFye"]) + pd.Timedelta(days=20):
+                    wait.append("fiscal year rolling over: Yahoo still shows the year just reported")
+                elif 0 < row["n_analysts"] < C.MIN_ANALYSTS:
+                    wait.append(f"new fiscal year: only {row['n_analysts']} next-year forecasts so far")
+                rows_n = (n or {}).get("rows") or []
+                if y.get("nextFye") and rows_n:
+                    f2_ = pd.Timestamp(y["nextFye"]) + pd.DateOffset(years=2)
+                    late = max(pd.Timestamp(r_["fye"]) for r_ in rows_n) >= f2_ - pd.Timedelta(days=40)
+                    if late and not any(abs((pd.Timestamp(r_["fye"]) - f2_).days) < 40 for r_ in rows_n):
+                        wait.append("year-after (FY+2) forecasts not aligned with Yahoo's years yet")
+        ya_ = y.get("asof")
+        if not ya_ or (today.normalize() - pd.Timestamp(ya_)).days > C.STALE_DAYS or rec.get("retry_y"):
+            wait.append("data stale or incomplete: waiting for a fresh download")
+        row["wait"] = "; ".join(wait) or None
+        row["ready"] = not wait
         ttm, ttm_ago = ttm_pair(q, today)
         fx = y.get("fx") or 1.0
-        if row["price"] is None:
+        if gone:                                             # delisted / acquired: sell at the last close
+            row.update(state="SELL", why=f"no price since {col.index[-1].date()} (delisted or acquired): sold at the last close", ready=True, wait=None)
+        elif row["price"] is None:
             row.update(state="NO DATA", why="no price")
         elif not ttm or not ttm_ago:
             row.update(state="NO DATA", why=(f"only {len(q)} reported quarters (new listing)" if len(q) < 8 else
@@ -183,7 +214,7 @@ def compute(U, recs, closes, held=(), today=None):
     f_in, f_out = C.FLOOR_IN * mkt_pe / C.MKT_PE_BASE, C.FLOOR_OUT * mkt_pe / C.MKT_PE_BASE
     D["need_in"], D["need_out"] = (C.ENTRY * D.relpe).clip(lower=f_in), (C.EXIT * D.relpe).clip(lower=f_out)
     for i, x in D.iterrows():
-        if x.get("state") == "NO DATA":
+        if x.get("state") in ("NO DATA", "SELL"):              # SELL here = delisted (set above)
             continue
         g2 = x.g2 if pd.notna(x.g2) else x.g1
         yrs = {"Cur": x.gCur, "+1": x.g1, "+2" if pd.notna(x.g2) else "+2 (=+1)": g2}
@@ -191,7 +222,7 @@ def compute(U, recs, closes, held=(), today=None):
             D.at[i, "state"], D.at[i, "why"] = "NO DATA", "fiscal-year consensus incomplete"
             continue
         weak_k, weak_v = min(yrs.items(), key=lambda kv: kv[1])
-        enter = x.trail >= x.need_in and weak_v >= x.need_in
+        enter = x.trail >= x.need_in and weak_v >= x.need_in and x.n_analysts >= C.MIN_ANALYSTS
         exit_ = weak_v < x.need_out
         if x.held:
             room = weak_v - x.need_out
@@ -203,6 +234,8 @@ def compute(U, recs, closes, held=(), today=None):
             room = lv - x.need_in
             if enter:
                 st, why = "BUY", f"trailing {x.trail:+.0%} and every forecast year (weakest {weak_k} {weak_v:+.1%}) >= entry bar {x.need_in:.1%}"
+            elif room >= 0:                                  # passes both rules but too few analysts
+                st, why = "WATCH", f"passes both rules, but only {int(x.n_analysts)} analysts forecast next year (minimum {C.MIN_ANALYSTS})"
             else:
                 st = "WATCH" if room >= -C.WATCH and not exit_ else "OUT"
                 why = f"{lk} {lv:+.1%} is {-room * 100:.1f} pts short of the entry bar {x.need_in:.1%}"

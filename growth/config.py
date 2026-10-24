@@ -32,8 +32,14 @@ CAPITAL = 100_000.0
 MAX_HOLD = 10
 SWAP_BUFFER = 0.05
 PRUNE_MONTHS = (1, 4, 7, 10)
-PRUNE_N = 2
+PRUNE_N = None                    # None = every holding below PRUNE_UPSIDE (Part 24k: a limit of 2 rarely binds)
 PRUNE_UPSIDE = 0.10
+# readiness to act (v1.9): a stock is only bought / sold once its data is mature
+SETTLE_SHARE = 0.10               # forecasts settled when <= 10% of analysts (min 1) revised next year in the last 7 days ...
+SETTLE_MOVE = 0.01                # ... or the next-year consensus moved < 1% in 7 days; decided anyway at the end of REVIEW
+MIN_ANALYSTS = 3                  # at least 3 analysts on next year's forecast to buy
+STALE_DAYS = 8                    # no trades on Yahoo data older than this (or flagged incomplete)
+DELISTED_DAYS = 7                 # a holding without a price for this many days is sold at its last close
 # second share classes use the main class's EPS data (same company, one consensus); only the price is their own.
 # Yahoo covers the second class thinly and inconsistently (GOOG 2026-10: 8 analysts for FY26 and quarters on another basis)
 SHARE_CLASS = {"GOOG": "GOOGL", "FOX": "FOXA", "NWS": "NWSA"}

@@ -48,6 +48,13 @@ def main():
     for s, v in C.EXTRA.items():                              # watch-only extra tickers
         U["stocks"].setdefault(s, {"name": v["name"], "sector": v["sector"], "sp500": False, "sp500_added": None, "ndx": False})
         U["stocks"][s]["extra"] = True
+    L0 = portfolio.load()
+    prev_u = update.jload(C.UNIVERSE, {}) or {}
+    for s in (portfolio.positions(L0)[0] if L0 else {}):     # held stocks that left the indexes stay evaluated (no new buys)
+        if s not in U["stocks"]:
+            o = (prev_u.get("stocks") or {}).get(s) or {}
+            U["stocks"][s] = {"name": o.get("name", s), "sector": o.get("sector", "Unknown"), "sp500": False, "sp500_added": None,
+                              "ndx": False, "extra": True, "left_index": True}
     syms = sorted(U["stocks"])
     if a.offline:
         closes = pd.read_csv(C.CLOSES, index_col=0, parse_dates=True)
@@ -106,7 +113,7 @@ def main():
             st = "SOLD"
         h = H.get(r["sym"], {})
         x = {k: clean(r.get(k)) for k in ("sym", "name", "sector", "ndx", "sp500", "extra", "held", "why", "price", "pe", "sector_pe", "relpe", "trail", "fwd",
-                                          "gLast", "lastFlag", "oneoff", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
+                                          "gLast", "lastFlag", "oneoff", "wait", "ready", "left_index", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
                                           "last_report", "next_report", "days_since_report", "in_review")}
         x["fy"] = r.get("fy") if isinstance(r.get("fy"), list) else None
         x["fy_points"], x["qh"] = r.get("fy_points"), r.get("qh")

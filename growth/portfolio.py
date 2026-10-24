@@ -5,7 +5,8 @@
           C.MAX_HOLD fixed slots; each stock keeps its own money (no trims, no rebalancing). A sale's whole value waits
           in cash (one free slot) for the next qualifier, which gets it all. When full, a new BUY replaces the holding
           with the lowest 12m upside if its own upside is >= C.SWAP_BUFFER higher. First close of each quarter: up to
-          C.PRUNE_N holdings with upside below C.PRUNE_UPSIDE are sold (their money waits for the next qualifier).
+          every holding (or C.PRUNE_N) with upside below C.PRUNE_UPSIDE is sold (its money waits for the next qualifier).
+          v1.9: only stocks whose data is 'ready' (signals.py: forecasts settled, fiscal year rolled, fresh data) trade.
   trips   one row per position (first buy -> position closed), with P&L
   nav     daily value (cash earns 0)
 """
@@ -101,17 +102,19 @@ def update(L, S, d, up=None):
     tag = " (monthly sweep)" if month_sweep else " (post-report review)"
     for sym in sorted(pos):                                  # rule sells: the whole slot goes to cash
         x = sig.loc[sym] if sym in sig.index else None
-        if x is not None and x.state == "SELL" and (bool(x.get("in_review")) or month_sweep):
+        if x is not None and x.state == "SELL" and bool(x.get("ready", True)) and (bool(x.get("in_review")) or month_sweep or "delisted" in str(x.why)):
             val = pos[sym] * x.price
             _trade(L, d, sym, "SELL", pos.pop(sym), x.price, x.why + tag, px_date)
             free.append(val); done.append(("SELL", sym))
     if prune_day:                                            # quarterly prune: least upside left
-        weak = sorted((k for k in pos if _upside(up, k) < C.PRUNE_UPSIDE), key=lambda k: _upside(up, k))[:C.PRUNE_N]
+        weak = sorted((k for k in pos if _upside(up, k) < C.PRUNE_UPSIDE and k in sig.index and bool(sig.loc[k].get("ready", True))),
+                      key=lambda k: _upside(up, k))[:C.PRUNE_N]
         for k in weak:
             val = pos[k] * px[k]
             _trade(L, d, k, "SELL", pos.pop(k), px[k], f"quarterly prune: 12m upside {_upside(up, k):+.0%} < {C.PRUNE_UPSIDE:.0%}", px_date)
             free.append(val); done.append(("SELL", k))
-    new = [s for s, x in sig.iterrows() if x.state == "BUY" and not bool(x.get("extra")) and (bool(x.get("in_review")) or month_sweep) and s not in pos]
+    new = [s for s, x in sig.iterrows() if x.state == "BUY" and not bool(x.get("extra")) and bool(x.get("ready", True))
+           and (bool(x.get("in_review")) or month_sweep) and s not in pos]
     new.sort(key=lambda s: -_upside(up, s))                  # most upside first
     for s in new:
         if free:                                             # empty slot: it gets the whole slot cash
