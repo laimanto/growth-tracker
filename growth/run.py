@@ -17,6 +17,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config as C      # noqa: E402
 import history         # noqa: E402
+import notify          # noqa: E402
 import pemodel          # noqa: E402
 import perf             # noqa: E402
 import portfolio        # noqa: E402
@@ -109,6 +110,7 @@ def main():
     sold_recent = {t["sym"]: t for t in T if t["status"] == "closed" and
                    (pd.Timestamp(S.attrs["price_date"]) - pd.Timestamp(t["exit_date"])).days <= C.HIGHLIGHT_DAYS}
     open_trip = {t["sym"]: t for t in T if t["status"] == "open"}
+    notify.run(L, S, T, TG, log=say)                          # e-mail on trades / new BUY-waiting (CI secrets)
     rows = []
     for r in S.to_dict("records"):
         st = r["state"]

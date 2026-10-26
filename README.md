@@ -38,6 +38,15 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 Failed or incomplete Yahoo / Nasdaq downloads keep the last good copy and are retried on every daily run (`retry_y` / `retry_n` in the stock's file), as are stocks whose latest reported quarter is missing; a past report date without EPS is filled from Yahoo's `earnings_history`. Second share classes (GOOG, FOX, NWS) use the main class's EPS data (`config.SHARE_CLASS`).
 A normal day fetches about 50-100 stocks and a few rows of prices. `--offline` rebuilds the page without downloading.
 
+## E-mail notices
+`growth/notify.py` (called by every run) e-mails when the model portfolio changes: each SELL with the whole trade (bought /
+sold date, price, shares, value, profit or loss in $ and %, days held, why bought / why sold), each BUY (price, value, 12m target,
+why), stocks that get a BUY signal but are still waiting (data not ready / next review window or month start / portfolio full)
+and waiting stocks whose BUY signal went away; plus the current holdings with P&L. No change -> no e-mail.
+Needs three repository secrets (unset -> no e-mail, the run is unaffected): `SMTP_USER` (Gmail address), `SMTP_PASS` (a Gmail
+app password, https://myaccount.google.com/apppasswords - needs 2-step verification) and `MAIL_TO` (kept out of the public code).
+`data/notify.json` = last notified trade + waiting list; it only advances after a successful send (a failed send is retried next run).
+
 ## Forecast history (data/history/)
 The backtests use simulated forecasts: actual later EPS, leaning 40% on trailing growth, plus a 30% random log error (AR 0.9 per month;
 Research Part 19). To check and refit this with real data, every run appends (`growth/history.py`; append-only plain CSV, never rewritten):
@@ -67,6 +76,7 @@ a useful sample needs ~1 year for the current FY and 2-3 years for FY+1 / FY+2.
 | `growth/perf.py` | annual return / Sortino / downside deviation / max drawdown for 4 windows |
 | `growth/run.py`, `growth/template.html` | daily run and the page |
 | `growth/history.py`, `growth/forecast_check.py` | forecast history (appended every run), check of the backtest's forecast-error assumption |
+| `growth/notify.py` | e-mail notice on trades and new BUY-waiting stocks |
 | `data/backtest.json` | Strategy-tab backtest results (static, from the research) |
 
 No orders are ever sent to a broker. Delete `data/ledger.json` to restart the paper portfolio.

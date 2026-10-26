@@ -60,6 +60,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Update data, signals, portfolio and page
+        env:
+          # e-mail notices (growth/notify.py); unset -> no e-mail. Gmail: SMTP_USER = the address, SMTP_PASS = an app password
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python growth/run.py
 
       - name: Commit refreshed data + page
