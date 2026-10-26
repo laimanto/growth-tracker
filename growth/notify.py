@@ -1,22 +1,22 @@
-"""E-mail notice when the model portfolio changes: new BUY / SELL trades (a SELL shows the whole round trip with its
+"""Change notice when the model portfolio changes: new BUY / SELL trades (a SELL shows the whole round trip with its
 P&L) and stocks entering or leaving "BUY, waiting" (BUY signal, not bought yet: data not ready, outside the review
-window, or no free slot). Nothing changed -> no e-mail.
+window, or no free slot). Nothing changed -> no notice.
 
-Sent only when SMTP_USER, SMTP_PASS and MAIL_TO are set (GitHub secrets in update.yml; Gmail: an app password).
-data/notify.json remembers the last notified trade and the waiting list; it only advances after a successful send, so
-a failed send is retried (with everything since) on the next run. The first run sends a "notifications on" summary.
+Delivered as a GitHub issue assigned to the repo owner (same set-up as the Bull Bear Monitor, user 2026-10-26): GitHub
+mails it to the account's notification address, so there is no SMTP password to store. This module only writes
+notice.md and the step outputs changed / title; .github/workflows/update.yml creates the issue BEFORE the commit step,
+so if that fails the advanced data/notify.json is never committed and the next run re-detects the same changes.
+Runs only on GitHub Actions (local runs never touch data/notify.json). The first run sends a "notifications on" notice.
 """
-import html
 import json
 import os
-import smtplib
-from email.message import EmailMessage
 
 import pandas as pd
 
 import config as C
 
 STATE = os.path.join(C.DATA, "notify.json")
+NOTICE = os.path.join(C.ROOT, "notice.md")
 PAGE = "https://laimanto.github.io/growth-tracker/"
 
 
@@ -32,11 +32,15 @@ def _usd(v):
 
 
 def _px(v):
-    return "" if v is None else f"{v:,.2f}"
+    return "" if v is None or v != v else f"{v:,.2f}"
 
 
 def _pct(v):
     return "" if v is None or v != v else f"{v:+.1%}"
+
+
+def _md(s):
+    return str(s).replace("|", "\\|").replace("\n", " ")
 
 
 def waiting(S, L):
@@ -62,120 +66,95 @@ def waiting(S, L):
 
 
 def _trip_of(T, t):
-    """The round trip a SELL trade closed (or reduced)."""
-    for x in T:
-        if x["sym"] == t["sym"] and x.get("exit_date") == t["price_date"]:
-            return x
-    return None
+    """The round trip a SELL trade closed."""
+    return next((x for x in T if x["sym"] == t["sym"] and x.get("exit_date") == t["price_date"]), None)
+
+
+def _table(rows):
+    return "| | |\n|---|---|\n" + "".join(f"| {_md(k)} | {_md(v)} |\n" for k, v in rows)
 
 
 def build(L, S, T, TG, st):
+    """-> (markdown sections, title parts, waiting list)"""
     trades = L["trades"][st["n_trades"]:]
     W = waiting(S, L)
     w_old = st.get("waiting") or {}
-    w_new = {s: w for s, w in W.items() if s not in w_old}
-    w_gone = [s for s in w_old if s not in W]
-    bought = {t["sym"] for t in trades if t["side"] == "BUY"}
     sig = S.set_index("sym")
-    nm = lambda s: sig.name.get(s, s) if "name" in sig else s
-    items, text = [], []
-    h = lambda s: html.escape(str(s))
-
+    nm = lambda s: sig.name.get(s, s)
+    out, title = [], []
     for t in [t for t in trades if t["side"] == "SELL"]:
         x = _trip_of(T, t) or {}
         days = (pd.Timestamp(t["price_date"]) - pd.Timestamp(x["entry_date"])).days if x.get("entry_date") else None
-        rows = [("Bought", f"{x.get('entry_date', '')} at {_px(x.get('entry_px'))} ({x.get('bought_sh', 0):,.2f} shares, {_usd(x.get('bought'))})"),
-                ("Sold", f"{t['price_date']} at {_px(t['price'])} ({t['shares']:,.2f} shares, {_usd(t['value'])})"),
-                ("Profit / loss", f"{_usd(x.get('pnl'))} ({_pct(x.get('pnl_pct'))})" + (f" over {days} days" if days is not None else "")),
+        pnl = x.get("pnl")
+        rows = [("Bought", f"{x.get('entry_date', '')} close at {_px(x.get('entry_px'))} ({x.get('bought_sh', 0):,.2f} shares, {_usd(x.get('bought'))})"),
+                ("Sold", f"{t['price_date']} close at {_px(t['price'])} ({t['shares']:,.2f} shares, {_usd(t['value'])})"),
+                ("**Profit / loss**", f"**{_usd(pnl)} ({_pct(x.get('pnl_pct'))})**" + (f" over {days} days" if days is not None else "")),
                 ("Why bought", x.get("entry_reason", "")), ("Why sold", t["reason"])]
-        col = "#1a7f37" if (x.get("pnl") or 0) >= 0 else "#cf222e"
-        items.append(f"<h3 style='color:{col}'>SELL {h(t['sym'])} &middot; {h(nm(t['sym']))} &middot; {h(_pct(x.get('pnl_pct')))}</h3><table>" +
-                     "".join(f"<tr><td style='color:#666;padding-right:12px;vertical-align:top'>{h(k)}</td><td>{h(v)}</td></tr>" for k, v in rows) + "</table>")
-        text += [f"SELL {t['sym']} ({nm(t['sym'])}) {_pct(x.get('pnl_pct'))}"] + [f"  {k}: {v}" for k, v in rows]
+        icon = "🟢" if (pnl or 0) >= 0 else "🔴"
+        out.append(f"### {icon} SELL {t['sym']} · {nm(t['sym'])} · {_pct(x.get('pnl_pct'))}\n\n" + _table(rows))
+        title.append(f"SELL {t['sym']} {_pct(x.get('pnl_pct'))}")
     for t in [t for t in trades if t["side"] == "BUY"]:
         tg = TG.loc[t["sym"]] if t["sym"] in TG.index else None
-        rows = [("Bought", f"{t['price_date']} at {_px(t['price'])} ({t['shares']:,.2f} shares, {_usd(t['value'])})"),
+        rows = [("Bought", f"{t['price_date']} close at {_px(t['price'])} ({t['shares']:,.2f} shares, {_usd(t['value'])})"),
                 ("12m target", f"{_px(tg.target)} ({_pct(tg.upside)})" if tg is not None else "n/a"), ("Why", t["reason"])]
-        items.append(f"<h3 style='color:#0969da'>BUY {h(t['sym'])} &middot; {h(nm(t['sym']))}</h3><table>" +
-                     "".join(f"<tr><td style='color:#666;padding-right:12px;vertical-align:top'>{h(k)}</td><td>{h(v)}</td></tr>" for k, v in rows) + "</table>")
-        text += [f"BUY {t['sym']} ({nm(t['sym'])})"] + [f"  {k}: {v}" for k, v in rows]
+        out.append(f"### 🔵 BUY {t['sym']} · {nm(t['sym'])}\n\n" + _table(rows))
+        title.append(f"BUY {t['sym']}")
+    w_new = {s: w for s, w in W.items() if s not in w_old}
     if w_new:
-        li = "".join(f"<li><b>{h(s)}</b> {h(nm(s))} ({h(_px(sig.price.get(s)))}): {h(w)}</li>" for s, w in w_new.items())
-        items.append(f"<h3 style='color:#9a6700'>New BUY, waiting</h3><ul>{li}</ul>")
-        text += ["New BUY, waiting:"] + [f"  {s} ({nm(s)}): {w}" for s, w in w_new.items()]
-    gone = [s for s in w_gone if s not in bought]
+        out.append("### 🟡 New BUY, waiting\n\n" + "".join(f"- **{s}** {nm(s)} ({_px(sig.price.get(s))}): {w}\n" for s, w in w_new.items()))
+        title += [f"{s} BUY waiting" for s in w_new]
+    bought = {t["sym"] for t in trades if t["side"] == "BUY"}
+    gone = [s for s in w_old if s not in W and s not in bought]
     if gone:
-        li = "".join(f"<li><b>{h(s)}</b> {h(nm(s))}: now {h(sig.state.get(s, 'not tracked'))}</li>" for s in gone)
-        items.append(f"<h3 style='color:#666'>No longer waiting (BUY signal gone, not bought)</h3><ul>{li}</ul>")
-        text += ["No longer waiting (not bought):"] + [f"  {s}: now {sig.state.get(s, 'not tracked')}" for s in gone]
-    return items, text, W, trades
+        out.append("### ⚪ No longer waiting (BUY signal gone, not bought)\n\n" +
+                   "".join(f"- **{s}** {nm(s)}: now {sig.state.get(s, 'not tracked')}\n" for s in gone))
+        title += [f"{s} no longer BUY" for s in gone]
+    return out, title, W
 
 
 def summary(L, S, T):
     from portfolio import positions
     pos, cash = positions(L)
-    op = [x for x in T if x["status"] == "open"]
+    op = sorted((x for x in T if x["status"] == "open"), key=lambda x: x["sym"])
     nav = cash + sum(x["sh"] * (x.get("last_px") or 0) for x in op)
-    h = lambda s: html.escape(str(s))
-    rows = "".join(f"<tr><td><b>{h(x['sym'])}</b></td><td>{h(x['entry_date'])}</td><td align=right>{_px(x['entry_px'])}</td>"
-                   f"<td align=right>{_px(x.get('last_px'))}</td><td align=right>{_usd(x['pnl'])}</td><td align=right>{_pct(x['pnl_pct'])}</td></tr>"
-                   for x in sorted(op, key=lambda x: x["sym"]))
     free = C.MAX_HOLD - len(pos)
-    tab = ("<h3>Portfolio now</h3><table cellpadding=3><tr style='color:#666'><td>Stock</td><td>Bought</td><td align=right>Entry</td>"
-           f"<td align=right>Last</td><td align=right>P&amp;L</td><td align=right>%</td></tr>{rows}</table>"
-           f"<p>Value {_usd(nav)} ({_pct(nav / L['capital'] - 1)} since {h(L['price_date'])}); cash {_usd(cash)} in {free} empty slot{'s' * (free != 1)}. "
-           f"Prices of {h(S.attrs['price_date'])} close.</p>")
-    txt = [f"Portfolio now: value {_usd(nav)} ({_pct(nav / L['capital'] - 1)}), cash {_usd(cash)} in {free} empty slots"] + \
-          [f"  {x['sym']}: bought {x['entry_date']} at {_px(x['entry_px'])}, last {_px(x.get('last_px'))}, P&L {_usd(x['pnl'])} ({_pct(x['pnl_pct'])})" for x in op]
-    return tab, txt
+    tab = "| Stock | Bought | Entry | Last | P&L | % |\n|---|---|--:|--:|--:|--:|\n" + "".join(
+        f"| **{x['sym']}** | {x['entry_date']} | {_px(x['entry_px'])} | {_px(x.get('last_px'))} | {_usd(x['pnl'])} | {_pct(x['pnl_pct'])} |\n" for x in op)
+    return (f"### Portfolio now\n\n{tab}\nValue **{_usd(nav)}** ({_pct(nav / L['capital'] - 1)} since {L['price_date']}); "
+            f"cash {_usd(cash)} in {free} empty slot{'s' * (free != 1)}. Prices of the {S.attrs['price_date']} close.\n")
 
 
-def send(subject, body_html, body_text):
-    user, pw, to = (os.environ.get(k) for k in ("SMTP_USER", "SMTP_PASS", "MAIL_TO"))
-    m = EmailMessage()
-    m["Subject"], m["From"], m["To"] = subject, f"Growth Tracker <{user}>", to
-    m.set_content(body_text)
-    m.add_alternative(body_html, subtype="html")
-    with smtplib.SMTP(os.environ.get("SMTP_HOST", "smtp.gmail.com"), int(os.environ.get("SMTP_PORT", "587")), timeout=60) as s:
-        s.starttls()
-        s.login(user, pw)
-        s.send_message(m)
+def _output(**kv):
+    p = os.environ.get("GITHUB_OUTPUT")
+    if p:
+        with open(p, "a", encoding="utf-8") as f:
+            for k, v in kv.items():
+                f.write(f"{k}={v}\n")
 
 
 def run(L, S, T, TG, log=print):
-    if not all(os.environ.get(k) for k in ("SMTP_USER", "SMTP_PASS", "MAIL_TO")):
-        log("e-mail: SMTP_USER / SMTP_PASS / MAIL_TO not set - no notice")
+    if not os.environ.get("GITHUB_ACTIONS"):
+        log("notice: local run - no change notice (sent by the GitHub workflow only)")
         return
     st = _load()
     first = st is None
     st = st or {"n_trades": len(L["trades"]), "waiting": {}}
     if st["n_trades"] > len(L["trades"]):                   # ledger restarted
         st = {"n_trades": 0, "waiting": {}}
-    items, text, W, trades = build(L, S, T, TG, st)
-    if not items and not first:
-        log("e-mail: no position change - no notice")
-        st["waiting"] = W
-        json.dump(st, open(STATE, "w", encoding="utf-8"), indent=1)
-        return
-    tab, txt = summary(L, S, T)
-    n_b, n_s = sum(t["side"] == "BUY" for t in trades), sum(t["side"] == "SELL" for t in trades)
-    parts = [f"{n_s} sell" + "s" * (n_s != 1)] * bool(n_s) + [f"{n_b} buy" + "s" * (n_b != 1)] * bool(n_b)
-    nw = len(set(W) - set(st.get("waiting") or {}))
-    parts += [f"{nw} waiting"] * bool(nw)
-    subj = "Growth Tracker: " + (", ".join(parts) if parts else "notifications on") + f" ({S.attrs['price_date']})"
-    if first:
-        items.insert(0, "<p>Notifications are on: you get an e-mail when the model portfolio buys or sells, and when a stock "
-                        "gets a BUY signal it is still waiting to buy.</p>")
-        if W:
-            items.append("<h3 style='color:#9a6700'>BUY, waiting now</h3><ul>" +
-                         "".join(f"<li><b>{html.escape(s)}</b>: {html.escape(w)}</li>" for s, w in W.items()) + "</ul>")
-            text += ["BUY, waiting now:"] + [f"  {s}: {w}" for s, w in W.items()]
-    body = ("<div style='font-family:Arial,sans-serif;font-size:14px'>" + "".join(items) + tab +
-            f"<p><a href='{PAGE}'>Open the Growth Tracker</a> &middot; paper portfolio, a strategy simulation (no orders are sent).</p></div>")
-    try:
-        send(subj, body, "\n".join(text + [""] + txt + ["", PAGE]))
-    except Exception as e:                                   # never break the daily run; retried next run
-        log(f"e-mail: send failed ({type(e).__name__}: {e}) - retried next run")
-        return
+    secs, title, W = build(L, S, T, TG, st)
     json.dump({"n_trades": len(L["trades"]), "waiting": W}, open(STATE, "w", encoding="utf-8"), indent=1)
-    log(f"e-mail: sent '{subj}'")
+    if not secs and not first:
+        log("notice: no position change")
+        return
+    if first:
+        secs.insert(0, "Notifications are on: a notice is sent when the model portfolio buys or sells, and when a stock gets a "
+                       "BUY signal it is still waiting to buy.\n")
+        if W:
+            secs.append("### 🟡 BUY, waiting now\n\n" + "".join(f"- **{s}**: {w}\n" for s, w in W.items()))
+        title = title or ["notifications on"]
+    body = "\n".join(secs) + "\n" + summary(L, S, T) + f"\n[Open the Growth Tracker]({PAGE}) · paper portfolio, a strategy simulation (no orders are sent).\n"
+    open(NOTICE, "w", encoding="utf-8").write(body)
+    t = ", ".join(title)
+    t = f"Growth Tracker {S.attrs['price_date']}: " + (t if len(t) <= 200 else t[:197] + "...")
+    _output(changed="true", title=t)
+    log(f"notice: {t}")

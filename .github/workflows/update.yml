@@ -16,6 +16,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  issues: write      # change notices are issues (GitHub mails them to the owner)
 
 concurrency:
   group: growth-tracker
@@ -60,12 +61,21 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Update data, signals, portfolio and page
-        env:
-          # e-mail notices (growth/notify.py); unset -> no e-mail. Gmail: SMTP_USER = the address, SMTP_PASS = an app password
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
+        id: run
         run: python growth/run.py
+
+      # Change notice (growth/notify.py writes notice.md + outputs changed / title) delivered as an issue, like the
+      # Bull Bear Monitor: GitHub mails it to the owner's notification address - no SMTP secret. --assignee makes the
+      # mail independent of the repo's watch setting. BEFORE the commit on purpose: if this fails, data/notify.json is
+      # not committed and the next run re-detects the same changes. Title via env, not ${{ }} in the shell.
+      - name: Mail the change notice
+        if: steps.run.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ steps.run.outputs.title }}
+        run: |
+          gh issue create --repo "${{ github.repository }}" --title "$TITLE" --body-file notice.md \
+            --assignee "${{ github.repository_owner }}"
 
       - name: Commit refreshed data + page
         run: |
