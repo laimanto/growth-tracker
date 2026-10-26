@@ -38,6 +38,23 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 Failed or incomplete Yahoo / Nasdaq downloads keep the last good copy and are retried on every daily run (`retry_y` / `retry_n` in the stock's file), as are stocks whose latest reported quarter is missing; a past report date without EPS is filled from Yahoo's `earnings_history`. Second share classes (GOOG, FOX, NWS) use the main class's EPS data (`config.SHARE_CLASS`).
 A normal day fetches about 50-100 stocks and a few rows of prices. `--offline` rebuilds the page without downloading.
 
+## Forecast history (data/history/)
+The backtests use simulated forecasts: actual later EPS, leaning 40% on trailing growth, plus a 30% random log error (AR 0.9 per month;
+Research Part 19). To check and refit this with real data, every run appends (`growth/history.py`; append-only plain CSV, never rewritten):
+| file | content |
+|---|---|
+| `forecasts_YYYY.csv` | every consensus download as fetched (before one-off adjustments): Yahoo current / next quarter and current / next fiscal year (avg, low, high, analysts, year-ago EPS, revisions 7d / 30d) and Nasdaq FY+1..FY+3. `yahoo_trend` rows = one-time seed from Yahoo's 7-90 days-ago consensus |
+| `actuals.csv` | every reported quarter (EPS, estimate just before the report); Yahoo only shows a window, this keeps them all. Restated quarters get a new row |
+| `signals_YYYY.csv` | per stock and price date: state, price, P/E, sector P/E, growth Last / Cur / +1 / +2 / trailing / 24m, analysts, 12m target and upside |
+Seeded 2026-10-26 from the git history of `data/eps/` (downloads from 2026-10-21) plus Yahoo's 90-day trend. About 15-20 MB a year.
+
+**Download:** `git pull` in the local clone (the CI commits the files daily), or open
+https://github.com/laimanto/growth-tracker/tree/main/data/history and download any file.
+**Check the assumption:** `python growth/forecast_check.py [--csv errors.csv]` - error ln(actual / forecast FY EPS) by months to
+fiscal-year end (bias, SD, robust SD vs the assumed 30%), anchoring weight w (assumed 0.6) and month-to-month persistence (assumed 0.9);
+also the quarterly surprise since 2008 as a reference. Fiscal years start resolving as current FYs are reported (from Nov 2026);
+a useful sample needs ~1 year for the current FY and 2-3 years for FY+1 / FY+2.
+
 ## Files
 | file | role |
 |---|---|
@@ -49,6 +66,7 @@ A normal day fetches about 50-100 stocks and a few rows of prices. `--offline` r
 | `growth/pemodel.py` | 12-month target from the P/E model |
 | `growth/perf.py` | annual return / Sortino / downside deviation / max drawdown for 4 windows |
 | `growth/run.py`, `growth/template.html` | daily run and the page |
+| `growth/history.py`, `growth/forecast_check.py` | forecast history (appended every run), check of the backtest's forecast-error assumption |
 | `data/backtest.json` | Strategy-tab backtest results (static, from the research) |
 
 No orders are ever sent to a broker. Delete `data/ledger.json` to restart the paper portfolio.

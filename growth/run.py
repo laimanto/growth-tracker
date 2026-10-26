@@ -16,6 +16,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config as C      # noqa: E402
+import history         # noqa: E402
 import pemodel          # noqa: E402
 import perf             # noqa: E402
 import portfolio        # noqa: E402
@@ -68,6 +69,7 @@ def main():
     for s2, s1 in C.SHARE_CLASS.items():
         if s2 in recs and recs.get(s1):
             recs[s2] = recs[s1]
+    raw = dict(recs)                                          # as downloaded (one_offs below returns adjusted copies)
     oneoff = {}
     for s, r in recs.items():
         if r.get("yahoo"):
@@ -99,6 +101,7 @@ def main():
         if not h or h["state"] != r.state:
             H[r.sym] = {"state": r.state, "since": S.attrs["price_date"], "px": r.price}
     update.jsave(C.SIGHIST, H, indent=0)
+    history.record(raw, S, TG, log=say)                       # append-only forecast / actuals / signal history
 
     say(f"12m targets: {len(TG)} stocks ({(TG.kind == 'P/E model').sum()} P/E model, {(TG.kind != 'P/E model').sum()} growth-only)")
     last_px = S.set_index("sym").price.to_dict()
