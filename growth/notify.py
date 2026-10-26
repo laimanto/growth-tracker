@@ -149,8 +149,6 @@ def run(L, S, T, TG, log=print):
     if first:
         secs.insert(0, "Notifications are on: a notice is sent when the model portfolio buys or sells, and when a stock gets a "
                        "BUY signal it is still waiting to buy.\n")
-        if W:
-            secs.append("### 🟡 BUY, waiting now\n\n" + "".join(f"- **{s}**: {w}\n" for s, w in W.items()))
         title = title or ["notifications on"]
     body = "\n".join(secs) + "\n" + summary(L, S, T) + f"\n[Open the Growth Tracker]({PAGE}) · paper portfolio, a strategy simulation (no orders are sent).\n"
     open(NOTICE, "w", encoding="utf-8").write(body)
