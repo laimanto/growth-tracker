@@ -111,6 +111,7 @@ def main():
                    (pd.Timestamp(S.attrs["price_date"]) - pd.Timestamp(t["exit_date"])).days <= C.HIGHLIGHT_DAYS}
     open_trip = {t["sym"]: t for t in T if t["status"] == "open"}
     notify.run(L, S, T, TG, log=say)                          # e-mail on trades / new BUY-waiting (CI secrets)
+    buy_wait = notify.waiting(S, L)                            # BUY signals not bought yet -> reason
     rows = []
     for r in S.to_dict("records"):
         st = r["state"]
@@ -135,6 +136,9 @@ def main():
             x.update(entry_date=h.get("since"), entry_px=clean(h.get("px")))
         if st == "SELL":
             x["exit_date"] = h.get("since")
+            x["pending"] = notify.pending_sell(r, S.attrs["price_date"]) if r["held"] else None
+        elif st == "BUY" and buy_wait.get(r["sym"]) not in (None, "buys at the next close"):
+            x["pending"] = buy_wait[r["sym"]]
         rows.append(x)
 
     # performance

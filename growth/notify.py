@@ -65,6 +65,29 @@ def waiting(S, L):
     return out
 
 
+def _weekday(d):
+    while d.weekday() >= 5:
+        d += pd.Timedelta(days=1)
+    return d
+
+
+def pending_sell(r, price_date):
+    """Why a held SELL signal has not been sold yet (None = it is sold at the next close)."""
+    wt, rv = r.get("wait"), r.get("in_review")
+    if isinstance(wt, str) and wt:
+        return f"to be sold once the data is ready: {wt}"
+    if rv is True or rv == 1:
+        return None
+    pd_ = pd.Timestamp(price_date)
+    month = _weekday((pd_ + pd.offsets.MonthBegin(1)).normalize())
+    nxt = r.get("next_report")
+    rep = _weekday(pd.Timestamp(nxt) + pd.Timedelta(days=C.REVIEW[0])) if nxt else None
+    first = min(month, rep) if rep is not None else month
+    why = f"to be sold on about {first.day} {first:%b}: at the post-report review" + (f" (report {nxt}, from day {C.REVIEW[0]} once forecasts settle)" if nxt else "") + \
+          f" or the first close of {month:%B}, whichever comes first. Signals that start between reports wait for one of these"
+    return why
+
+
 def _trip_of(T, t):
     """The round trip a SELL trade closed."""
     return next((x for x in T if x["sym"] == t["sym"] and x.get("exit_date") == t["price_date"]), None)

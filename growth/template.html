@@ -135,7 +135,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Holds up to 10 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
       <div><h3>How to use it</h3><ul>
         <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
-        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “waiting” tag means the data is not mature yet (analysts still revising, new fiscal year, stale data): no trade until it clears. Everything is also re-checked at the start of each month.</li>
+        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “waiting” tag next to BUY or SELL means the trade has not happened yet: either the data is not mature (analysts still revising, new fiscal year, stale data), or the signal started between reports and waits for the next post-report review or the first close of next month. Hover the tag for the reason and the expected date.</li>
         <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but holdings with little upside left make way for stronger new buys, and below 10% they are sold at the quarterly review.</li>
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
@@ -287,7 +287,7 @@ const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
 let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
 function sigTiles() {
   const c = s => S.filter(r => r.state === s).length;
-  const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.wait).length; return w ? `qualify, not held · ${w} waiting for settled forecasts` : 'qualify, not held'; })()], ['SELL', c('SELL'), 'held, EPS growth or PEG rule failed'], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
+  const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.pending).length; return w ? `qualify, not held · ${w} waiting` : 'qualify, not held'; })()], ['SELL', c('SELL'), (() => { const w = S.filter(r => r.state === 'SELL' && r.pending).length; return 'held, EPS growth or PEG rule failed' + (w ? ` · ${w} waiting` : ''); })()], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
     ['HOLD', c('HOLD'), 'held, still qualify'], ['WATCH', c('WATCH'), '≤ 5 pts short of entry'], ['Prices', D.price_date, 'last close used']];
   document.getElementById('sigTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
 }
@@ -296,7 +296,7 @@ function sigTable() {
   const rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
   const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
   table('sigTab', [
-    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state) + (r.wait && ['BUY', 'SELL'].includes(r.state) ? ' <span class="rb y">waiting</span>' : ''), v: r => -ord[r.state], tt: r => (r.wait && ['BUY', 'SELL'].includes(r.state) ? 'Passes the rules, but no trade until the data is ready: ' + r.wait + '. ' : '') + (r.why || '')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state) + (r.pending ? ' <span class="rb y">waiting</span>' : ''), v: r => -ord[r.state], tt: r => (r.pending ? 'Not traded yet – ' + r.pending + '. ' : '') + (r.why || '')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
     {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
     {k: 'entry_date', h: 'Entry', t: 'buy date (BUY/WATCH: date the signal started)', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
     {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
@@ -407,7 +407,7 @@ function detail() {
       <div class="meter">${mk(r.need_out, '--sell')}${mk(r.need_in, '--buy')}${mk(r.trail, '--s3')}${mk(r.fwd, '--s1')}</div>`;
   }
   const fy = i => r.fy ? 'FY' + r.fy[i] : '';
-  const kv = [['Signal', badge(r.state) + (r.since ? ` since ${r.since}` : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
+  const kv = [['Signal', badge(r.state) + (r.pending ? ' <span class="rb y">waiting</span>' : '') + (r.since ? ` since ${r.since}` : '') + (r.pending ? `<div class="sub">Not traded yet – ${r.pending}.</div>` : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
     ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector P/E', `${num(r.pe)} · ${num(r.sector_pe)}`], ['PEG (weakest year) · PEG in / out', `${num(pegOf(r), 2)} · ${num(r.sector_pe / 30, 2)} / ${num(r.sector_pe / 25, 2)}`],
     ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
     ['Remarks', remarks(r) || '–'],
