@@ -164,30 +164,35 @@ def compute(U, recs, closes, held=(), today=None):
             row["rev_up30"], row["rev_dn30"] = rvv.get("upLast30days"), rvv.get("downLast30days")
         # readiness to act (v1.9): settled forecasts after a report, fiscal-year rollover, fresh data
         wait, dsr = [], row.get("days_since_report")
+        dm = lambda k: f"{(last_rep + pd.Timedelta(days=k)).day} {last_rep + pd.Timedelta(days=k):%b}"
         if dsr is not None and dsr <= C.REVIEW[1]:
             if dsr < C.REVIEW[0]:
-                wait.append("just reported: analysts still revising")
+                wait.append(f"just reported ({row['last_report']}): no trade before day {C.REVIEW[0]} ({dm(C.REVIEW[0])}) while analysts update")
             elif dsr < C.REVIEW[1] - 2:                      # from day 12 decide anyway (day 14 may fall on a weekend)
                 rv = (y.get("revs") or {}).get("+1y") or {}
                 n7 = (rv.get("upLast7days") or 0) + (rv.get("downLast7Days") or rv.get("downLast7days") or 0)
                 busy_n = bool(rv) and n7 > max(1, C.SETTLE_SHARE * max(row["n_analysts"], 1))
                 busy_c = row["rev7"] is not None and abs(row["rev7"]) >= C.SETTLE_MOVE
                 if (busy_n and busy_c) if rv else busy_c:
-                    wait.append(f"forecasts settling ({n7} of {row['n_analysts']} analysts revised next year in 7 days)" if rv else
-                                f"forecasts settling (next-year consensus {row['rev7']:+.1%} in 7 days)")
+                    late = f" – trades anyway from day {C.REVIEW[1] - 2} ({dm(C.REVIEW[1] - 2)})"
+                    wait.append(f"analysts still updating after the {row['last_report']} report: {n7} of {row['n_analysts']} ({n7 / max(row['n_analysts'], 1):.0%}) "
+                                f"changed next year’s forecast in 7 days (needs ≤ {C.SETTLE_SHARE:.0%}) and the consensus moved {row['rev7']:+.1%} (needs < {C.SETTLE_MOVE:.0%})" + late if rv else
+                                f"analysts still updating after the {row['last_report']} report: next-year consensus moved {row['rev7']:+.1%} in 7 days (needs < {C.SETTLE_MOVE:.0%})" + late)
                 if y.get("nextFye") and last_rep is not None and last_rep > pd.Timestamp(y["nextFye"]) + pd.Timedelta(days=20):
-                    wait.append("fiscal year rolling over: Yahoo still shows the year just reported")
+                    wait.append("Yahoo has not switched to the new fiscal year yet (still shows the year just reported)")
                 elif 0 < row["n_analysts"] < C.ROLLOVER_MIN:
-                    wait.append(f"new fiscal year: only {row['n_analysts']} next-year forecasts so far")
+                    wait.append(f"new fiscal year: only {row['n_analysts']} analysts forecast next year so far (needs {C.ROLLOVER_MIN})")
                 rows_n = (n or {}).get("rows") or []
                 if y.get("nextFye") and rows_n:
                     f2_ = pd.Timestamp(y["nextFye"]) + pd.DateOffset(years=2)
                     late = max(pd.Timestamp(r_["fye"]) for r_ in rows_n) >= f2_ - pd.Timedelta(days=40)
                     if late and not any(abs((pd.Timestamp(r_["fye"]) - f2_).days) < 40 for r_ in rows_n):
-                        wait.append("year-after (FY+2) forecasts not aligned with Yahoo's years yet")
+                        wait.append("the two-years-ahead (FY+2) forecast from Nasdaq is not for the same year as Yahoo’s yet")
         ya_ = y.get("asof")
-        if not ya_ or (today.normalize() - pd.Timestamp(ya_)).days > C.STALE_DAYS or rec.get("retry_y"):
-            wait.append("data stale or incomplete: waiting for a fresh download")
+        if not ya_ or (today.normalize() - pd.Timestamp(ya_)).days > C.STALE_DAYS:
+            wait.append(f"Yahoo data {'missing' if not ya_ else str((today.normalize() - pd.Timestamp(ya_)).days) + ' days old'} (max {C.STALE_DAYS}): waiting for a fresh download")
+        elif rec.get("retry_y"):
+            wait.append("last Yahoo download incomplete: re-downloaded at the next daily run")
         row["wait"] = "; ".join(wait) or None
         row["ready"] = not wait
         ttm, ttm_ago = ttm_pair(q, today)

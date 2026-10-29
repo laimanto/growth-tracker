@@ -136,9 +136,10 @@ def main():
             x.update(entry_date=h.get("since"), entry_px=clean(h.get("px")))
         if st == "SELL":
             x["exit_date"] = h.get("since")
-            x["pending"] = notify.pending_sell(r, S.attrs["price_date"]) if r["held"] else None
-        elif st == "BUY" and buy_wait.get(r["sym"]) not in (None, "buys at the next close"):
-            x["pending"] = buy_wait[r["sym"]]
+            x["pending"] = notify.pending(r, S.attrs["price_date"]) if r["held"] else None
+        elif st == "BUY" and r["sym"] in buy_wait and buy_wait[r["sym"]] != "bought at the next close":
+            x["pending"] = buy_wait[r["sym"]].split("; ")
+        x["pending"] = x.get("pending") or None
         rows.append(x)
 
     # performance

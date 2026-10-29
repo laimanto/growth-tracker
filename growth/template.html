@@ -88,7 +88,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 
 <section data-tab="Earnings">
   <div class="card"><h2>Earnings calendar</h2>
-    <p class="cap"><b>In review window</b> = reported 3–14 days ago; the model may act once forecasts settle. <b>Reporting in 14 days</b> = report coming up (no action until 3 days after it). <b>Analysts</b> = forecasting next fiscal year. <b>Revised 7d / 30d</b> = analysts who changed that forecast (↑ / ↓). <b>Forecasts</b> = settled (model can act) or waiting (hover for the reason). <b>Fcst Δ</b> = change of the next-year consensus EPS.</p>
+    <p class="cap"><b>In review window</b> = reported 3–14 days ago; the model may act once forecasts settle. <b>Reporting in 14 days</b> = report coming up (no action until 3 days after it). <b>Analysts</b> = forecasting next fiscal year. <b>Revised 7d / 30d</b> = analysts who changed that forecast (↑ / ↓). <b>Forecasts</b> = settled (model can act) or pending (hover for the reason). <b>Fcst Δ</b> = change of the next-year consensus EPS.</p>
     <div class="ctrl"><div class="chips" id="calChips"></div></div>
     <div class="topbar" data-for="calWrap"><div></div></div><div class="tscroll" id="calWrap"><table id="calTab"></table></div></div>
 </section>
@@ -135,7 +135,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Holds up to 10 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
       <div><h3>How to use it</h3><ul>
         <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
-        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “waiting” tag next to BUY or SELL means the trade has not happened yet: either the data is not mature (analysts still revising, new fiscal year, stale data), or the signal started between reports and waits for the next post-report review or the first close of next month. Hover the tag for the reason and the expected date.</li>
+        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “pending” tag next to BUY or SELL means the trade has not happened yet. Hover it to see exactly what it is pending, e.g. the next quarterly report (and its date), the first close of next month, or analysts still updating their forecasts.</li>
         <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but holdings with little upside left make way for stronger new buys, and below 10% they are sold at the quarterly review.</li>
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
@@ -159,7 +159,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li>The last, already reported year is shown but not used.</li></ul></div>
     <div class="rule"><b>Timing</b><ul style="margin:4px 0 0;padding-left:18px">
       <li>Decisions 3–14 days after each stock’s report, or at the first close of each month (monthly sweep).</li>
-      <li>Only when the stock’s data is <b>ready</b>: forecasts settled (≤ 10% of analysts revised next year in 7 days, or consensus moved &lt; 1%; decided anyway from day 12); fiscal year rolled over at Yahoo; ≥ 3 next-year forecasts; year-after forecasts aligned; data fresh. Otherwise the page shows “waiting”.</li>
+      <li>Only when the stock’s data is <b>ready</b>: forecasts settled (≤ 10% of analysts revised next year in 7 days, or consensus moved &lt; 1%; decided anyway from day 12); fiscal year rolled over at Yahoo; ≥ 3 next-year forecasts; year-after forecasts aligned; data fresh. Otherwise the page shows “pending”.</li>
       <li>Holdings that leave the indexes stay tracked until the rules sell them; a delisted or acquired holding is sold at its last close.</li></ul></div>
     <div class="rule"><b>Portfolio</b><ul style="margin:4px 0 0;padding-left:18px">
       <li><b>10 slots</b> of equal start size; each stock keeps its own money (no trims, no rebalancing).</li>
@@ -262,7 +262,7 @@ function remarks(r) {
   if (r.held && r.state !== 'SELL' && weak != null && r.need_out != null && weak - r.need_out < 0.03) b.push(rb('near exit', `Weakest forecast year ${pct(weak)} is within 3 pts of G out ${pctu(r.need_out)}.`, 'r'));
   if (r.state === 'WATCH' && r.room != null) b.push(rb(-r.room < 0.001 ? 'just short' : `${(-r.room * 100).toFixed(1)} pts short`, r.why || '', 'y'));
   if (r.n_analysts && r.n_analysts < 10) b.push(rb('few analysts', `Only ${r.n_analysts} analysts forecast next year (buys need 10).`));
-  if (r.wait) b.push(rb('waiting', 'No trade yet: ' + r.wait + '.', 'y'));
+  if (r.wait && !r.pending) b.push(rb('data pending', 'Not ready to trade: ' + r.wait + '.', 'y'));
   if (r.left_index) b.push(rb('left index', 'No longer in the S&P 500 / Nasdaq-100: kept until the rules sell it, never bought again.', 'r'));
   if (r.extra && !r.left_index) b.push(rb('watchlist', 'Added on request: outside the S&P 500 / Nasdaq-100. Same rules, but never bought by the model portfolio and not counted in the sector P/E medians.', 'b'));
   if (r.lastFlag) b.push(rb('one-off', r.lastFlag));
@@ -287,7 +287,7 @@ const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
 let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
 function sigTiles() {
   const c = s => S.filter(r => r.state === s).length;
-  const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.pending).length; return w ? `qualify, not held · ${w} waiting` : 'qualify, not held'; })()], ['SELL', c('SELL'), (() => { const w = S.filter(r => r.state === 'SELL' && r.pending).length; return 'held, EPS growth or PEG rule failed' + (w ? ` · ${w} waiting` : ''); })()], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
+  const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.pending).length; return w ? `qualify, not held · ${w} pending` : 'qualify, not held'; })()], ['SELL', c('SELL'), (() => { const w = S.filter(r => r.state === 'SELL' && r.pending).length; return 'held, EPS growth or PEG rule failed' + (w ? ` · ${w} pending` : ''); })()], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
     ['HOLD', c('HOLD'), 'held, still qualify'], ['WATCH', c('WATCH'), '≤ 5 pts short of entry'], ['Prices', D.price_date, 'last close used']];
   document.getElementById('sigTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
 }
@@ -296,7 +296,7 @@ function sigTable() {
   const rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
   const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
   table('sigTab', [
-    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state) + (r.pending ? ' <span class="rb y">waiting</span>' : ''), v: r => -ord[r.state], tt: r => (r.pending ? 'Not traded yet – ' + r.pending + '. ' : '') + (r.why || '')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state) + (r.pending ? ' <span class="rb y">pending</span>' : ''), v: r => -ord[r.state], tt: r => ((r.pending ? 'Pending:\n• ' + r.pending.join('\n• ') + '\n\n' : '') + (r.why || '')).replace(/"/g, '&quot;')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
     {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
     {k: 'entry_date', h: 'Entry', t: 'buy date (BUY/WATCH: date the signal started)', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
     {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
@@ -341,7 +341,7 @@ function calTable() {
     {k: 'n_analysts', h: 'Analysts', t: 'analysts forecasting next fiscal year', f: r => r.n_analysts || '–'},
     {k: 'rev_n7', h: 'Revised 7d', t: 'analysts who changed next year’s forecast in the last 7 days (up / down)', f: r => r.rev_up7 == null ? '–' : `${r.rev_up7 + r.rev_dn7} <span class="sub">(${r.rev_up7}↑ ${r.rev_dn7}↓)</span>`, v: r => r.rev_up7 == null ? -1 : r.rev_up7 + r.rev_dn7},
     {k: 'rev_n30', h: 'Revised 30d', t: 'analysts who changed next year’s forecast in the last 30 days (up / down)', f: r => r.rev_up30 == null ? '–' : `${r.rev_up30 + r.rev_dn30} <span class="sub">(${r.rev_up30}↑ ${r.rev_dn30}↓)</span>`, v: r => r.rev_up30 == null ? -1 : r.rev_up30 + r.rev_dn30},
-    {k: 'ready', h: 'Forecasts', l: 1, t: 'settled = the model can act; waiting = data not mature yet', f: r => r.wait ? `<span class="rb y" title="${r.wait.replace(/"/g, '&quot;')}">waiting</span>` : (r.in_review ? '<span class="rb g">settled</span>' : '–'), v: r => r.wait ? 2 : (r.in_review ? 1 : 0)},
+    {k: 'ready', h: 'Forecasts', l: 1, t: 'settled = the model can act; pending = data not mature yet', f: r => r.wait ? `<span class="rb y" title="${r.wait.split('; ').join('\n').replace(/"/g, '&quot;')}">pending</span>` : (r.in_review ? '<span class="rb g">settled</span>' : '–'), v: r => r.wait ? 2 : (r.in_review ? 1 : 0)},
     {k: 'rev7', h: 'Fcst Δ7d', f: r => pct(r.rev7, 1), cls: r => cls(r.rev7)}, {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)},
     {k: 'rev90', h: 'Fcst Δ90d', f: r => pct(r.rev90, 1), cls: r => cls(r.rev90)}, ...G4],
     rows, {sort: 'next_report', dir: 1, click: openDetail});
@@ -407,7 +407,7 @@ function detail() {
       <div class="meter">${mk(r.need_out, '--sell')}${mk(r.need_in, '--buy')}${mk(r.trail, '--s3')}${mk(r.fwd, '--s1')}</div>`;
   }
   const fy = i => r.fy ? 'FY' + r.fy[i] : '';
-  const kv = [['Signal', badge(r.state) + (r.pending ? ' <span class="rb y">waiting</span>' : '') + (r.since ? ` since ${r.since}` : '') + (r.pending ? `<div class="sub">Not traded yet – ${r.pending}.</div>` : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
+  const kv = [['Signal', badge(r.state) + (r.pending ? ' <span class="rb y">pending</span>' : '') + (r.since ? ` since ${r.since}` : '') + (r.pending ? '<div class="sub">Pending:<br>• ' + r.pending.join('<br>• ') + '</div>' : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
     ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector P/E', `${num(r.pe)} · ${num(r.sector_pe)}`], ['PEG (weakest year) · PEG in / out', `${num(pegOf(r), 2)} · ${num(r.sector_pe / 30, 2)} / ${num(r.sector_pe / 25, 2)}`],
     ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
     ['Remarks', remarks(r) || '–'],
@@ -501,7 +501,7 @@ function stratInit() {
     ['G in / G out', 'The growth a stock needs at today’s price to pass both rules: G in = max(buy floor, P/E ÷ PEG in), G out = max(keep floor, P/E ÷ PEG out). Red years are below the one that matters for the row.'],
     ['Red year', 'A forecast year below the growth that matters for the row: G in for stocks not held, G out for holdings.'],
     ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
-    ['Remark badges', 'review now (3–14 days after a report, data ready) · waiting (data not ready) · report Nd (report within a week) · fcst ↑/↓ (consensus ±5% in 30 days) · near exit (within 3 pts of G out) · N pts short (WATCH) · few analysts (&lt; 10) · one-off / one-off qtr (distorted figures replaced) · FY+2 n/a · target: growth only · watchlist · left index. Hover for details.'],
+    ['Remark badges', 'review now (3–14 days after a report, data ready) · data pending (data not ready, non-BUY/SELL rows) · report Nd (report within a week) · fcst ↑/↓ (consensus ±5% in 30 days) · near exit (within 3 pts of G out) · N pts short (WATCH) · few analysts (&lt; 10) · one-off / one-off qtr (distorted figures replaced) · FY+2 n/a · target: growth only · watchlist · left index. Hover for details.'],
     ['WATCH', 'Not held; weakest growth at most 5 pts below G in, or passes both rules with fewer than 10 analysts. Information only.'],
     ['Fcst Δ30d', 'Change of the next-year consensus EPS over the last 30 days.']];
   document.getElementById('guide').innerHTML = guide.map(g => `<tr><td class="l"><b>${g[0]}</b></td><td class="l" style="white-space:normal">${g[1]}</td></tr>`).join('');

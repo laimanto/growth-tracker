@@ -1,5 +1,5 @@
 """Change notice when the model portfolio changes: new BUY / SELL trades (a SELL shows the whole round trip with its
-P&L) and stocks entering or leaving "BUY, waiting" (BUY signal, not bought yet: data not ready, outside the review
+P&L) and stocks entering or leaving "BUY, pending" (BUY signal, not bought yet: data not ready, outside the review
 window, or no free slot). Nothing changed -> no notice.
 
 Delivered as a GitHub issue assigned to the repo owner (same set-up as the Bull Bear Monitor, user 2026-10-26): GitHub
@@ -43,49 +43,49 @@ def _md(s):
     return str(s).replace("|", "\\|").replace("\n", " ")
 
 
-def waiting(S, L):
-    """BUY signals not held (model universe only) -> {sym: reason it is not bought yet}."""
-    from portfolio import positions
-    pos, _ = positions(L)
-    full = len(pos) >= C.MAX_HOLD
-    out = {}
-    for r in S.itertuples():
-        if r.state != "BUY" or r.held or bool(getattr(r, "extra", False)):
-            continue
-        wt, rv = getattr(r, "wait", None), getattr(r, "in_review", None)
-        if isinstance(wt, str) and wt:
-            why = f"data not ready: {wt}"
-        elif full:
-            why = f"portfolio full: buys only if its 12m upside is >= {C.SWAP_BUFFER:.0%} above the weakest holding's"
-        elif rv is not True and rv != 1:
-            why = "buys at the next post-report review or the first close of next month"
-        else:
-            why = "buys at the next close"
-        out[r.sym] = why
-    return out
-
-
 def _weekday(d):
     while d.weekday() >= 5:
         d += pd.Timedelta(days=1)
     return d
 
 
-def pending_sell(r, price_date):
-    """Why a held SELL signal has not been sold yet (None = it is sold at the next close)."""
-    wt, rv = r.get("wait"), r.get("in_review")
-    if isinstance(wt, str) and wt:
-        return f"to be sold once the data is ready: {wt}"
-    if rv is True or rv == 1:
-        return None
-    pd_ = pd.Timestamp(price_date)
-    month = _weekday((pd_ + pd.offsets.MonthBegin(1)).normalize())
-    nxt = r.get("next_report")
-    rep = _weekday(pd.Timestamp(nxt) + pd.Timedelta(days=C.REVIEW[0])) if nxt else None
-    first = min(month, rep) if rep is not None else month
-    why = f"to be sold on about {first.day} {first:%b}: at the post-report review" + (f" (report {nxt}, from day {C.REVIEW[0]} once forecasts settle)" if nxt else "") + \
-          f" or the first close of {month:%B}, whichever comes first. Signals that start between reports wait for one of these"
-    return why
+def _dm(d):
+    return f"{d.day} {d:%b}"
+
+
+def pending(r, price_date, full=False):
+    """Every reason a BUY (not held) / SELL (held) signal is not traded yet -> list of plain-language reasons ([] = trades
+    at the next close). Mirrors portfolio.update: trade only when the data is ready AND (post-report review OR month start)."""
+    act = "sold" if r.get("state") == "SELL" else "bought"
+    wt = r.get("wait")
+    out = [x for x in wt.split("; ") if x] if isinstance(wt, str) else []
+    rv = r.get("in_review")
+    if not (rv is True or rv == 1) and not out:
+        pd_ = pd.Timestamp(price_date)
+        month = _weekday((pd_ + pd.offsets.MonthBegin(1)).normalize())
+        nxt = r.get("next_report")
+        if nxt:
+            d3 = _weekday(pd.Timestamp(nxt) + pd.Timedelta(days=C.REVIEW[0]))
+            rep = f"the next quarterly report ({nxt}): {act} from day {C.REVIEW[0]} after it ({_dm(d3)}) once analysts have updated"
+        else:
+            rep = "the next quarterly report (date not announced yet)"
+        out.append(f"waiting for {rep} – or at the first close of {month:%B} ({_dm(month)}), whichever comes first")
+    if full and act == "bought":
+        out.append(f"portfolio full ({C.MAX_HOLD} slots): bought only if its 12m upside is ≥ {C.SWAP_BUFFER:.0%} above the weakest holding’s")
+    return out
+
+
+def waiting(S, L):
+    """BUY signals not held (model universe only) -> {sym: why it is not bought yet}."""
+    from portfolio import positions
+    pos, _ = positions(L)
+    full = len(pos) >= C.MAX_HOLD
+    out = {}
+    for r in S.to_dict("records"):
+        if r["state"] != "BUY" or r["held"] or bool(r.get("extra", False)):
+            continue
+        out[r["sym"]] = "; ".join(pending(r, S.attrs["price_date"], full)) or "bought at the next close"
+    return out
 
 
 def _trip_of(T, t):
@@ -124,12 +124,12 @@ def build(L, S, T, TG, st):
         title.append(f"BUY {t['sym']}")
     w_new = {s: w for s, w in W.items() if s not in w_old}
     if w_new:
-        out.append("### 🟡 New BUY, waiting\n\n" + "".join(f"- **{s}** {nm(s)} ({_px(sig.price.get(s))}): {w}\n" for s, w in w_new.items()))
-        title += [f"{s} BUY waiting" for s in w_new]
+        out.append("### 🟡 New BUY, pending\n\n" + "".join(f"- **{s}** {nm(s)} ({_px(sig.price.get(s))}): {w}\n" for s, w in w_new.items()))
+        title += [f"{s} BUY pending" for s in w_new]
     bought = {t["sym"] for t in trades if t["side"] == "BUY"}
     gone = [s for s in w_old if s not in W and s not in bought]
     if gone:
-        out.append("### ⚪ No longer waiting (BUY signal gone, not bought)\n\n" +
+        out.append("### ⚪ No longer pending (BUY signal gone, not bought)\n\n" +
                    "".join(f"- **{s}** {nm(s)}: now {sig.state.get(s, 'not tracked')}\n" for s in gone))
         title += [f"{s} no longer BUY" for s in gone]
     return out, title, W
