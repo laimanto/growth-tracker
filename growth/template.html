@@ -135,7 +135,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Holds up to 10 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
       <div><h3>How to use it</h3><ul>
         <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
-        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “pending” tag next to BUY or SELL means the trade has not happened yet. Hover it to see exactly what it is pending, e.g. the next quarterly report (and its date), the first close of next month, or analysts still updating their forecasts.</li>
+        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “pending” tag next to the Entry (BUY) or Exit (SELL) date means the signal started that day but the trade has not happened yet. Hover it to see exactly what it is pending, e.g. the next quarterly report (and its date), the first close of next month, or analysts still updating their forecasts.</li>
         <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but holdings with little upside left make way for stronger new buys, and below 10% they are sold at the quarterly review.</li>
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
@@ -286,6 +286,8 @@ const G4 = [
 /* ---------- Signals ---------- */
 const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
 let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
+const pendBuy = r => r.state === 'BUY' && !r.held && r.pending, pendSell = r => r.state === 'SELL' && r.held && !r.exit_date && r.pending;
+const pendTip = (w, d, p) => (`${w} signal since ${d || '?'} – not traded yet. Pending:\n• ` + p.join('\n• ')).replace(/"/g, '&quot;');
 function sigTiles() {
   const c = s => S.filter(r => r.state === s).length;
   const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.pending).length; return w ? `qualify, not held · ${w} pending` : 'qualify, not held'; })()], ['SELL', c('SELL'), (() => { const w = S.filter(r => r.state === 'SELL' && r.pending).length; return 'held, EPS growth or PEG rule failed' + (w ? ` · ${w} pending` : ''); })()], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
@@ -297,14 +299,14 @@ function sigTable() {
   const rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
   const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
   table('sigTab', [
-    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state) + (r.pending ? ' <span class="rb y">pending</span>' : ''), v: r => -ord[r.state], tt: r => ((r.pending ? 'Pending:\n• ' + r.pending.join('\n• ') + '\n\n' : '') + (r.why || '')).replace(/"/g, '&quot;')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state), v: r => -ord[r.state], tt: r => (r.why || '').replace(/"/g, '&quot;')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
     {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
-    {k: 'entry_date', h: 'Entry', t: 'buy date (BUY/WATCH: date the signal started)', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
+    {k: 'entry_date', h: 'Entry', t: 'buy date; a BUY not bought yet (and WATCH): date the signal started, “pending” = not traded yet (hover for what it waits for)', f: r => (r.entry_date || '–') + (pendBuy(r) ? ' <span class="rb y">pending</span>' : ''), tt: r => pendBuy(r) ? pendTip('Buy', r.entry_date, r.pending) : '', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
     {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
     {k: 'target', h: '12m tgt', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
     {k: 'upside', h: 'Upside', t: 'target ÷ last price − 1', f: r => pct(r.upside), cls: r => cls(r.upside)},
     {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
-    {k: 'exit_date', h: 'Exit', t: 'date sold (a SELL not traded yet shows –; hover its “pending” tag for the signal date)', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
+    {k: 'exit_date', h: 'Exit', t: 'sale date; a SELL not sold yet: date the signal started + “pending” (hover for what it waits for). Actual trades: Trades tab', f: r => r.exit_date || (pendSell(r) ? r.sell_signal + ' <span class="rb y">pending</span>' : (r.sell_signal || '–')), v: r => r.exit_date || r.sell_signal || '', tt: r => pendSell(r) ? pendTip('Sell', r.sell_signal, r.pending) : '', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
     {k: 'peg', h: 'PEG', t: 'P/E ÷ growth (%) of the weakest forecast year', f: r => num(pegOf(r), 2), v: r => pegOf(r) ?? 99, cls: r => pegOf(r) != null && pegBar(r) != null && pegOf(r) > pegBar(r) ? 'below' : ''},
     {k: 'pegin', h: 'PEG in', t: 'PEG buy limit = sector P/E ÷ 30 (buy only if every year’s PEG is at or below it)', f: r => num(r.sector_pe / 30, 2), v: r => r.sector_pe ?? 99},
