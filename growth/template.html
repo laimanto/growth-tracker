@@ -304,7 +304,7 @@ function sigTable() {
     {k: 'target', h: '12m tgt', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
     {k: 'upside', h: 'Upside', t: 'target ÷ last price − 1', f: r => pct(r.upside), cls: r => cls(r.upside)},
     {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
-    {k: 'exit_date', h: 'Exit', t: 'SELL: date the sell signal started; SOLD: date sold', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''},
+    {k: 'exit_date', h: 'Exit', t: 'date sold (a SELL not traded yet shows –; hover its “pending” tag for the signal date)', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
     {k: 'peg', h: 'PEG', t: 'P/E ÷ growth (%) of the weakest forecast year', f: r => num(pegOf(r), 2), v: r => pegOf(r) ?? 99, cls: r => pegOf(r) != null && pegBar(r) != null && pegOf(r) > pegBar(r) ? 'below' : ''},
     {k: 'pegin', h: 'PEG in', t: 'PEG buy limit = sector P/E ÷ 30 (buy only if every year’s PEG is at or below it)', f: r => num(r.sector_pe / 30, 2), v: r => r.sector_pe ?? 99},

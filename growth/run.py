@@ -134,9 +134,11 @@ def main():
                      exit_date=tr.get("exit_date"), exit_px=clean(tr.get("exit_px")))
         elif st == "BUY":
             x.update(entry_date=h.get("since"), entry_px=clean(h.get("px")))
-        if st == "SELL":
-            x["exit_date"] = h.get("since")
-            x["pending"] = notify.pending(r, S.attrs["price_date"]) if r["held"] else None
+        if st == "SELL":                                    # Exit column = actual sale date only; signal date in the tag
+            x["sell_signal"] = h.get("since")
+            if r["held"]:
+                ss = pd.Timestamp(h["since"]) if h.get("since") else None
+                x["pending"] = ([f"sell signal since {ss.day} {ss:%b}"] if ss is not None else []) + notify.pending(r, S.attrs["price_date"])
         elif st == "BUY" and r["sym"] in buy_wait and buy_wait[r["sym"]] != "bought at the next close":
             x["pending"] = buy_wait[r["sym"]].split("; ")
         x["pending"] = x.get("pending") or None
