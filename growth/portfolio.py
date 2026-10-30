@@ -2,6 +2,8 @@
 
   update  once per new market close: a SELL is executed / a BUY bought at that close when the stock is in its
           post-report review window (3-14 days after reporting) or at the first close of a new month (monthly sweep).
+          v1.11: an EMPTY slot is filled at once (any day) with the ready BUY with the most 12m upside - no waiting for
+          the month start after a sale (Research Part 25c: 2008-24 +2.5 pts/yr, DD -31% vs -36%; 2022-26 neutral).
           C.MAX_HOLD fixed slots; each stock keeps its own money (no trims, no rebalancing). A sale's whole value waits
           in cash (one free slot) for the next qualifier, which gets it all. When full, a new BUY replaces the holding
           with the lowest 12m upside if its own upside is >= C.SWAP_BUFFER higher. First close of each quarter: up to
@@ -114,15 +116,16 @@ def update(L, S, d, up=None):
             _trade(L, d, k, "SELL", pos.pop(k), px[k], f"quarterly prune: 12m upside {_upside(up, k):+.0%} < {C.PRUNE_UPSIDE:.0%}", px_date)
             free.append(val); done.append(("SELL", k))
     new = [s for s, x in sig.iterrows() if x.state == "BUY" and not bool(x.get("extra")) and bool(x.get("ready", True))
-           and (bool(x.get("in_review")) or month_sweep) and s not in pos]
+           and s not in pos]
+    timed = lambda s: bool(sig.loc[s].get("in_review")) or month_sweep
     new.sort(key=lambda s: -_upside(up, s))                  # most upside first
     for s in new:
-        if free:                                             # empty slot: it gets the whole slot cash
+        if free:                                             # empty slot: it gets the whole slot cash - any day (v1.11 refill)
             free.sort(reverse=True)
             amt = free.pop(0)
-            _trade(L, d, s, "BUY", amt / px[s], px[s], sig.loc[s].why + tag, px_date)
+            _trade(L, d, s, "BUY", amt / px[s], px[s], sig.loc[s].why + (tag if timed(s) else " (empty-slot refill)"), px_date)
             pos[s] = amt / px[s]; done.append(("BUY", s))
-        elif pos:                                            # full: replace the lowest-upside holding if clearly weaker
+        elif pos and timed(s):                               # full: replace the lowest-upside holding if clearly weaker
             w = min(pos, key=lambda k: _upside(up, k))
             if _upside(up, s) >= _upside(up, w) + C.SWAP_BUFFER:
                 val = pos[w] * px[w]

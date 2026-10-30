@@ -55,12 +55,13 @@ def _dm(d):
 
 def pending(r, price_date, full=False):
     """Every reason a BUY (not held) / SELL (held) signal is not traded yet -> list of plain-language reasons ([] = trades
-    at the next close). Mirrors portfolio.update: trade only when the data is ready AND (post-report review OR month start)."""
+    at the next close). Mirrors portfolio.update: trade only when the data is ready AND (post-report review OR month start);
+    a BUY with an empty slot free (full=False) is bought at the next close whatever the date (v1.11 refill)."""
     act = "sold" if r.get("state") == "SELL" else "bought"
     wt = r.get("wait")
     out = [x for x in wt.split("; ") if x] if isinstance(wt, str) else []
     rv = r.get("in_review")
-    if not (rv is True or rv == 1) and not out:
+    if not (rv is True or rv == 1) and not out and not (act == "bought" and not full):
         pd_ = pd.Timestamp(price_date)
         month = _weekday((pd_ + pd.offsets.MonthBegin(1)).normalize())
         nxt = r.get("next_report")

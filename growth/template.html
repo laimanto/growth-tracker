@@ -159,11 +159,12 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li>The last, already reported year is shown but not used.</li></ul></div>
     <div class="rule"><b>Timing</b><ul style="margin:4px 0 0;padding-left:18px">
       <li>Decisions 3–14 days after each stock’s report, or at the first close of each month (monthly sweep).</li>
+      <li>An empty slot is filled at once, any day, with the waiting BUY with the most 12m upside.</li>
       <li>Only when the stock’s data is <b>ready</b>: forecasts settled (≤ 10% of analysts revised next year in 7 days, or consensus moved &lt; 1%; decided anyway from day 12); fiscal year rolled over at Yahoo; ≥ 3 next-year forecasts; year-after forecasts aligned; data fresh. Otherwise the page shows “pending”.</li>
       <li>Holdings that leave the indexes stay tracked until the rules sell them; a delisted or acquired holding is sold at its last close.</li></ul></div>
     <div class="rule"><b>Portfolio</b><ul style="margin:4px 0 0;padding-left:18px">
       <li><b>10 slots</b> of equal start size; each stock keeps its own money (no trims, no rebalancing).</li>
-      <li>Sale: the whole slot waits in cash (empty slot) for the next qualifying stock, which gets all of it.</li>
+      <li>Sale: the whole slot goes to the next qualifying stock – at once if a BUY is already waiting, otherwise it waits in cash.</li>
       <li>All slots full: a new buy replaces the holding with the lowest 12m upside if its own upside is ≥ 5 points higher.</li>
       <li>First close of each quarter: every holding with &lt; 10% upside is sold.</li></ul></div>
     <div class="rule"><b>12m target</b><ul style="margin:4px 0 0;padding-left:18px">
@@ -457,7 +458,7 @@ function perfInit() {
   document.querySelectorAll('#winChips button').forEach(b => b.addEventListener('click', () => { win = b.dataset.w; document.querySelectorAll('#winChips button').forEach(x => x.classList.toggle('on', x === b)); riskTable(); }));
   document.getElementById('riskCap').innerHTML = "Daily returns; target (MAR) 4% a year, as in the Sortino dashboard. Annual return = compound growth; downside deviation = √252 × RMS of daily shortfalls below 4%; Sortino = (annual return − 4%) ÷ downside deviation. Strategy (backtest) = median run of Backtest 1 (price only, ~1%/yr below total return), ending Sep 2026. Model (live) appears after ~3 months. Common = days all series exist.";
   const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', '10 slots of equal start size, no rebalancing; a sale’s money funds the next buy; fractional shares'],
-    ['Acts on', '3–14 days after a report, or first close of each month'], ['Prices used', D.price_date + ' close']];
+    ['Acts on', '3–14 days after a report, or first close of each month; empty slots any day'], ['Prices used', D.price_date + ' close']];
   document.getElementById('setupTab').innerHTML = st.map(x => `<tr><td class="l">${x[0]}</td><td>${x[1]}</td></tr>`).join('');
   riskTable();
 }

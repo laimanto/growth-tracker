@@ -26,7 +26,7 @@ REVIEW = (3, 14)                  # act 3-14 days after a report (consensus revi
 HIGHLIGHT_DAYS = 7                # new entries / exits stay highlighted (and SOLD rows listed) for a week
 CAPITAL = 100_000.0
 # portfolio policy (v1.8, Research Part 24h-i): MAX_HOLD fixed slots, each stock keeps its own money (no trims, no
-# rebalancing). A sale's whole value waits in cash for the next qualifier; a new BUY when full replaces the lowest-upside
+# rebalancing). A sale's whole value goes to the next qualifier (v1.11: any day, empty slots are refilled at once); a new BUY when full replaces the lowest-upside
 # holding if its own 12m upside is >= SWAP_BUFFER higher; at the first close of each PRUNE_MONTHS month up to PRUNE_N
 # holdings with 12m upside below PRUNE_UPSIDE are sold (lowest first)
 MAX_HOLD = 10
