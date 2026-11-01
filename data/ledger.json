@@ -52,6 +52,26 @@
    "price": 74.09,
    "value": 10000.0,
    "reason": "initial portfolio: trailing +73% and every forecast year (weakest +1 +24.0%) >= entry bar 19.8%"
+  },
+  {
+   "date": "2026-11-01",
+   "price_date": "2026-10-30",
+   "sym": "LUV",
+   "side": "BUY",
+   "shares": 235.682299,
+   "price": 42.43,
+   "value": 10000.0,
+   "reason": "trailing +128% and every forecast year (weakest +2 +33.0%) >= G in 23.6% (post-report review)"
+  },
+  {
+   "date": "2026-11-01",
+   "price_date": "2026-10-30",
+   "sym": "HPE",
+   "side": "BUY",
+   "shares": 181.521147,
+   "price": 55.09,
+   "value": 10000.0,
+   "reason": "trailing +68% and every forecast year (weakest +1 +23.6%) >= G in 19.9% (empty-slot refill)"
   }
  ],
  "runs": [
@@ -59,12 +79,11 @@
   "2026-10-28",
   "2026-10-29",
   "2026-10-29",
-  "2026-10-30"
+  "2026-10-30",
+  "2026-11-01"
  ],
- "last_close": "2026-10-29",
+ "last_close": "2026-10-30",
  "free": [
-  10000.0,
-  10000.0,
   10000.0,
   10000.0,
   10000.0
