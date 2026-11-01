@@ -124,13 +124,18 @@ def nasdaq(sym):
     for i in range(3):
         try:
             d = requests.get(f"https://api.nasdaq.com/api/analyst/{sym.replace('-', '.')}/earnings-forecast", headers=UA, timeout=20).json()
-            rows = (((d.get("data") or {}).get("yearlyForecast") or {}).get("rows")) or []
-            res = []
-            for r in rows:
-                mon, yr = r["fiscalEnd"].split()
-                fye = (pd.Timestamp(int(yr), _MON[mon[:3]], 1) + pd.offsets.MonthEnd(0)).date()
-                res.append({"fye": str(fye), "eps": r.get("consensusEPSForecast"), "n": int(r.get("noOfEstimates") or 0)})
-            return {"asof": date.today().isoformat(), "rows": res}
+            def parse(rows):
+                res = []
+                for r in rows or []:
+                    mon, yr = r["fiscalEnd"].split()
+                    fye = (pd.Timestamp(int(yr), _MON[mon[:3]], 1) + pd.offsets.MonthEnd(0)).date()
+                    # up / down = analysts revising in the last 4 weeks (Zacks panel) - logged for the revision study
+                    res.append({"fye": str(fye), "eps": r.get("consensusEPSForecast"), "n": int(r.get("noOfEstimates") or 0),
+                                "high": r.get("highEPSForecast"), "low": r.get("lowEPSForecast"), "up": r.get("up"), "down": r.get("down")})
+                return res
+            dd = d.get("data") or {}
+            rows = parse((dd.get("yearlyForecast") or {}).get("rows"))
+            return {"asof": date.today().isoformat(), "rows": rows, "qrows": parse((dd.get("quarterlyForecast") or {}).get("rows"))}
         except Exception:
             time.sleep(1 + i)
     return None

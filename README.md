@@ -16,10 +16,10 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 * **buy** when both rules pass; **sell** when either fails. Together this equals growth >= max(30% x P/E / sector P/E, floor) to enter
   and < max(25% x P/E / sector P/E, keep floor) to exit (v1.2; floor v1.6, Research Part 23/23b; the last reported year is shown, not required)
 * **12m target** (buy reference, not a sell price) = last close x (1 + forecast next-12m EPS growth) x P/E-model change; the P/E model is the Sortino project's pe28 (data/models/, needs scikit-learn 1.9.0), with the growth-only pe28g for stocks without 24 months of P/E history. Backtest: unbiased estimate of the 12-month peak (Research Part 22)
-* act 3-14 days after each report (when analysts revise) or at the first close of each month (monthly sweep); an empty slot
+* act 3-17 days after each report (once forecasts settle) or at the first close of each month (monthly sweep); an empty slot
   is refilled at once, any day, with the ready BUY with the most 12m upside (v1.11, Research Part 25c)
-* **readiness (v1.9):** a stock trades only when its data is mature: forecasts settled after a report (<= 10% of analysts revised next
-  year in 7 days, or consensus moved < 1%; decided anyway from day 12), fiscal year rolled at Yahoo, >= 3 next-year forecasts, FY+2 aligned,
+* **readiness (v1.9):** a stock trades only when its data is mature: forecasts settled after a report (v1.12: >= 50% of analysts revised
+  next year's forecast since the report, from day 3, else day 14), the new quarter in the data, fiscal year rolled at Yahoo, >= 3 next-year forecasts, FY+2 aligned,
   Yahoo data fresh (<= 8 days, complete). A buy needs >= 10 analysts on the next fiscal year (v1.10, Research Part 24m; >= 3 after a fiscal-year rollover to be 'ready'). Held stocks that leave the indexes stay tracked (no new buys);
   a holding without a price for 7 days (delisted / acquired) is sold at its last close. Page tags: "waiting", "left index"
 * **portfolio (v1.8):** 10 fixed slots of equal start size; each stock keeps its own money (no trims, no rebalancing). A sale's
@@ -32,11 +32,11 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 | data | refreshed |
 |---|---|
 | `data/universe.json` (Wikipedia S&P 500 / Nasdaq-100) | monthly |
-| `data/eps/<TICKER>.json`: Yahoo consensus, reported quarters, revisions, next report | new stock / after a report / every 2 days in the post-report window / otherwise weekly, spread over the week |
+| `data/eps/<TICKER>.json`: Yahoo consensus, reported quarters, revisions, next report | new stock / after a report (daily until its quarter appears) / daily in the first week after a report, every 2 days in the second / otherwise weekly, spread over the week |
 | same file, Nasdaq FY+2 consensus | every 2 weeks and after a report |
 | `data/closes.csv`, `data/bench.csv` | only the days since the last stored close |
 | `data/closes_m.csv` (month-end closes, 3+ years, P/E history for the target) | built once, then completed months appended |
-Failed or incomplete Yahoo / Nasdaq downloads keep the last good copy and are retried on every daily run (`retry_y` / `retry_n` in the stock's file), as are stocks whose latest reported quarter is missing; a past report date without EPS is filled from Yahoo's `earnings_history`. Second share classes (GOOG, FOX, NWS) use the main class's EPS data (`config.SHARE_CLASS`).
+Failed or incomplete Yahoo / Nasdaq downloads keep the last good copy and are retried on every daily run (`retry_y` / `retry_n` in the stock's file), as are stocks whose latest reported quarter is missing; a past report date without EPS is filled from Yahoo's `earnings_history`. Second share classes (GOOG, FOX, NWS) use the main class's EPS data (`config.SHARE_CLASS`). If a re-download returns the quarterly history on another basis (median > 20% off the stored quarters), the history whose last fiscal year matches the analysts' actual is kept and only new quarters are added (`update.guard_quarters`).
 A normal day fetches about 50-100 stocks and a few rows of prices. `--offline` rebuilds the page without downloading.
 
 ## E-mail notices
@@ -72,6 +72,7 @@ a useful sample needs ~1 year for the current FY and 2-3 years for FY+1 / FY+2.
 | `growth/fetch.py` | Yahoo / Nasdaq / price downloads |
 | `growth/update.py` | what is due today, delta merges |
 | `growth/signals.py` | the rule, fiscal-year growth (Last / Cur / +1 / +2), states BUY / HOLD / SELL / SOLD / WATCH / OUT |
+| `growth/reports.py` | Signals tab Earnings view: forecasts just before the latest report (from `data/history`) vs now, aligned by fiscal year; analysts revising since the report (settle test); `data/history/report_revisions.csv` = revisions by day 7/14/30/90 and consensus change per report (extra downloads on days 7/14/30/60/90), to calibrate the 50% bar |
 | `growth/portfolio.py` | paper ledger `data/ledger.json`, positions (buy -> sell rows), NAV |
 | `growth/pemodel.py` | 12-month target from the P/E model |
 | `growth/perf.py` | annual return / Sortino / downside deviation / max drawdown for 4 windows |

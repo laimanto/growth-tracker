@@ -21,6 +21,7 @@ import notify          # noqa: E402
 import pemodel          # noqa: E402
 import perf             # noqa: E402
 import portfolio        # noqa: E402
+import reports          # noqa: E402
 import signals          # noqa: E402
 import update           # noqa: E402
 
@@ -81,9 +82,11 @@ def main():
                     oneoff[s] = notes
     say(f"one-off quarters (last 8) replaced by their estimate: {', '.join(oneoff) or 'none'}")
 
+    H = reports.load_history()
+    revs = reports.revisions(raw, H)                           # analysts revising since the latest report (settle test)
     L = portfolio.load()
     held = set(portfolio.positions(L)[0]) if L else set()
-    S = signals.compute(U, recs, closes, held=held)
+    S = signals.compute(U, recs, closes, held=held, revs=revs)
     TG = pemodel.targets(S, recs, closes_m, S.attrs["curves"], today)   # 12m upside also ranks buys / swaps
     up = TG.upside.to_dict()
     if L is None:
@@ -93,7 +96,8 @@ def main():
         done = portfolio.update(L, S, today, up)
     say(f"model trades: {done or 'none'}")
     held = set(portfolio.positions(L)[0])
-    S = signals.compute(U, recs, closes, held=held)
+    S = signals.compute(U, recs, closes, held=held, revs=revs)
+    reports.attach(S, raw, H, log=say)                          # forecasts just before the latest report (Earnings columns)
 
     # signal history: date each stock entered its current state
     H = update.jload(C.SIGHIST, {}) or {}
@@ -103,6 +107,7 @@ def main():
             H[r.sym] = {"state": r.state, "since": S.attrs["price_date"], "px": r.price}
     update.jsave(C.SIGHIST, H, indent=0)
     history.record(raw, S, TG, log=say)                       # append-only forecast / actuals / signal history
+    reports.report_log(log=say)                               # per-report revision study (data/history/report_revisions.csv)
 
     say(f"12m targets: {len(TG)} stocks ({(TG.kind == 'P/E model').sum()} P/E model, {(TG.kind != 'P/E model').sum()} growth-only)")
     last_px = S.set_index("sym").price.to_dict()
@@ -119,10 +124,16 @@ def main():
             st = "SOLD"
         h = H.get(r["sym"], {})
         x = {k: clean(r.get(k)) for k in ("sym", "name", "sector", "ndx", "sp500", "extra", "held", "why", "price", "pe", "sector_pe", "relpe", "trail", "fwd",
-                                          "gLast", "lastFlag", "oneoff", "wait", "ready", "left_index", "rev_up7", "rev_dn7", "rev_up30", "rev_dn30", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts", "rev7", "rev30", "rev90",
+                                          "gLast", "lastFlag", "oneoff", "wait", "ready", "left_index", "gCur", "g1", "g2", "need_in", "need_out", "room", "n_analysts",
+                                          "p_n", "p_asof", "p_approx", "rev_since", "rev_n", "rev_how",
                                           "last_report", "next_report", "days_since_report", "in_review")}
         x["fy"] = r.get("fy") if isinstance(r.get("fy"), list) else None
         x["fy_points"], x["qh"] = r.get("fy_points"), r.get("qh")
+        for k in ("p_g", "p_eps", "p_fy"):
+            x[k] = [clean(v) for v in r[k]] if isinstance(r.get(k), list) else None
+        fe, fn = r.get("fy_eps") or {}, r.get("fy_n") or {}
+        x["eps_fy"] = [clean(fe.get(f)) for f in x["fy"]] if x["fy"] else None    # EPS by fiscal year (Last..+2), for hover
+        x["n_fy"] = [clean(fn.get(f)) for f in x["fy"]] if x["fy"] else None
         x["state"] = st
         if r["sym"] in TG.index:
             t_ = TG.loc[r["sym"]]

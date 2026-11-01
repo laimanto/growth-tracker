@@ -22,7 +22,7 @@ ENTRY, EXIT = 0.30, 0.25          # x relative P/E
 FLOOR_IN, FLOOR_OUT = 0.15, 0.10  # growth floor under both bars at an average market P/E (v1.6, Research Part 23: cheap stocks needed only 5-8%)
 MKT_PE_BASE = 18.96               # floor x (universe median P/E / this): average universe median P/E 2002-2026 (Part 23b) -> adapts to the era
 WATCH = 0.05                      # WATCH = not held, weakest of trailing / forecast years at most 5 pts below the entry bar
-REVIEW = (3, 14)                  # act 3-14 days after a report (consensus revisions cluster there)
+REVIEW = (3, 17)                  # act 3-17 days after a report (settled by day 14 at the latest; 3 spare days for holidays / failed runs)
 HIGHLIGHT_DAYS = 7                # new entries / exits stay highlighted (and SOLD rows listed) for a week
 CAPITAL = 100_000.0
 # portfolio policy (v1.8, Research Part 24h-i): MAX_HOLD fixed slots, each stock keeps its own money (no trims, no
@@ -35,8 +35,8 @@ PRUNE_MONTHS = (1, 4, 7, 10)
 PRUNE_N = None                    # None = every holding below PRUNE_UPSIDE (Part 24k: a limit of 2 rarely binds)
 PRUNE_UPSIDE = 0.10
 # readiness to act (v1.9): a stock is only bought / sold once its data is mature
-SETTLE_SHARE = 0.10               # forecasts settled when <= 10% of analysts (min 1) revised next year in the last 7 days ...
-SETTLE_MOVE = 0.01                # ... or the next-year consensus moved < 1% in 7 days; decided anyway from day 12 of REVIEW
+SETTLE_SHARE = 0.50               # forecasts settled once >= 50% of analysts revised next year's forecast since the report (from day 3) ...
+SETTLE_DAY = 14                   # ... otherwise on day 14 (user 2026-11-01: the buy / sell depends on it; Yahoo's counts look incomplete)
 MIN_ANALYSTS = 10                 # at least 10 analysts on next fiscal year's forecast to buy (v1.10, Research Part 24m)
 ROLLOVER_MIN = 3                  # after a fiscal-year rollover, wait until at least 3 next-year forecasts exist
 START_FILL = False                # start-up: leave empty slots in cash (True = fill with the closest near-misses)
@@ -51,7 +51,10 @@ EXTRA = {"FUTU": {"name": "Futu Holdings (ADR)", "sector": "Financial Services"}
 
 # refresh policy (delta updates)
 EPS_MAX_AGE = 7                   # every stock's Yahoo consensus at least weekly (spread over the week)
-EPS_REVIEW_AGE = 2                # every 2 days while in the post-report window
+EPS_DAILY_DAYS = 7                # daily for the first 7 days after a report ...
+EPS_REVIEW_AGE = 2                # ... then every 2 days to the end of REVIEW (day 17), then weekly
+REV_MILESTONES = (7, 14, 30, 60, 90)   # extra downloads after each report for the revision study (reports.report_log)
+REPORT_WAIT = 10                  # report date passed but its quarter missing at Yahoo: retry daily for up to 10 days
 NASDAQ_MAX_AGE = 14               # FY+2 consensus (Nasdaq / Zacks) every two weeks, and after a report
 UNIVERSE_MAX_AGE = 30
 

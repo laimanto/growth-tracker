@@ -1,7 +1,8 @@
 """Delta update - download only what is due:
   universe     Wikipedia S&P 500 + Nasdaq-100 lists, monthly
   eps/<sym>    Yahoo consensus + quarters + revisions + next report date:
-                 never fetched / a report since the last fetch / every 2 days in the post-report window /
+                 never fetched / a report since the last fetch (daily until its quarter appears) / daily in the
+                 first week after a report, every 2 days in the second /
                  daily while the last download failed or came back incomplete, or the latest quarter is missing /
                  otherwise weekly, spread over the week (stable hash of the ticker -> weekday)
                Nasdaq FY+2: every 2 weeks, and after a report
@@ -13,7 +14,7 @@ import json
 import os
 import zlib
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 
@@ -92,6 +93,19 @@ def _age(d):
     return 9999 if not d else (date.today() - date.fromisoformat(d[:10])).days
 
 
+def milestone(last_rep, asof):
+    """Revision study: a download on (or just after) day 7 / 14 / 30 / 60 / 90 after a report, so the 7-day and 30-day
+    revision counts can be added up to 14 and 90 days (reports.report_log). Returns the day or None."""
+    if not last_rep or not asof:
+        return None
+    r = date.fromisoformat(last_rep[:10])
+    age = (date.today() - r).days
+    for m in C.REV_MILESTONES:
+        if m <= age <= m + 4 and asof[:10] < str(r + timedelta(days=m)):
+            return m
+    return None
+
+
 def due(sym, rec):
     """Why the Yahoo / Nasdaq data of one stock must be refreshed today (or None)."""
     y, n = rec.get("yahoo") or {}, rec.get("nasdaq") or {}
@@ -108,15 +122,58 @@ def due(sym, rec):
         why_y = "retry: latest reported quarter missing"
     elif nxt and ya < nxt <= today:
         why_y = "reported since last fetch"
-    elif last_rep and C.REVIEW[0] - 3 <= (date.today() - date.fromisoformat(last_rep)).days <= C.REVIEW[1] and _age(ya) >= C.EPS_REVIEW_AGE:
+    elif nxt and nxt <= today and _age(ya) >= 1 and (not last_rep or last_rep < nxt) and _age(nxt) <= C.REPORT_WAIT:
+        # report day passed but its quarter is not in the data yet (an after-close report downloaded the same morning:
+        # MSFT 2026-10-28) -> daily until it appears
+        why_y = "report not in data yet"
+    elif rep_age is not None and rep_age <= C.EPS_DAILY_DAYS and _age(ya) >= 1:
+        why_y = "post-report week (daily)"
+    elif rep_age is not None and rep_age <= C.REVIEW[1] and _age(ya) >= C.EPS_REVIEW_AGE:
         why_y = "post-report window"
+    elif (m := milestone(last_rep, ya)) is not None:
+        why_y = f"day-{m} snapshot after the report"
     elif _age(ya) >= C.EPS_MAX_AGE or (_age(ya) >= 4 and zlib.crc32(sym.encode()) % 5 == date.today().weekday() % 5):
         why_y = "weekly refresh"
     if "." in sym or sym.startswith("^"):
         pass
-    elif not n.get("asof") or rec.get("retry_n") or _age(n.get("asof")) >= C.NASDAQ_MAX_AGE or (why_y == "reported since last fetch"):
+    elif (not n.get("asof") or rec.get("retry_n") or _age(n.get("asof")) >= C.NASDAQ_MAX_AGE or why_y in ("reported since last fetch", "report not in data yet")
+          or (rep_age is not None and C.REVIEW[0] <= rep_age <= C.REVIEW[1] and n["asof"] < str(date.fromisoformat(last_rep) + timedelta(days=C.REVIEW[0])))
+          or milestone(last_rep, n.get("asof")) is not None):
+        # ... and once more 3+ days after a report, when analysts have updated FY+2 too
         why_n = "FY+2 refresh"
     return why_y, why_n
+
+
+def guard_quarters(y, old):
+    """Yahoo sometimes returns the quarterly history on another basis (APH 2026-11-01: older quarters doubled, the new
+    quarter not). When the quarters both downloads share differ by > 20% (median), keep the history whose last
+    fiscal year adds up closest to the analysts' actual (yearAgoEps) and only add the newer quarters to it.
+    Returns a note when the stored history was kept, else None."""
+    oq, nq = dict(old.get("qh") or []), dict(y.get("qh") or [])
+    both = [d for d in nq if d in oq and oq[d] and nq[d] and oq[d] > 0 and nq[d] > 0]
+    if len(both) < 2:
+        return None
+    r = float(pd.Series([nq[d] / oq[d] for d in both]).median())
+    if abs(r - 1) <= 0.2:
+        return None
+    ya = ((y.get("est") or {}).get("0y") or {}).get("yearAgoEps")
+    lf = y.get("lastFye")
+    def fy_sum(q):
+        if not lf:
+            return None
+        f = pd.Timestamp(lf)
+        x = [v for d, v in q.items() if f - pd.Timedelta(days=270) < pd.Timestamp(d) <= f + pd.Timedelta(days=110)]
+        return sum(x) if len(x) == 4 else None
+    so, sn = fy_sum(oq), fy_sum(nq)
+    err = lambda s: abs(s / ya - 1) if s and ya else 9
+    if err(sn) <= err(so):
+        return None                                          # the new download matches the analysts (e.g. a stock split)
+    last_old = max(oq)
+    add = {d: v for d, v in nq.items() if d > last_old}
+    y["qh"] = [[d, v] for d, v in sorted({**oq, **add}.items())][-24:]
+    qe = {**dict(old.get("qe") or []), **{d: v for d, v in (y.get("qe") or []) if d in add}}
+    y["qe"] = [[d, qe[d]] for d, _ in y["qh"] if d in qe]
+    return f"quarters on another basis (x{r:.2f}): kept the stored history, added {len(add)} new"
 
 
 def refresh_eps(syms, workers=6, log=print):
@@ -143,6 +200,9 @@ def refresh_eps(syms, workers=6, log=print):
                         y[k] = old[k]
                         if k == "qh" and old.get("next") and not y.get("next"):
                             y["next"] = old["next"]
+                note = guard_quarters(y, old) if "qh" not in y.get("missing", []) else None
+                if note:
+                    guarded.append(f"{s} ({note})")
                 rec["yahoo"] = y
             rec["retry_y"] = not y or bool(y.get("missing"))  # -> fetched again on the next daily run
         if wn:
@@ -156,8 +216,11 @@ def refresh_eps(syms, workers=6, log=print):
         jsave(eps_path(s), rec)
         return s
 
+    guarded = []
     with ThreadPoolExecutor(workers) as ex:
         list(ex.map(work, jobs))
+    if guarded:
+        log(f"EPS: {len(guarded)} kept their stored quarters: {'; '.join(guarded)}")
     bad = [s for s in syms if s not in C.SHARE_CLASS and load_stock(s).get("retry_y")]
     if bad:
         log(f"EPS: {len(bad)} still incomplete, retried tomorrow: {' '.join(bad[:30])}")

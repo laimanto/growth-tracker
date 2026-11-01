@@ -82,15 +82,9 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
     <p class="cap">Rules: Strategy tab. <b>PEG</b> = P/E ÷ growth of the weakest forecast year; <b>PEG in / out</b> = buy / sell limit of its sector; <b>G in / out</b> = growth needed at today’s price to buy / keep (both rules). <span class="badge SELL">Red</span> cells = forecast years below G in (G out for holdings); Last = information only. Hover a signal, ⓘ or badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates = last 7 days. SOLD rows stay 7 days, then move to Trades. Click a row for detail.</p>
-    <div class="ctrl"><div class="chips" id="stateChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
+    <p class="cap hide" id="earnCap">EPS growth by fiscal year = today’s forecasts; they keep updating until the next report. <b>(Bracket)</b> = change since the forecasts just before the latest report, in % points of growth, e.g. 24% (+1); hover for the before and now figures and the EPS change. Same fiscal year compared: after a year-end report, Last compares the actual with what was expected; (new) = a year added by the rollover. Before this history began (21 Oct 2026) the “before” figures are approximate (Yahoo’s consensus from about then; marked ≈ in the hover). <b>#</b> = analysts forecasting next year. <b>Revised</b> = analysts who changed next year’s forecast since the report, out of all analysts (Yahoo counts names no one: new vs existing analysts cannot be told apart). <b>Forecasts</b>: <i>settled</i> = at least 50% of analysts have revised (from day 3), or day 14 is reached – only then may the model buy or sell; <i>pending</i> = not yet, or data incomplete (hover).</p>
+    <div class="ctrl"><div class="chips" id="viewChips"></div><div class="chips" id="stateChips"></div><div class="chips hide" id="repChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
-</section>
-
-<section data-tab="Earnings">
-  <div class="card"><h2>Earnings calendar</h2>
-    <p class="cap"><b>In review window</b> = reported 3–14 days ago; the model may act once forecasts settle. <b>Reporting in 14 days</b> = report coming up (no action until 3 days after it). <b>Analysts</b> = forecasting next fiscal year. <b>Revised 7d / 30d</b> = analysts who changed that forecast (↑ / ↓). <b>Forecasts</b> = settled (model can act) or pending (hover for the reason). <b>Fcst Δ</b> = change of the next-year consensus EPS.</p>
-    <div class="ctrl"><div class="chips" id="calChips"></div></div>
-    <div class="topbar" data-for="calWrap"><div></div></div><div class="tscroll" id="calWrap"><table id="calTab"></table></div></div>
 </section>
 
 <section data-tab="Stock detail">
@@ -135,7 +129,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
         <li>Holds up to 10 shares, mostly tech: expect bigger swings than an index fund.</li></ul></div>
       <div><h3>How to use it</h3><ul>
         <li><span class="badge BUY">BUY</span> qualifies now · <span class="badge HOLD">HOLD</span> owned and still qualifies · <span class="badge SELL">SELL</span> growth outlook faded · <span class="badge WATCH">WATCH</span> nearly there.</li>
-        <li>Act on stocks tagged “review now” (reported 3–14 days ago, forecasts settled). A “pending” tag next to the Entry (BUY) or Exit (SELL) date means the signal started that day but the trade has not happened yet. Hover it to see exactly what it is pending, e.g. the next quarterly report (and its date), the first close of next month, or analysts still updating their forecasts.</li>
+        <li>Act on stocks tagged “review now” (reported 3–17 days ago, forecasts settled). A signal marked <b>(P)</b>, e.g. BUY (P), is pending: the signal has started but the trade has not happened yet. Hover it to see exactly what it waits for, e.g. the next quarterly report (and its date), the first close of next month, or analysts still updating their forecasts.</li>
         <li><b>Upside</b> (12m target) shows how much room may be left. It is not a sell target, but holdings with little upside left make way for stronger new buys, and below 10% they are sold at the quarterly review.</li>
         <li>Every S&amp;P 500 and Nasdaq-100 stock is listed with its earnings history, growth forecasts and 12m target (Signals table and Stock detail), so you can look up any stock even when it is not picked.</li>
         <li>Tags such as “few analysts” or “one-off qtr” flag numbers worth a second look. A research tool, not investment advice.</li></ul></div>
@@ -158,9 +152,9 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li>First close of each quarter: 12m upside &lt; 10%</li>
       <li>The last, already reported year is shown but not used.</li></ul></div>
     <div class="rule"><b>Timing</b><ul style="margin:4px 0 0;padding-left:18px">
-      <li>Decisions 3–14 days after each stock’s report, or at the first close of each month (monthly sweep).</li>
+      <li>Decisions 3–17 days after each stock’s report, or at the first close of each month (monthly sweep).</li>
       <li>An empty slot is filled at once, any day, with the waiting BUY with the most 12m upside.</li>
-      <li>Only when the stock’s data is <b>ready</b>: forecasts settled (≤ 10% of analysts revised next year in 7 days, or consensus moved &lt; 1%; decided anyway from day 12); fiscal year rolled over at Yahoo; ≥ 3 next-year forecasts; year-after forecasts aligned; data fresh. Otherwise the page shows “pending”.</li>
+      <li>Only when the stock’s data is <b>ready</b>: forecasts settled (at least 50% of analysts revised next year’s forecast since the report, or day 14 reached); fiscal year rolled over at Yahoo; ≥ 3 next-year forecasts; year-after forecasts aligned; data fresh. Otherwise the page shows “pending”.</li>
       <li>Holdings that leave the indexes stay tracked until the rules sell them; a delisted or acquired holding is sold at its last close.</li></ul></div>
     <div class="rule"><b>Portfolio</b><ul style="margin:4px 0 0;padding-left:18px">
       <li><b>10 slots</b> of equal start size; each stock keeps its own money (no trims, no rebalancing).</li>
@@ -207,7 +201,7 @@ const badge = s => `<span class="badge ${s.replace(' ', '')}">${s}</span>`;
 const daysAgo = d => d ? Math.round((Date.parse(D.price_date) - Date.parse(d)) / 864e5) : 1e9;
 const fresh = d => d && daysAgo(d) <= D.rules.highlight;
 const S = D.signals, BY = Object.fromEntries(S.map(r => [r.sym, r]));
-const TABS = ['Signals', 'Earnings', 'Stock detail', 'Performance', 'Trades', 'Strategy'];
+const TABS = ['Signals', 'Stock detail', 'Performance', 'Trades', 'Strategy'];
 
 document.getElementById('meta').textContent = `Last update ${D.updated_utc} UTC · ${D.updated_hk} GMT+8`;
 function showTab(t) {
@@ -256,10 +250,11 @@ const rb = (txt, tip, c = '') => `<span class="rb ${c}" title="${tip.replace(/"/
 function remarks(r) {
   const b = [], wk = [r.gCur, r.g1, r.g2 ?? r.g1].filter(v => v != null);
   const weak = wk.length ? Math.min(...wk) : null;
-  if (r.in_review && r.ready !== false) b.push(rb('review now', `Reported ${r.days_since_report} days ago: analysts are revising, and the model acts in this 3–14 day window.`, 'b'));
+  if (r.in_review && r.ready !== false) b.push(rb('review now', `Reported ${r.days_since_report} days ago and forecasts settled: the model acts in this 3–17 day window.`, 'b'));
   if (r.next_report) { const d = Math.round((Date.parse(r.next_report) - Date.parse(D.price_date)) / 864e5); if (d >= 0 && d <= 7) b.push(rb(`report ${d}d`, `Next earnings report ${r.next_report}.`, 'y')); }
-  if (r.rev30 != null && r.rev30 >= 0.05) b.push(rb('fcst ↑', `Next-year consensus EPS up ${pct(r.rev30, 1)} in 30 days.`, 'g'));
-  if (r.rev30 != null && r.rev30 <= -0.05) b.push(rb('fcst ↓', `Next-year consensus EPS down ${pct(r.rev30, 1)} in 30 days.`, 'r'));
+  const dm = dMove(r);
+  if (dm && dm[1] >= 0.05) b.push(rb('fcst ↑', `Since the last report: ${dm[0]} growth up ${(dm[1] * 100).toFixed(1)} pts (Earnings view).`, 'g'));
+  if (dm && dm[1] <= -0.05) b.push(rb('fcst ↓', `Since the last report: ${dm[0]} growth down ${(-dm[1] * 100).toFixed(1)} pts (Earnings view).`, 'r'));
   if (r.held && r.state !== 'SELL' && weak != null && r.need_out != null && weak - r.need_out < 0.03) b.push(rb('near exit', `Weakest forecast year ${pct(weak)} is within 3 pts of G out ${pctu(r.need_out)}.`, 'r'));
   if (r.state === 'WATCH' && r.room != null) b.push(rb(-r.room < 0.001 ? 'just short' : `${(-r.room * 100).toFixed(1)} pts short`, r.why || '', 'y'));
   if (r.n_analysts && r.n_analysts < 10) b.push(rb('few analysts', `Only ${r.n_analysts} analysts forecast next year (buys need 10).`));
@@ -288,33 +283,45 @@ const STATES = ['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH', 'OUT', 'NO DATA'];
 let stF = new Set(['BUY', 'SELL', 'SOLD', 'HOLD', 'WATCH']);
 const pendBuy = r => r.state === 'BUY' && !r.held && r.pending, pendSell = r => r.state === 'SELL' && r.held && !r.exit_date && r.pending;
 const pendTip = (w, d, p) => (`${w} signal since ${d || '?'} – not traded yet. Pending:\n• ` + p.join('\n• ')).replace(/"/g, '&quot;');
+const isPend = r => pendBuy(r) || pendSell(r);
+const sigCol = ord => ({k: 'state', h: 'Signal', l: 1, t: '(P) = pending: signal not traded yet (hover for what it waits for)', v: r => -ord[r.state] - (isPend(r) ? 0.5 : 0),
+  f: r => `<span class="badge ${r.state.replace(' ', '')}">${r.state}${isPend(r) ? ' (P)' : ''}</span>`,
+  tt: r => pendBuy(r) ? pendTip('Buy', r.entry_date, r.pending) : pendSell(r) ? pendTip('Sell', r.sell_signal, r.pending) : (r.why || '').replace(/"/g, '&quot;')});
 function sigTiles() {
   const c = s => S.filter(r => r.state === s).length;
   const t = [['BUY', c('BUY'), (() => { const w = S.filter(r => r.state === 'BUY' && r.pending).length; return w ? `qualify, not held · ${w} pending` : 'qualify, not held'; })()], ['SELL', c('SELL'), (() => { const w = S.filter(r => r.state === 'SELL' && r.pending).length; return 'held, EPS growth or PEG rule failed' + (w ? ` · ${w} pending` : ''); })()], ['SOLD (7 days)', c('SOLD'), 'recently closed'],
     ['HOLD', c('HOLD'), 'held, still qualify'], ['WATCH', c('WATCH'), '≤ 5 pts short of entry'], ['Prices', D.price_date, 'last close used']];
   document.getElementById('sigTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
 }
+let view = 'sig', repF = 'any';
+try { view = localStorage.getItem('gt_view') === 'earn' ? 'earn' : 'sig'; } catch (e) {}
+const toNext = r => r.next_report ? Math.round((Date.parse(r.next_report) - Date.parse(D.price_date)) / 864e5) : null;
 function sigTable() {
   const q = document.getElementById('sigSearch').value.trim().toUpperCase(), sec = document.getElementById('sigSector').value;
-  const rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
+  let rows = S.filter(r => stF.has(r.state) && (!q || r.sym.includes(q) || (r.name || '').toUpperCase().includes(q)) && (!sec || r.sector === sec));
+  if (view === 'earn') {
+    rows = rows.filter(r => repF === 'any' || (repF === 'past14' && r.days_since_report != null && r.days_since_report <= 14) ||
+      (repF === 'next14' && toNext(r) != null && toNext(r) >= 0 && toNext(r) <= 14));
+    return earnTable(rows);
+  }
   const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
   table('sigTab', [
-    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state), v: r => -ord[r.state], tt: r => (r.why || '').replace(/"/g, '&quot;')}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    sigCol(ord), {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
     {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
-    {k: 'entry_date', h: 'Entry', t: 'buy date; a BUY not bought yet (and WATCH): date the signal started, “pending” = not traded yet (hover for what it waits for)', f: r => (r.entry_date || '–') + (pendBuy(r) ? ' <span class="rb y">pending</span>' : ''), tt: r => pendBuy(r) ? pendTip('Buy', r.entry_date, r.pending) : '', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
+    {k: 'entry_date', h: 'Entry', t: 'buy date; a BUY not bought yet (and WATCH): date the signal started', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
     {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
     {k: 'target', h: '12m tgt', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
     {k: 'upside', h: 'Upside', t: 'target ÷ last price − 1', f: r => pct(r.upside), cls: r => cls(r.upside)},
     {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
-    {k: 'exit_date', h: 'Exit', t: 'sale date; a SELL not sold yet: date the signal started + “pending” (hover for what it waits for). Actual trades: Trades tab', f: r => r.exit_date || (pendSell(r) ? r.sell_signal + ' <span class="rb y">pending</span>' : (r.sell_signal || '–')), v: r => r.exit_date || r.sell_signal || '', tt: r => pendSell(r) ? pendTip('Sell', r.sell_signal, r.pending) : '', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
+    {k: 'exit_date', h: 'Exit', t: 'sale date; a SELL not sold yet: date the signal started. Actual trades: Trades tab', f: r => r.exit_date || r.sell_signal || '–', v: r => r.exit_date || r.sell_signal || '', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
     {k: 'peg', h: 'PEG', t: 'P/E ÷ growth (%) of the weakest forecast year', f: r => num(pegOf(r), 2), v: r => pegOf(r) ?? 99, cls: r => pegOf(r) != null && pegBar(r) != null && pegOf(r) > pegBar(r) ? 'below' : ''},
     {k: 'pegin', h: 'PEG in', t: 'PEG buy limit = sector P/E ÷ 30 (buy only if every year’s PEG is at or below it)', f: r => num(r.sector_pe / 30, 2), v: r => r.sector_pe ?? 99},
     {k: 'pegout', h: 'PEG out', t: 'PEG sell limit = sector P/E ÷ 25 (a holding is sold once any year’s PEG is above it)', f: r => num(r.sector_pe / 25, 2), v: r => r.sector_pe ?? 99}, ...G4,
     {k: 'need_in', h: 'G in', t: 'growth needed to buy at today’s price: the higher of the buy floor and the growth that brings PEG down to PEG in', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'G out', t: 'growth needed to keep a holding: the higher of the keep floor and the growth that keeps PEG at or below PEG out', f: r => pctu(r.need_out)},
-    {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
+    {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
     {k: 'remark', h: 'Remark', l: 1, f: remarks, v: r => remarks(r).length}], rows,
-    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 4], ['EPS growth by fiscal year', 4], ['', 5]]});
+    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 4], ['EPS growth by fiscal year', 4], ['', 4]]});
 }
 function sigInit() {
   const allOn = () => STATES.every(s => stF.has(s));
@@ -328,32 +335,55 @@ function sigInit() {
     sigTable(); }));
   document.getElementById('sigSector').innerHTML = '<option value="">All sectors</option>' + [...new Set(S.map(r => r.sector))].sort().map(s => `<option>${s}</option>`).join('');
   ['sigSearch', 'sigSector'].forEach(id => document.getElementById(id).addEventListener('input', sigTable));
-  sigTiles(); sigTable();
+  const V = [['sig', 'Signals view'], ['earn', 'Earnings view']], R = [['any', 'Any report date'], ['past14', 'Reported in 14 days'], ['next14', 'Reporting in 14 days']];
+  const chipRow = (id, items, cur, set) => { const el = document.getElementById(id);
+    el.innerHTML = items.map(c => `<button type="button" class="${c[0] === cur() ? 'on' : ''}" data-v="${c[0]}">${c[1]}</button>`).join('');
+    el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { set(b.dataset.v); el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); showView(); })); };
+  const showView = () => { ['earnCap', 'repChips'].forEach(id => document.getElementById(id).classList.toggle('hide', view !== 'earn')); sigTable(); };
+  chipRow('viewChips', V, () => view, v => { view = v; try { localStorage.setItem('gt_view', v); } catch (e) {} });
+  chipRow('repChips', R, () => repF, v => { repF = v; });
+  sigTiles(); showView();
 }
 
-/* ---------- Earnings ---------- */
-let calF = 'watch';
-function calTable() {
-  const today = D.price_date;
-  const rows = S.filter(r => calF === 'all' || (calF === 'watch' && (r.held || ['BUY', 'WATCH', 'SELL', 'SOLD'].includes(r.state))) || (calF === 'review' && r.in_review) ||
-    (calF === 'next14' && r.next_report && r.next_report >= today && (Date.parse(r.next_report) - Date.parse(today)) / 864e5 <= 14));
-  table('calTab', [
-    {k: 'state', h: 'Signal', l: 1, f: r => badge(r.state)}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`}, {k: 'name', h: 'Name', l: 1},
-    {k: 'last_report', h: 'Last rpt', f: r => r.last_report || '–'}, {k: 'days_since_report', h: 'Days since', f: r => r.days_since_report ?? '–'},
-    {k: 'in_review', h: 'Review', f: r => r.in_review ? '<b>now</b>' : '–'}, {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
-    {k: 'n_analysts', h: 'Analysts', t: 'analysts forecasting next fiscal year', f: r => r.n_analysts || '–'},
-    {k: 'rev_n7', h: 'Revised 7d', t: 'analysts who changed next year’s forecast in the last 7 days (up / down)', f: r => r.rev_up7 == null ? '–' : `${r.rev_up7 + r.rev_dn7} <span class="sub">(${r.rev_up7}↑ ${r.rev_dn7}↓)</span>`, v: r => r.rev_up7 == null ? -1 : r.rev_up7 + r.rev_dn7},
-    {k: 'rev_n30', h: 'Revised 30d', t: 'analysts who changed next year’s forecast in the last 30 days (up / down)', f: r => r.rev_up30 == null ? '–' : `${r.rev_up30 + r.rev_dn30} <span class="sub">(${r.rev_up30}↑ ${r.rev_dn30}↓)</span>`, v: r => r.rev_up30 == null ? -1 : r.rev_up30 + r.rev_dn30},
-    {k: 'ready', h: 'Forecasts', l: 1, t: 'settled = the model can act; pending = data not mature yet', f: r => r.wait ? `<span class="rb y" title="${r.wait.split('; ').join('\n').replace(/"/g, '&quot;')}">pending</span>` : (r.in_review ? '<span class="rb g">settled</span>' : '–'), v: r => r.wait ? 2 : (r.in_review ? 1 : 0)},
-    {k: 'rev7', h: 'Fcst Δ7d', f: r => pct(r.rev7, 1), cls: r => cls(r.rev7)}, {k: 'rev30', h: 'Fcst Δ30d', f: r => pct(r.rev30, 1), cls: r => cls(r.rev30)},
-    {k: 'rev90', h: 'Fcst Δ90d', f: r => pct(r.rev90, 1), cls: r => cls(r.rev90)}, ...G4],
-    rows, {sort: 'next_report', dir: 1, click: openDetail});
+/* ---------- Earnings view (Signals tab): forecasts at the last report vs now ---------- */
+const COLS4 = [['Last', 'last fiscal year'], ['Cur', 'current fiscal year'], ['+1', 'next fiscal year'], ['+2', 'fiscal year after next']];
+const nowG = (r, i) => [r.gLast, r.gCur, r.g1, r.g2][i];
+const prevG = (r, i) => r.p_g ? r.p_g[i] : null;
+const inPrev = (r, i) => r.p_fy && r.fy && r.p_fy.includes(r.fy[i]);           // this fiscal year was in the last-report set
+const dG = (r, i) => nowG(r, i) != null && prevG(r, i) != null ? nowG(r, i) - prevG(r, i) : null;
+const dMove = r => { let best = null; [1, 2, 3].forEach(i => { const d = dG(r, i); if (d != null && (!best || Math.abs(d) > Math.abs(best[1]))) best = [COLS4[i][0], d]; }); return best; };
+const eps = v => v == null ? '–' : v.toFixed(2);
+const pctD = v => v == null ? '–' : (v >= 0 ? '+' : '') + (v * 100).toFixed(1);
+function dTip(r, i) {
+  const a = r.p_eps ? r.p_eps[i] : null, b = r.eps_fy ? r.eps_fy[i] : null;
+  if (!r.fy) return '';
+  if (r.p_asof && !inPrev(r, i)) return `FY${r.fy[i]} was not in the last-report set (added after the fiscal-year rollover)`;
+  if (!r.p_asof) return 'No forecast logged before the latest report (history starts 21 Oct 2026): change shown from the next report on.';
+  return `FY${r.fy[i]} before the ${r.last_report} report (${r.p_asof}) → now:\nEPS ${eps(a)} → ${eps(b)}` + (a > 0 && b != null ? ` (${pct(b / a - 1, 1)})` : '') +
+    '\ngrowth ' + pct(prevG(r, i), 1) + ' → ' + pct(nowG(r, i), 1) + (r.p_approx ? `\n≈ ${r.p_approx}` : '');
 }
-function calInit() {
-  const C = [['watch', 'Holdings + signals'], ['review', 'In review window'], ['next14', 'Reporting in 14 days'], ['all', 'All']];
-  document.getElementById('calChips').innerHTML = C.map(c => `<button type="button" class="${c[0] === calF ? 'on' : ''}" data-c="${c[0]}">${c[1]}</button>`).join('');
-  document.querySelectorAll('#calChips button').forEach(b => b.addEventListener('click', () => { calF = b.dataset.c; document.querySelectorAll('#calChips button').forEach(x => x.classList.toggle('on', x === b)); calTable(); }));
-  calTable();
+function earnTable(rows) {
+  const ord = {SELL: 0, BUY: 1, SOLD: 2, HOLD: 3, WATCH: 4, OUT: 5, 'NO DATA': 6};
+  const dTxt = (d, isNew) => d != null ? ` <span class="sub ${clsm(d)}">(${Math.round(d) > 0 ? '+' : ''}${Math.round(d)})</span>` : (isNew ? ' <span class="sub">(new)</span>' : '');
+  const nowCols = COLS4.map(([h, t], i) => {
+    const base = i === 0 ? {f: r => pct(r.gLast) + (r.lastFlag ? ic(`Likely distorted by one-off items (${r.lastFlag.split(':')[0]}); the Signals view shows the trailing 12-month growth ${pct(r.trail)} instead.`) : ''), cls: r => cls(r.gLast)}
+                         : {f: G4[i].f, cls: G4[i].cls};
+    return {k: 'n' + i, h, t: `EPS growth, ${t} now; (bracket) = change since the last report in % points. Hover for the EPS change`, v: r => nowG(r, i) ?? (i === 3 ? r.g1 : null),
+      f: r => base.f(r) + dTxt(dG(r, i) == null ? null : dG(r, i) * 100, r.p_asof && r.fy && !inPrev(r, i)), cls: base.cls, tt: r => dTip(r, i).replace(/"/g, '&quot;')};
+  });
+  const dN = r => r.n_analysts && r.p_n != null ? r.n_analysts - r.p_n : null;
+  table('sigTab', [
+    sigCol(ord), {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
+    {k: 'name', h: 'Name', l: 1},
+    {k: 'last_report', h: 'Last rpt', f: r => r.last_report || '–', cls: r => fresh(r.last_report) ? 'hl' : ''},
+    {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
+    {k: 'rev_since', h: 'Revised', t: 'analysts who revised next year’s forecast since the latest report / analysts forecasting next year (Yahoo counts; hover for how it is counted). Settled at 50%, or on day 14', v: r => r.rev_n ? r.rev_since / r.rev_n : null,
+     f: r => r.rev_since == null || !r.rev_n || r.days_since_report == null || r.days_since_report > 30 ? '–' : `${r.rev_since}/${r.rev_n} <span class="sub">(${Math.min(100, Math.round(100 * r.rev_since / r.rev_n))}%)</span>`,
+     cls: r => r.rev_n && r.rev_since / r.rev_n >= 0.5 ? 'pos' : '', tt: r => r.rev_how || ''},
+    {k: 'ready', h: 'Forecasts', l: 1, t: 'settled = the model can act; pending = data not mature yet (hover)', f: r => r.wait ? `<span class="rb y" title="${r.wait.split('; ').join('\n').replace(/"/g, '&quot;')}">pending</span>` : (r.in_review ? '<span class="rb g">settled</span>' : '–'), v: r => r.wait ? 2 : (r.in_review ? 1 : 0)},
+    ...nowCols,
+    {k: 'n_analysts', h: '#', t: 'analysts forecasting next year now; (bracket) = change since the last report', f: r => (r.n_analysts || '–') + (dN(r) != null ? ` <span class="sub">(${dN(r) > 0 ? '+' : ''}${dN(r)})</span>` : '')}],
+    rows, {sort: 'last_report', click: openDetail, groups: [['', 3], ['Reports', 4], ['EPS growth by fiscal year now (change since the last report, % points)', 5]]});
 }
 
 /* ---------- line chart ---------- */
@@ -400,7 +430,7 @@ let detSym = null;
 function openDetail(sym) { detSym = sym; document.getElementById('detSearch').value = sym; showTab('Stock detail'); }
 function detail() {
   const r = BY[detSym], el = document.getElementById('detBody');
-  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in Signals / Earnings / Trades.</p>'; return; }
+  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in Signals / Trades.</p>'; return; }
   let meter = '';
   if (r.fwd != null) {
     const mx = Math.max(r.need_in * 1.6, r.fwd, r.trail, 0.1), mn = Math.min(0, r.fwd, r.trail), P = v => ((v - mn) / (mx - mn) * 100).toFixed(1) + '%';
@@ -415,7 +445,7 @@ function detail() {
     ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
     ['Remarks', remarks(r) || '–'],
     ['Trailing 12m / 2-yr average forecast', pct(r.trail) + ' / ' + pct(r.fwd)], ['G in / G out', `${pctu(r.need_in)} / ${pctu(r.need_out)}`],
-    ['Analysts (FY+1)', r.n_analysts || '–'], ['Fcst Δ 7 / 30 / 90 days', [pct(r.rev7, 1), pct(r.rev30, 1), pct(r.rev90, 1)].join(' / ')],
+    ['Analysts (FY+1)', r.n_analysts || '–'], ['Growth Δ since last report (Cur / +1 / +2)', r.p_asof ? [1, 2, 3].map(i => dG(r, i) == null ? '–' : pctD(dG(r, i)) + ' pts').join(' / ') + (r.p_approx ? ' ≈' : '') + ` <span class="sub">(vs ${r.p_asof})</span>` : '–'],
     ['12m target (peak est.)', r.target != null ? `${px(r.target)} (${pct(r.upside)} upside; P/E change ${pct(r.pe_chg)}; ${r.tkind})` : '–'],
     ['Last / next report', (r.last_report || '–') + ' / ' + (r.next_report || '–')]];
   el.innerHTML = `<h2>${r.sym} · ${r.name}</h2><p class="cap">${r.sector}${r.ndx ? ' · Nasdaq-100' : ''}${r.sp500 ? ' · S&amp;P 500' : ''} — ${r.why || ''}</p>${meter}
@@ -460,7 +490,7 @@ function perfInit() {
   document.querySelectorAll('#winChips button').forEach(b => b.addEventListener('click', () => { win = b.dataset.w; document.querySelectorAll('#winChips button').forEach(x => x.classList.toggle('on', x === b)); riskTable(); }));
   document.getElementById('riskCap').innerHTML = "Daily returns; target (MAR) 4% a year, as in the Sortino dashboard. Annual return = compound growth; downside deviation = √252 × RMS of daily shortfalls below 4%; Sortino = (annual return − 4%) ÷ downside deviation. Strategy (backtest) = median run of Backtest 1 (price only, ~1%/yr below total return), ending Sep 2026. Model (live) appears after ~3 months. Common = days all series exist.";
   const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', '10 slots of equal start size, no rebalancing; a sale’s money funds the next buy; fractional shares'],
-    ['Acts on', '3–14 days after a report, or first close of each month; empty slots any day'], ['Prices used', D.price_date + ' close']];
+    ['Acts on', '3–17 days after a report once forecasts settle, or first close of each month; empty slots any day'], ['Prices used', D.price_date + ' close']];
   document.getElementById('setupTab').innerHTML = st.map(x => `<tr><td class="l">${x[0]}</td><td>${x[1]}</td></tr>`).join('');
   riskTable();
 }
@@ -504,7 +534,7 @@ function stratInit() {
     ['G in / G out', 'The growth a stock needs at today’s price to pass both rules: G in = max(buy floor, P/E ÷ PEG in), G out = max(keep floor, P/E ÷ PEG out). Red years are below the one that matters for the row.'],
     ['Red year', 'A forecast year below the growth that matters for the row: G in for stocks not held, G out for holdings.'],
     ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
-    ['Remark badges', 'review now (3–14 days after a report, data ready) · data pending (data not ready, non-BUY/SELL rows) · report Nd (report within a week) · fcst ↑/↓ (consensus ±5% in 30 days) · near exit (within 3 pts of G out) · N pts short (WATCH) · few analysts (&lt; 10) · one-off / one-off qtr (distorted figures replaced) · FY+2 n/a · target: growth only · watchlist · left index. Hover for details.'],
+    ['Remark badges', 'review now (3–14 days after a report, data ready) · data pending (data not ready, non-BUY/SELL rows) · report Nd (report within a week) · fcst ↑/↓ (a forecast year’s growth ±5 pts since the last report) · near exit (within 3 pts of G out) · N pts short (WATCH) · few analysts (&lt; 10) · one-off / one-off qtr (distorted figures replaced) · FY+2 n/a · target: growth only · watchlist · left index. Hover for details.'],
     ['WATCH', 'Not held; weakest growth at most 5 pts below G in, or passes both rules with fewer than 10 analysts. Information only.'],
     ['Fcst Δ30d', 'Change of the next-year consensus EPS over the last 30 days.']];
   document.getElementById('guide').innerHTML = guide.map(g => `<tr><td class="l"><b>${g[0]}</b></td><td class="l" style="white-space:normal">${g[1]}</td></tr>`).join('');
@@ -546,8 +576,8 @@ document.getElementById('detSearch').addEventListener('change', e => { detSym = 
 document.getElementById('themeBtn').addEventListener('click', () => { const de = document.documentElement, dark = de.dataset.theme === 'dark' || (!de.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches); de.dataset.theme = dark ? 'light' : 'dark'; drawCharts(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawCharts);
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { drawCharts(); syncBars(); }, 150); });
-sigInit(); calInit(); perfInit(); trInit(); stratInit(); detail();
-let first = 'Signals'; try { first = localStorage.getItem('gt_tab') || first; } catch (e) {}
+sigInit(); perfInit(); trInit(); stratInit(); detail();
+let first = 'Signals'; try { first = TABS.includes(localStorage.getItem('gt_tab')) ? localStorage.getItem('gt_tab') : first; } catch (e) {}
 if (location.hash) first = decodeURIComponent(location.hash.slice(1));
 showTab(TABS.includes(first) ? first : 'Signals');
 </script>

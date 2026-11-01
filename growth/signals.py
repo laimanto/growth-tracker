@@ -111,7 +111,36 @@ def curve(y, n):
     return pd.concat([c, tail]), pts, g2
 
 
-def compute(U, recs, closes, held=(), today=None):
+def fy_growth(y, n, q):
+    """EPS growth of the last (actual), current, next and next-but-one fiscal year from one Yahoo / Nasdaq record:
+    {"fy": [years], "gLast", "lastFlag", "gCur", "g1", "g2", "eps": {year: EPS}, "nfy": {year: analysts}} (empty without a fiscal-year end)."""
+    est = y.get("est") or {}
+    e0, e1 = est.get("0y") or {}, est.get("+1y") or {}
+    if not y.get("nextFye"):
+        return {}
+    f0 = pd.Timestamp(y["nextFye"])
+    fl, fll = fy_from_q(q, f0 - pd.DateOffset(years=1)), fy_from_q(q, f0 - pd.DateOffset(years=2))
+    o = {"fy": [f0.year - 1, f0.year, f0.year + 1, f0.year + 2]}
+    o["gLast"] = fl / fll - 1 if fl and fll and fl > 0 and fll > 0 else None
+    ya = e0.get("yearAgoEps")                         # analysts' actual for the last fiscal year
+    if o["gLast"] is not None and ya and ya > 0 and abs(fl / ya - 1) > 0.15:
+        o["lastFlag"] = (f"reported quarters of FY{f0.year - 1} add up to {fl:.2f} vs the analysts’ actual {ya:.2f}: "
+                         f"one-off items (tax, write-downs, gains) likely distort this growth figure")
+    o["gCur"] = e0["avg"] / ya - 1 if e0.get("avg") and ya and ya > 0 and e0["avg"] > 0 else None
+    o["g1"] = e1["avg"] / e0["avg"] - 1 if e1.get("avg") and e0.get("avg") and e0["avg"] > 0 and e1["avg"] > 0 else None
+    _, pts, o["g2"] = curve(y, n)
+    o["eps"] = {f0.year - 1 + i: v for i, v in enumerate([ya, e0.get("avg"), e1.get("avg")]) if v is not None}
+    if pts and len(pts) == 4:
+        o["eps"][f0.year + 2] = pts[3][1]
+    rows_n = (n or {}).get("rows") or []
+    f2 = f0 + pd.DateOffset(years=2)
+    b = next((r for r in rows_n if abs((pd.Timestamp(r["fye"]) - f2).days) < 40), None)
+    o["nfy"] = {f0.year: e0.get("numberOfAnalysts"), f0.year + 1: e1.get("numberOfAnalysts"), f0.year + 2: (b or {}).get("n")}
+    return o
+
+
+def compute(U, recs, closes, held=(), today=None, revs=None):
+    """revs = reports.revisions(): analysts revising next year since the latest report (settle test)."""
     today = pd.Timestamp(today or date.today())
     last_close = closes.index[closes.index <= today].max()
     m_now = today + pd.offsets.MonthEnd(0)
@@ -133,51 +162,33 @@ def compute(U, recs, closes, held=(), today=None):
         if last_rep is not None:
             row["days_since_report"] = int((today.normalize() - last_rep).days)
             row["in_review"] = C.REVIEW[0] <= row["days_since_report"] <= C.REVIEW[1]
-        tr = (y.get("trend") or {}).get("+1y") or {}
-        cur = tr.get("current")
-        for k, lab in (("7daysAgo", "rev7"), ("30daysAgo", "rev30"), ("90daysAgo", "rev90")):
-            row[lab] = (cur / tr[k] - 1) if cur and tr.get(k) and cur > 0 and tr[k] > 0 else None
         # fiscal-year growth: last (actual), current, +1, +2
-        est = y.get("est") or {}
-        e0, e1 = est.get("0y") or {}, est.get("+1y") or {}
+        e1 = (y.get("est") or {}).get("+1y") or {}
         c, pts, g2 = curve(y, n)
         if c is not None:
             curves[s] = c
-        if y.get("nextFye"):
-            f0 = pd.Timestamp(y["nextFye"])
-            fl, fll = fy_from_q(q, f0 - pd.DateOffset(years=1)), fy_from_q(q, f0 - pd.DateOffset(years=2))
-            row["fy"] = [f0.year - 1, f0.year, f0.year + 1, f0.year + 2]
-            row["gLast"] = fl / fll - 1 if fl and fll and fl > 0 and fll > 0 else None
-            ya = e0.get("yearAgoEps")                         # analysts' actual for the last fiscal year
-            if row["gLast"] is not None and ya and ya > 0 and abs(fl / ya - 1) > 0.15:
-                row["lastFlag"] = (f"reported quarters of FY{f0.year - 1} add up to {fl:.2f} vs the analysts’ actual {ya:.2f}: "
-                                   f"one-off items (tax, write-downs, gains) likely distort this growth figure")
-            row["gCur"] = e0["avg"] / e0["yearAgoEps"] - 1 if e0.get("avg") and e0.get("yearAgoEps") and e0["yearAgoEps"] > 0 and e0["avg"] > 0 else None
-            row["g1"] = e1["avg"] / e0["avg"] - 1 if e1.get("avg") and e0.get("avg") and e0["avg"] > 0 and e1["avg"] > 0 else None
-            row["g2"] = g2
+        fg = fy_growth(y, n, q)
+        row.update({k: fg[k] for k in ("fy", "gLast", "lastFlag", "gCur", "g1", "g2") if k in fg})
+        row["fy_eps"], row["fy_n"] = fg.get("eps"), fg.get("nfy")
         row["fy_points"] = [[str(pd.Timestamp(d).date()), round(float(v), 4)] for d, v in (pts or [])]
         row["qh"] = [[str(d.date()), v] for d, v in q][-12:]
         row["n_analysts"] = int(e1.get("numberOfAnalysts") or 0)
-        rvv = (y.get("revs") or {}).get("+1y") or {}
-        if rvv:
-            row["rev_up7"], row["rev_dn7"] = rvv.get("upLast7days"), rvv.get("downLast7Days", rvv.get("downLast7days"))
-            row["rev_up30"], row["rev_dn30"] = rvv.get("upLast30days"), rvv.get("downLast30days")
         # readiness to act (v1.9): settled forecasts after a report, fiscal-year rollover, fresh data
         wait, dsr = [], row.get("days_since_report")
         dm = lambda k: f"{(last_rep + pd.Timedelta(days=k)).day} {last_rep + pd.Timedelta(days=k):%b}"
+        rvs = (revs or {}).get(s)
+        if rvs:
+            row["rev_since"], row["rev_n"], row["rev_how"] = rvs["rev"], rvs["n"], rvs["how"]
         if dsr is not None and dsr <= C.REVIEW[1]:
             if dsr < C.REVIEW[0]:
                 wait.append(f"just reported ({row['last_report']}): no trade before day {C.REVIEW[0]} ({dm(C.REVIEW[0])}) while analysts update")
-            elif dsr < C.REVIEW[1] - 2:                      # from day 12 decide anyway (day 14 may fall on a weekend)
-                rv = (y.get("revs") or {}).get("+1y") or {}
-                n7 = (rv.get("upLast7days") or 0) + (rv.get("downLast7Days") or rv.get("downLast7days") or 0)
-                busy_n = bool(rv) and n7 > max(1, C.SETTLE_SHARE * max(row["n_analysts"], 1))
-                busy_c = row["rev7"] is not None and abs(row["rev7"]) >= C.SETTLE_MOVE
-                if (busy_n and busy_c) if rv else busy_c:
-                    late = f" – trades anyway from day {C.REVIEW[1] - 2} ({dm(C.REVIEW[1] - 2)})"
-                    wait.append(f"analysts still updating after the {row['last_report']} report: {n7} of {row['n_analysts']} ({n7 / max(row['n_analysts'], 1):.0%}) "
-                                f"changed next year’s forecast in 7 days (needs ≤ {C.SETTLE_SHARE:.0%}) and the consensus moved {row['rev7']:+.1%} (needs < {C.SETTLE_MOVE:.0%})" + late if rv else
-                                f"analysts still updating after the {row['last_report']} report: next-year consensus moved {row['rev7']:+.1%} in 7 days (needs < {C.SETTLE_MOVE:.0%})" + late)
+            elif dsr < C.SETTLE_DAY:
+                # settled once >= 50% of analysts revised next year's forecast since the report, else on day 14 (user 2026-11-01)
+                share = rvs["rev"] / rvs["n"] if rvs and rvs["n"] else None
+                if share is None or share < C.SETTLE_SHARE:
+                    got = (f"{rvs['rev']} of {rvs['n']} analysts ({min(share, 1):.0%}) revised next year’s forecast since the {row['last_report']} report"
+                           if share is not None else f"no revision count since the {row['last_report']} report")
+                    wait.append(f"forecasts not settled: {got} (needs {C.SETTLE_SHARE:.0%}) – settled on day {C.SETTLE_DAY} ({dm(C.SETTLE_DAY)}) at the latest")
                 if y.get("nextFye") and last_rep is not None and last_rep > pd.Timestamp(y["nextFye"]) + pd.Timedelta(days=20):
                     wait.append("Yahoo has not switched to the new fiscal year yet (still shows the year just reported)")
                 elif 0 < row["n_analysts"] < C.ROLLOVER_MIN:
@@ -188,6 +199,8 @@ def compute(U, recs, closes, held=(), today=None):
                     late = max(pd.Timestamp(r_["fye"]) for r_ in rows_n) >= f2_ - pd.Timedelta(days=40)
                     if late and not any(abs((pd.Timestamp(r_["fye"]) - f2_).days) < 40 for r_ in rows_n):
                         wait.append("the two-years-ahead (FY+2) forecast from Nasdaq is not for the same year as Yahoo’s yet")
+        if nxt and 0 <= (today.normalize() - pd.Timestamp(nxt)).days <= C.REPORT_WAIT and (last_rep is None or (pd.Timestamp(nxt) - last_rep).days > 7):
+            wait.append(f"reported on {nxt}, but the new quarter is not in Yahoo’s data yet (re-downloaded daily)")
         ya_ = y.get("asof")
         if not ya_ or (today.normalize() - pd.Timestamp(ya_)).days > C.STALE_DAYS:
             wait.append(f"Yahoo data {'missing' if not ya_ else str((today.normalize() - pd.Timestamp(ya_)).days) + ' days old'} (max {C.STALE_DAYS}): waiting for a fresh download")

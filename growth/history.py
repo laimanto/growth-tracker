@@ -5,10 +5,14 @@ assumption (anchored forecasts w 0.6 + 30% log error, AR 0.9 - Research Part 19)
   forecasts_YYYY.csv  every consensus download, as fetched (before one-off adjustments):
                         date, sym, src, period, end, avg, low, high, n, year_ago, up7, dn7, up30, dn30
                         src yahoo: period 0q / +1q / 0y / +1y (end = fiscal-year end; quarter ends approximate)
-                        src nasdaq: period FY, end = fiscal-year end (FY+1..FY+3)
+                        src nasdaq: period FY (fiscal years) / Q (quarters, from 2026-11), end = period end;
+                          up30 / dn30 = Zacks' analysts revising up / down in the last 4 weeks, low / high from 2026-11
                         src yahoo_trend: one-time seed from Yahoo's 7 / 30 / 60 / 90 days-ago consensus (0y / +1y)
   actuals.csv         reported quarterly EPS and the consensus estimate just before the report:
                         sym, report_date, actual, estimate, first_seen  (a new row only for a new or restated quarter)
+  trend_YYYY.csv      Yahoo's consensus now and 7 / 30 / 60 / 90 days ago at every download (from 2026-11):
+                        date, sym, period (0y / +1y), end, current, d7, d30, d60, d90
+  report_revisions.csv  rebuilt each run by reports.py: analysts revising and consensus change after each report
   signals_YYYY.csv    the rule's inputs and outputs per stock per price date (re-runs replace that date):
                         date, sym, state, held, ready, price, pe, sector_pe, trail, gLast, gCur, g1, g2, fwd, n_analysts,
                         target, upside, tkind
@@ -24,6 +28,7 @@ import pandas as pd
 import config as C
 
 HIST = os.path.join(C.DATA, "history")
+T_COLS = ["date", "sym", "period", "end", "current", "d7", "d30", "d60", "d90"]
 F_COLS = ["date", "sym", "src", "period", "end", "avg", "low", "high", "n", "year_ago", "up7", "dn7", "up30", "dn30"]
 A_COLS = ["sym", "report_date", "actual", "estimate", "first_seen"]
 S_COLS = ["date", "sym", "state", "held", "ready", "price", "pe", "sector_pe", "trail", "gLast", "gCur", "g1", "g2", "fwd",
@@ -109,11 +114,28 @@ def record(recs, S=None, TG=None, log=print):
                 rows += _trend_rows(s, y)
             rows += _yahoo_rows(s, y)
         if n.get("asof") and (s, "nasdaq", n["asof"]) not in seen:
-            rows += [{"date": n["asof"], "sym": s, "src": "nasdaq", "period": "FY", "end": r.get("fye", ""),
-                      "avg": _num(r.get("eps")), "n": _num(r.get("n"), 0)} for r in n.get("rows") or []]
+            rows += [{"date": n["asof"], "sym": s, "src": "nasdaq", "period": per, "end": r.get("fye", ""),
+                      "avg": _num(r.get("eps")), "n": _num(r.get("n"), 0), "low": _num(r.get("low")), "high": _num(r.get("high")),
+                      "up30": _num(r.get("up"), 0), "dn30": _num(r.get("down"), 0)}
+                     for per, key in (("FY", "rows"), ("Q", "qrows")) for r in n.get(key) or []]
     rows = [r for r in rows if (r["sym"], r["src"], r["date"]) not in seen]
     for yr in sorted({r["date"][:4] for r in rows}):
         _append(os.path.join(HIST, f"forecasts_{yr}.csv"), F_COLS, [r for r in rows if r["date"][:4] == yr])
+    # ---- Yahoo's days-ago consensus at each new Yahoo download (same batches as above)
+    trows = []
+    for s, rec in recs.items():
+        y = rec.get("yahoo") or {}
+        if s in C.SHARE_CLASS or not y.get("asof") or (s, "yahoo", y["asof"]) in seen:
+            continue
+        f0 = pd.Timestamp(y["nextFye"]) if y.get("nextFye") else None
+        for p, end in (("0y", f0), ("+1y", f0 + pd.DateOffset(years=1) if f0 is not None else None)):
+            t = (y.get("trend") or {}).get(p) or {}
+            if t:
+                trows.append({"date": y["asof"], "sym": s, "period": p, "end": str(end.date()) if end is not None else "",
+                              "current": _num(t.get("current")), "d7": _num(t.get("7daysAgo")), "d30": _num(t.get("30daysAgo")),
+                              "d60": _num(t.get("60daysAgo")), "d90": _num(t.get("90daysAgo"))})
+    for yr in sorted({r["date"][:4] for r in trows}):
+        _append(os.path.join(HIST, f"trend_{yr}.csv"), T_COLS, [r for r in trows if r["date"][:4] == yr])
     # ---- reported quarters (Yahoo keeps only a window; this file keeps all of them)
     pa = os.path.join(HIST, "actuals.csv")
     a = _read(pa, A_COLS)
