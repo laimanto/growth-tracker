@@ -309,8 +309,8 @@ function sigTable() {
     sigCol(ord), {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`},
     {k: 'name', h: 'Name', l: 1}, {k: 'sector', h: 'Sector', l: 1},
     {k: 'entry_date', h: 'Entry', t: 'buy date; a BUY not bought yet (and WATCH): date the signal started', f: r => r.entry_date || '–', cls: r => fresh(r.entry_date) && r.state !== 'SOLD' ? 'hl' : ''},
-    {k: 'entry_px', h: 'Entry px', f: r => px(r.entry_px)}, {k: 'price', h: 'Last px', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
-    {k: 'target', h: '12m tgt', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
+    {k: 'entry_px', h: 'Entry $', f: r => px(r.entry_px)}, {k: 'price', h: 'Last $', f: r => px(r.state === 'SOLD' ? r.exit_px : r.price)},
+    {k: 'target', h: '12m $', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
     {k: 'upside', h: 'Upside', t: 'target ÷ last price − 1', f: r => pct(r.upside), cls: r => cls(r.upside)},
     {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
     {k: 'exit_date', h: 'Exit', t: 'sale date; a SELL not sold yet: date the signal started. Actual trades: Trades tab', f: r => r.exit_date || r.sell_signal || '–', v: r => r.exit_date || r.sell_signal || '', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
@@ -440,13 +440,13 @@ function detail() {
       <div class="meter">${mk(r.need_out, '--sell')}${mk(r.need_in, '--buy')}${mk(r.trail, '--s3')}${mk(r.fwd, '--s1')}</div>`;
   }
   const fy = i => r.fy ? 'FY' + r.fy[i] : '';
-  const kv = [['Signal', badge(r.state) + (r.pending ? ' <span class="rb y">pending</span>' : '') + (r.since ? ` since ${r.since}` : '') + (r.pending ? '<div class="sub">Pending:<br>• ' + r.pending.join('<br>• ') + '</div>' : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last price', px(r.price) + ` (${D.price_date})`],
+  const kv = [['Signal', badge(r.state) + (r.pending ? ' <span class="rb y">pending</span>' : '') + (r.since ? ` since ${r.since}` : '') + (r.pending ? '<div class="sub">Pending:<br>• ' + r.pending.join('<br>• ') + '</div>' : '')], ['Entry', r.entry_date ? `${r.entry_date} @ ${px(r.entry_px)}` : '–'], ['Last $', px(r.price) + ` (${D.price_date})`],
     ['P&L', r.pnl_pct != null ? pct(r.pnl_pct, 1) + ' · ' + money(r.pnl) : '–'], ['P/E · sector P/E', `${num(r.pe)} · ${num(r.sector_pe)}`], ['PEG (weakest year) · PEG in / out', `${num(pegOf(r), 2)} · ${num(r.sector_pe / 30, 2)} / ${num(r.sector_pe / 25, 2)}`],
     ['EPS growth ' + [fy(0), fy(1), fy(2), fy(3)].join(' / '), [pct(lastG(r)), pct(r.gCur), pct(r.g1), pct(r.g2 ?? r.g1)].join(' / ') + (r.lastFlag ? '<br><span class="cap">Last = trailing 12 months; ' + r.lastFlag + '</span>' : '')],
     ['Remarks', remarks(r) || '–'],
     ['Trailing 12m / 2-yr average forecast', pct(r.trail) + ' / ' + pct(r.fwd)], ['G in / G out', `${pctu(r.need_in)} / ${pctu(r.need_out)}`],
     ['Analysts (FY+1)', r.n_analysts || '–'], ['Growth Δ since last report (Cur / +1 / +2)', r.p_asof ? [1, 2, 3].map(i => dG(r, i) == null ? '–' : pctD(dG(r, i)) + ' pts').join(' / ') + (r.p_approx ? ' ≈' : '') + ` <span class="sub">(vs ${r.p_asof})</span>` : '–'],
-    ['12m target (peak est.)', r.target != null ? `${px(r.target)} (${pct(r.upside)} upside; P/E change ${pct(r.pe_chg)}; ${r.tkind})` : '–'],
+    ['12m $ (peak est.)', r.target != null ? `${px(r.target)} (${pct(r.upside)} upside; P/E change ${pct(r.pe_chg)}; ${r.tkind})` : '–'],
     ['Last / next report', (r.last_report || '–') + ' / ' + (r.next_report || '–')]];
   el.innerHTML = `<h2>${r.sym} · ${r.name}</h2><p class="cap">${r.sector}${r.ndx ? ' · Nasdaq-100' : ''}${r.sp500 ? ' · S&amp;P 500' : ''} — ${r.why || ''}</p>${meter}
     <div class="grid2"><div><table>${kv.map(k => `<tr><td class="l">${k[0]}</td><td>${k[1]}</td></tr>`).join('')}</table></div>
@@ -512,8 +512,8 @@ function pfSector() {
 function trInit() {
   const rows = D.trips.map(t => Object.assign({name: (BY[t.sym] || {}).name, days: Math.round(((t.exit_date ? Date.parse(t.exit_date) : Date.parse(D.price_date)) - Date.parse(t.entry_date)) / 864e5)}, t));
   table('tripTab', [{k: 'status', h: 'Status', l: 1, f: r => badge(r.status)}, {k: 'sym', h: 'Ticker', l: 1, f: r => `<b>${r.sym}</b>`}, {k: 'name', h: 'Name', l: 1},
-    {k: 'entry_date', h: 'Buy date', f: r => r.entry_date, cls: r => fresh(r.entry_date) ? 'hl' : ''}, {k: 'entry_px', h: 'Buy px', f: r => px(r.entry_px)},
-    {k: 'exit_date', h: 'Sell date', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''}, {k: 'exit_px', h: 'Sell px', f: r => r.exit_px != null ? px(r.exit_px) : (r.last_px != null ? px(r.last_px) + ' (last)' : '–')},
+    {k: 'entry_date', h: 'Buy date', f: r => r.entry_date, cls: r => fresh(r.entry_date) ? 'hl' : ''}, {k: 'entry_px', h: 'Buy $', f: r => px(r.entry_px)},
+    {k: 'exit_date', h: 'Sell date', f: r => r.exit_date || '–', cls: r => fresh(r.exit_date) ? 'hl' : ''}, {k: 'exit_px', h: 'Sell $', f: r => r.exit_px != null ? px(r.exit_px) : (r.last_px != null ? px(r.last_px) + ' (last)' : '–')},
     {k: 'bought', h: 'Invested', f: r => money(r.bought)}, {k: 'pnl', h: 'P&L', f: r => money(r.pnl), cls: r => clsm(r.pnl)}, {k: 'pnl_pct', h: 'P&L %', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
     {k: 'days', h: 'Days', f: r => r.days}, {k: 'entry_reason', h: 'Buy reason', l: 1, rsn: 1}, {k: 'exit_reason', h: 'Sell reason', l: 1, rsn: 1, f: r => r.exit_reason || '–'}],
     rows, {sort: 'entry_date', click: openDetail});
@@ -527,9 +527,9 @@ function stratInit() {
   const B = D.backtest, A = B.sumA, Bs = B.sumB;
   document.getElementById('ruleEx').innerHTML = 'Example: a tech stock with P/E 26 and 40% growth has PEG 0.65; with the tech sector at P/E 26 its buy limit is 26 ÷ 30 = 0.87, so it passes. If its price rose 60% with the same forecasts, PEG 1.04 would reach the sell limit 26 ÷ 25 = 1.04. Each stock’s current PEG and limit are in the Signals table.';
   if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market P/E ${D.floor.mkt_pe} → G must be at least <b>${pctu(D.floor.in, 1)}</b> to buy and <b>${pctu(D.floor.out, 1)}</b> to keep.`;
-  const guide = [['Entry / Entry px', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close). Highlighted for 7 days.'],
+  const guide = [['Entry / Entry $ / Last $', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close), and the last close (SOLD: the sale price). Highlighted for 7 days.'],
     ['Exit', 'SELL: date the signal started; SOLD: date sold (listed 7 days, then in Trades).'],
-    ['12m tgt / Upside', 'Expected 12-month peak price (see 12m target above). Backtest 2008–24: peak within ±20% of it 57% of the time, no bias; selling at it would have cut returns (+18% vs +27%).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
+    ['12m $ / Upside', 'Expected 12-month peak price (see 12m target above). Backtest 2008–24: peak within ±20% of it 57% of the time, no bias; selling at it would have cut returns (+18% vs +27%).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
     ['PEG in / PEG out', 'PEG limits for the stock’s sector: buy only if every year’s PEG ≤ sector P/E ÷ 30 (PEG in); sell once any forecast year’s PEG > sector P/E ÷ 25 (PEG out).'],
     ['G in / G out', 'The growth a stock needs at today’s price to pass both rules: G in = max(buy floor, P/E ÷ PEG in), G out = max(keep floor, P/E ÷ PEG out). Red years are below the one that matters for the row.'],
     ['Red year', 'A forecast year below the growth that matters for the row: G in for stocks not held, G out for holdings.'],

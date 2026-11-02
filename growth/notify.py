@@ -120,7 +120,7 @@ def build(L, S, T, TG, st):
     for t in [t for t in trades if t["side"] == "BUY"]:
         tg = TG.loc[t["sym"]] if t["sym"] in TG.index else None
         rows = [("Bought", f"{t['price_date']} close at {_px(t['price'])} ({t['shares']:,.2f} shares, {_usd(t['value'])})"),
-                ("12m target", f"{_px(tg.target)} ({_pct(tg.upside)})" if tg is not None else "n/a"), ("Why", t["reason"])]
+                ("12m $", f"{_px(tg.target)} ({_pct(tg.upside)})" if tg is not None else "n/a"), ("Why", t["reason"])]
         out.append(f"### 🔵 BUY {t['sym']} · {nm(t['sym'])}\n\n" + _table(rows))
         title.append(f"BUY {t['sym']}")
     w_new = {s: w for s, w in W.items() if s not in w_old}
