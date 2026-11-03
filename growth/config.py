@@ -19,8 +19,8 @@ TEMPLATE = os.path.join(ROOT, "growth", "template.html")
 
 # the rule (Research/Cisco_2026-10-23 Parts 14-21; v1.2 each forecast year must clear the bar - year_by_year_rule.py)
 ENTRY, EXIT = 0.30, 0.25          # x relative P/E
-FLOOR_IN, FLOOR_OUT = 0.15, 0.10  # growth floor under both bars at an average market P/E (v1.6, Research Part 23: cheap stocks needed only 5-8%)
-MKT_PE_BASE = 18.96               # floor x (universe median P/E / this): average universe median P/E 2002-2026 (Part 23b) -> adapts to the era
+FLOOR_IN, FLOOR_OUT = 0.80, 0.53  # growth floor (% growth) = this x universe median P/E (v1.6 Research Part 23/23b: 15% / 10% at the
+                                  # 2002-26 average P/E 18.96; rounded 2026-11-03 to 80% / 53% so the page can say it plainly)
 WATCH = 0.05                      # WATCH = not held, weakest of trailing / forecast years at most 5 pts below the entry bar
 REVIEW = (3, 17)                  # act 3-17 days after a report (settled by day 14 at the latest; 3 spare days for holidays / failed runs)
 HIGHLIGHT_DAYS = 7                # new entries / exits stay highlighted (and SOLD rows listed) for a week

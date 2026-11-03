@@ -10,7 +10,7 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
 
 ## The rule
 * **EPS growth rule:** expected EPS growth in every forecast fiscal year (current, next, year after), and over the last 12 months
-  when buying, must be at least the growth floor: 15% (buy) / 10% (keep) x universe median P/E / 18.96 (its 2002-26 average)
+  when buying, must be at least the growth floor: 80% (buy) / 53% (keep) of the universe median P/E, in % growth (15% / 10% at its 2002-26 average of 19)
 * **PEG rule:** PEG = P/E (last close / last 4 reported quarters' EPS) / growth in %, per year. Buy only if every PEG <= sector median
   P/E / 30; sell once any forecast-year PEG > sector median P/E / 25
 * **buy** when both rules pass; **sell** when either fails. Together this equals growth >= max(30% x P/E / sector P/E, floor) to enter

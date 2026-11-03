@@ -30,6 +30,7 @@ h1{font-size:18px;margin:0}h2{font-size:13.5px;margin:0 0 4px}h3{font-size:12.5p
 section{padding-top:12px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin:0 0 12px}
 .cap{color:var(--text2);font-size:11.5px;margin:0 0 8px}
+.mut{color:var(--text2)}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 12px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 11px}
 .tile .k{color:var(--text2);font-size:11px}.tile .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.tile .n{color:var(--muted);font-size:11.5px}
@@ -114,7 +115,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
     <div class="intro">
       <div><h3>What it does</h3><ul>
         <li>A dashboard that recommends stocks from the S&amp;P 500 and Nasdaq-100 based on their expected earnings growth (<b>EPS growth - G</b>) and valuation vs EPS growth (<b>PEG</b>).</li>
-        <li>It buys a stock when it passes two tests in each of the next 2–3 years: an <b>EPS growth</b> test (expected growth of at least about 15% a year) and a <b>PEG</b> test (P/E ÷ growth low enough compared with similar companies), with forecasts from <b>at least 10 analysts</b>.</li>
+        <li>It buys a stock when it passes two tests in each of the next 2–3 years: an <b>EPS growth</b> test (expected growth in % of at least 80% of the market P/E, usually 15–20% a year) and a <b>PEG</b> test (P/E ÷ growth low enough compared with similar companies), with forecasts from <b>at least 10 analysts</b>.</li>
         <li>It sells when either test fails in any of the coming 2 years: growth forecasts drop, or the price runs ahead so the PEG gets too high.</li>
         <li>It holds up to 10 stocks, each in its own slot of money. A stronger new stock replaces the holding with the least room left (lowest 12m upside), and each quarter every holding with less than 10% upside left is sold, taking profit where little room is left.</li>
         <li>Recommendations are made within 1–2 weeks after each quarterly earnings report, when analysts publish their new EPS forecasts.</li></ul></div>
@@ -141,16 +142,19 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li><b>P/E</b> = price ÷ EPS of the last 4 reported quarters.</li>
       <li><b>PEG</b> = P/E ÷ G in %.</li>
       <li><b>Sector P/E</b> = median P/E of the stock’s sector in the S&amp;P 500 / Nasdaq-100.</li>
-      <li><b>Market P/E</b> = median P/E of the whole universe; its 2002–26 average is 19. <span id="floorNow"></span></li></ul></div>
-    <div class="rule"><b>Buy: all of these, in every forecast year and over the last 12 months</b><ul style="margin:4px 0 0;padding-left:18px">
-      <li><b>G ≥ 15% × market P/E ÷ 19</b> (EPS growth rule)</li>
-      <li><b>PEG ≤ sector P/E ÷ 30</b> (PEG rule)</li>
-      <li><b>At least 10 analysts</b> forecasting next fiscal year (otherwise WATCH)</li></ul></div>
-    <div class="rule"><b>Sell: any of these</b><ul style="margin:4px 0 0;padding-left:18px">
-      <li>In any forecast year, <b>G &lt; 10% × market P/E ÷ 19</b> or <b>PEG &gt; sector P/E ÷ 25</b> (growth forecasts drop, or the price runs ahead)</li>
-      <li>All slots full and a stock with ≥ 5 points more 12m upside needs the slot (the lowest-upside holding is replaced)</li>
-      <li>First close of each quarter: 12m upside &lt; 10%</li>
-      <li>The last, already reported year is shown but not used.</li></ul></div>
+      <li><b>Market P/E</b> = median P/E of the whole universe. <span id="floorNow"></span></li></ul></div>
+    <div class="rule"><b>In one line</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li>Buy fast growers that are <b>not expensive for their growth</b>; sell when the <b>growth fades</b> or the <b>price runs too far ahead</b>.</li></ul></div>
+    <div class="rule"><b>Buy: all three must be true</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li><b>1. Growing fast enough.</b> Growth (in %) at least <b>80% of the market P/E</b>, every forecast year and the last 12 months. <span class="mut" id="flIn"></span></li>
+      <li><b>2. Not too expensive for that growth.</b> PEG (P/E ÷ growth %) at most <b>sector P/E ÷ 30</b>. <span class="mut" id="pegIn"></span></li>
+      <li><b>3. Well covered.</b> At least 10 analysts forecast next year (otherwise WATCH).</li></ul></div>
+    <div class="rule"><b>Sell: any one is enough</b><ul style="margin:4px 0 0;padding-left:18px">
+      <li><b>1. Growth fades.</b> Any forecast year below <b>53% of the market P/E</b>. <span class="mut" id="flOut"></span></li>
+      <li><b>2. Price runs ahead.</b> PEG above <b>sector P/E ÷ 25</b> in any forecast year (20% more room than to buy). <span class="mut" id="pegOut"></span></li>
+      <li><b>3. A better stock needs the slot.</b> All slots full and a new BUY has at least 5 points more 12m upside: it replaces the holding with the least upside.</li>
+      <li><b>4. Little upside left.</b> At the first close of each quarter, any holding with less than 10% 12m upside is sold.</li></ul>
+      <p class="cap" style="margin:4px 0 0">The keep bars sit below the buy bars on purpose: a holding can dip a little and still be kept. Only forecast years count; the last, already reported year is shown for information.</p></div>
     <div class="rule"><b>Timing</b><ul style="margin:4px 0 0;padding-left:18px">
       <li>Decisions 3–17 days after each stock’s report, or at the first close of each month (monthly sweep).</li>
       <li>An empty slot is filled at once, any day, with the waiting BUY with the most 12m upside.</li>
@@ -526,7 +530,17 @@ function trInit() {
 function stratInit() {
   const B = D.backtest, A = B.sumA, Bs = B.sumB;
   document.getElementById('ruleEx').innerHTML = 'Example: a tech stock with P/E 26 and 40% growth has PEG 0.65; with the tech sector at P/E 26 its buy limit is 26 ÷ 30 = 0.87, so it passes. If its price rose 60% with the same forecasts, PEG 1.04 would reach the sell limit 26 ÷ 25 = 1.04. Each stock’s current PEG and limit are in the Signals table.';
-  if (D.floor) document.getElementById('floorNow').innerHTML = `Now: market P/E ${D.floor.mkt_pe} → G must be at least <b>${pctu(D.floor.in, 1)}</b> to buy and <b>${pctu(D.floor.out, 1)}</b> to keep.`;
+  if (D.floor) {
+    document.getElementById('floorNow').innerHTML = `Now: market P/E ${D.floor.mkt_pe} → G must be at least <b>${pctu(D.floor.in, 1)}</b> to buy and <b>${pctu(D.floor.out, 1)}</b> to keep.`;
+    document.getElementById('flIn').textContent = `Today: market P/E ${D.floor.mkt_pe} → ${pctu(D.floor.in, 1)}.`;
+    document.getElementById('flOut').textContent = `Today: ${pctu(D.floor.out, 1)}.`;
+  }
+  const sp = Object.entries(D.sector_pe || {}).sort((a, b) => a[1] - b[1]);
+  if (sp.length) {
+    const lim = d => `from ${num(sp[0][1] / d, 2)} (${sp[0][0]}) to ${num(sp.at(-1)[1] / d, 2)} (${sp.at(-1)[0]})` + (D.sector_pe.Technology ? `; Technology ${num(D.sector_pe.Technology / d, 2)}` : '');
+    document.getElementById('pegIn').textContent = `Today: ${lim(30)}.`;
+    document.getElementById('pegOut').textContent = `Today: ${lim(25)}.`;
+  }
   const guide = [['Entry / Entry $ / Last $', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close), and the last close (SOLD: the sale price). Highlighted for 7 days.'],
     ['Exit', 'SELL: date the signal started; SOLD: date sold (listed 7 days, then in Trades).'],
     ['12m $ / Upside', 'Expected 12-month peak price (see 12m target above). Backtest 2008–24: peak within ±20% of it 57% of the time, no bias; selling at it would have cut returns (+18% vs +27%).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],

@@ -7,7 +7,7 @@
   fwd     = average yearly EPS growth over the next 24 months, read off the fiscal-year consensus curve
             (last FY actual -> current FY -> FY+1 from Yahoo -> FY+2 = FY+1 x Nasdaq FY+2/FY+1; monthly
             log-interpolation, so it blends the years by how far into the current fiscal year we are)
-  floor   15% / 10% x (universe median P/E / 18.96, its 2002-26 average): moves with the market's valuation era
+  floor   80% / 53% of the universe median P/E, in % growth (= 15% / 10% at its 2002-26 average 18.96)
   ENTER   trailing 12m growth AND each forecast fiscal year (Cur, +1, +2) >= max(30% x relPE, entry floor)
   EXIT    any forecast fiscal year (Cur, +1, +2) < max(25% x relPE, exit floor)
           (v1.6, 2026-10-24: floor from Research Part 23 / 23b, growth_floor_rule*.py)
@@ -233,7 +233,7 @@ def compute(U, recs, closes, held=(), today=None, revs=None):
     D["sector_pe"] = D.sector.map(med)
     D["relpe"] = D.pe / D.sector_pe
     mkt_pe = float(D[ok].pe.median())
-    f_in, f_out = C.FLOOR_IN * mkt_pe / C.MKT_PE_BASE, C.FLOOR_OUT * mkt_pe / C.MKT_PE_BASE
+    f_in, f_out = C.FLOOR_IN * mkt_pe / 100, C.FLOOR_OUT * mkt_pe / 100
     D["need_in"], D["need_out"] = (C.ENTRY * D.relpe).clip(lower=f_in), (C.EXIT * D.relpe).clip(lower=f_out)
     for i, x in D.iterrows():
         if x.get("state") in ("NO DATA", "SELL"):              # SELL here = delisted (set above)
@@ -265,5 +265,5 @@ def compute(U, recs, closes, held=(), today=None, revs=None):
     D.attrs["price_date"] = str(last_close.date())
     D.attrs["curves"] = curves
     D.attrs["sector_pe"] = {k: round(float(v), 1) for k, v in med.items()}
-    D.attrs["floor"] = {"mkt_pe": round(mkt_pe, 1), "base": C.MKT_PE_BASE, "in": round(f_in, 4), "out": round(f_out, 4)}
+    D.attrs["floor"] = {"mkt_pe": round(mkt_pe, 1), "in": round(f_in, 4), "out": round(f_out, 4)}
     return D
