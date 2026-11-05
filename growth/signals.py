@@ -119,7 +119,7 @@ def fy_from_q(q, fye):
 def curve(y, n):
     est = y.get("est") or {}
     e0, e1 = est.get("0y") or {}, est.get("+1y") or {}
-    if not (y.get("nextFye") and e0.get("avg") and e1.get("avg") and e0.get("yearAgoEps")):
+    if not (y.get("nextFye") and not pd.isna(y["nextFye"]) and e0.get("avg") and e1.get("avg") and e0.get("yearAgoEps")):
         return None, None, None
     f0 = pd.Timestamp(y["nextFye"]) + pd.offsets.MonthEnd(0)
     pts = [(f0 - pd.DateOffset(years=1), e0["yearAgoEps"]), (f0, e0["avg"]), (f0 + pd.DateOffset(years=1), e1["avg"])]
@@ -146,7 +146,7 @@ def fy_growth(y, n, q):
     {"fy": [years], "gLast", "lastFlag", "gCur", "g1", "g2", "eps": {year: EPS}, "nfy": {year: analysts}} (empty without a fiscal-year end)."""
     est = y.get("est") or {}
     e0, e1 = est.get("0y") or {}, est.get("+1y") or {}
-    if not y.get("nextFye"):
+    if not y.get("nextFye") or pd.isna(y["nextFye"]):
         return {}
     f0 = pd.Timestamp(y["nextFye"])
     fl, fll = fy_from_q(q, f0 - pd.DateOffset(years=1)), fy_from_q(q, f0 - pd.DateOffset(years=2))

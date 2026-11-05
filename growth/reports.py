@@ -62,7 +62,7 @@ def prior(sym, y, H):
         g = yb[yb.date == d]
         est = _yahoo_est(g)
         e0 = g[g.period == "0y"]
-        if not len(e0):
+        if not len(e0) or pd.isna(e0.end.iloc[0]):          # no fiscal-year end at Yahoo (FISV)
             return None
         yp = dict(y, est=est, nextFye=e0.end.iloc[0], qh=q_prev)
         approx = None
@@ -76,6 +76,8 @@ def prior(sym, y, H):
         if not len(e0):
             return None
         end0 = e0.end.iloc[0]
+        if pd.isna(end0):
+            return None
         ya = H[(H.sym == sym) & (H.src == "yahoo") & (H.period == "0y") & (H.end == end0)].year_ago.dropna()
         est = {"0y": {"avg": float(e0.avg.iloc[0])}}
         if len(ya):
