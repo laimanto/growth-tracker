@@ -1,4 +1,4 @@
-yfinance>=0.2.40
+yfinance==1.8.0     # pinned: new releases changed Yahoo table columns (1.8.0 broke the 4-5 Nov 2026 runs); test before upgrading
 pandas>=2.0
 numpy
 requests
