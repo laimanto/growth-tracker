@@ -52,6 +52,10 @@ def prior(sym, y, H):
     if len(nb):
         g = nb[nb.date == nb.date.max()]
         n_prev = {"rows": [{"fye": r.end, "eps": r.avg, "n": None if pd.isna(r.n) else int(r.n)} for r in g.itertuples() if pd.notna(r.avg)]}
+    nq = h[(h.src == "nasdaq") & (h.period == "Q")]
+    if len(nq):                                                # quarterly consensus for the one-off test
+        g = nq[nq.date == nq.date.max()]
+        n_prev = dict(n_prev or {}, qrows=[{"fye": r.end, "eps": r.avg} for r in g.itertuples() if pd.notna(r.avg)])
     q_prev = [[d, v] for d, v in (y.get("qh") or []) if d[:10] < rep]
     if len(yb):
         d = yb.date.max()
@@ -80,7 +84,7 @@ def prior(sym, y, H):
             est["+1y"] = {"avg": float(e1.avg.iloc[0])}
         yp = dict(y, est=est, nextFye=end0, qh=q_prev)
         approx = "Yahoo’s consensus from about that date (its 7 / 30 / 60 / 90 days-ago figures; no analyst counts)"
-    yp, _ = signals.one_offs(yp)
+    yp, _ = signals.one_offs(yp, n_prev)
     o = signals.fy_growth(yp, n_prev, signals.qtr(yp.get("qh")))
     if not o:
         return None

@@ -75,7 +75,7 @@ def main():
     oneoff = {}
     for s, r in recs.items():
         if r.get("yahoo"):
-            y, notes = signals.one_offs(r["yahoo"])
+            y, notes = signals.one_offs(r["yahoo"], r.get("nasdaq"))
             if y is not r["yahoo"]:
                 recs[s] = dict(r, yahoo=y, oneoff=notes or None)
                 if notes:

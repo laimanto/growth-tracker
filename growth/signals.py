@@ -30,28 +30,58 @@ def qtr(qh):
     return sorted((pd.Timestamp(d), v) for d, v in qh or [])
 
 
-def one_offs(y, k_hi=1.6, k_lo=0.4):
+def year_on(n, d):
+    """Nasdaq's consensus for the same quarter one year after the quarter reported on `d` (its quarter end falls
+    ~255-360 days after the report date), or None."""
+    d = pd.Timestamp(d)
+    for r in (n or {}).get("qrows") or []:
+        if r.get("eps") is not None and 255 <= (pd.Timestamp(r["fye"]) - d).days <= 360:
+            return r["eps"]
+    return None
+
+
+def nasdaq_q_fits(y, n, tol=0.25):
+    """Nasdaq's quarterly consensus is on the same EPS basis as Yahoo's: its estimate for the coming quarter is within
+    25% of Yahoo's (0q). Not so for REITs (Nasdaq/Zacks = FFO: UDR 0.64 vs 0.15) or near-zero / loss quarters."""
+    q = qtr(y.get("qh"))
+    y0 = ((y.get("est") or {}).get("0q") or {}).get("avg")
+    if not q or not y0 or y0 <= 0:
+        return False
+    nxt = [r for r in (n or {}).get("qrows") or [] if r.get("eps") is not None and pd.Timestamp(r["fye"]) > q[-1][0]]
+    return bool(nxt) and nxt[0]["eps"] > 0 and abs(nxt[0]["eps"] / y0 - 1) <= tol
+
+
+def one_offs(y, n=None, k_hi=1.6, k_lo=0.4, k_yr=1.3):
     """Quarters distorted by one-off items (GOOGL Q1/Q2 2026: 5.11 / 9.11 reported vs 2.67 / 2.90 expected - gains on
     equity stakes). A quarter is a one-off when its reported EPS is > 1.6x (or < 0.4x) BOTH its own consensus estimate and
     the estimate for the next quarter (analysts' run rate after seeing it - a real beat lifts that too: SNDK 6.20 vs 3.54
-    expected, next quarter expected 14.66). Flagged quarters are replaced by their estimate; the excess is also taken out
-    of the fiscal-year figures that contain it (current-FY consensus, last-FY actual), which include it.
+    expected, next quarter expected 14.66), AND - when Nasdaq's quarterly consensus is on Yahoo's basis (n = Nasdaq
+    record, nasdaq_q_fits) - > 1.3x (< 1/1.3x) the estimate for the same quarter a year later (1.3: room for a year of
+    growth). The last test is for seasonal businesses (2026-11-05 fix): LUV Q2 2026 0.94 adjusted vs 0.52 expected with a
+    weaker Q3 (0.58) ahead was a real beat - analysts expect Q2 2027 at 1.28; flagging it had cut LUV's FY2026 to 2.34,
+    below guidance 2.60-2.85, and inflated FY2027 growth from +51% to +79%. GOOGL Q1 (5.11 vs Q1 2027 3.30) stays flagged.
+    Flagged quarters are replaced by their estimate; the excess is also taken out of the fiscal-year figures that contain
+    it (current-FY consensus, last-FY actual), which include it.
     Returns (adjusted copy of y, list of notes)."""
     qh, qe = y.get("qh") or [], dict(y.get("qe") or [])
     if not qh or not qe:
         return y, []
     nxt0 = ((y.get("est") or {}).get("0q") or {}).get("avg")
+    fits = nasdaq_q_fits(y, n)
     out, notes, excess = [], [], []
     for i, (d, v) in enumerate(qh):
         e = qe.get(d)
         en = qe.get(qh[i + 1][0]) if i + 1 < len(qh) else nxt0
         if e is not None and en is not None and e > 0 and en > 0 and v is not None:
             lo, hi = min(e, en), max(e, en)
-            if v > k_hi * hi or v < k_lo * lo:
+            ey = year_on(n, d) if fits else None
+            ey = ey if ey is not None and ey > 0 else None
+            if (v > k_hi * hi and (ey is None or v > k_yr * ey)) or (v < k_lo * lo and (ey is None or v < ey / k_yr)):
                 out.append([d, e])
                 excess.append((pd.Timestamp(d), v - e))
                 if i >= len(qh) - 8:                        # shown only for the 8 quarters behind trailing growth / P/E
-                    notes.append(f"{d[:10]}: reported {v:.2f} vs {e:.2f} expected (next quarter expected {en:.2f})")
+                    notes.append(f"{d[:10]}: reported {v:.2f} vs {e:.2f} expected (next quarter expected {en:.2f}"
+                                 + (f", same quarter next year {ey:.2f})" if ey is not None else ")"))
                 continue
         out.append([d, v])
     if not excess:

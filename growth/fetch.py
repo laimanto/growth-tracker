@@ -3,6 +3,7 @@ WHAT is due (update.py), so a normal day only touches stocks that need it."""
 import time
 from datetime import date
 
+import numpy as np
 import pandas as pd
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36",
@@ -21,6 +22,20 @@ def fx_rate(cur, fcur):
         h = yf.Ticker(f"{cur}{fcur}=X").history(period="5d")["Close"].dropna()
         _FX[k] = float(h.iloc[-1]) if len(h) else None
     return _FX[k]
+
+
+def _nums(row, cast):
+    """Numeric cells of one Yahoo table row ({column: value}); text columns (currency, and since yfinance 1.8.0
+    methodology = 'normalized' / 'gaap', which broke the 4-5 Nov 2026 runs) are skipped."""
+    o = {}
+    for k, v in row.items():
+        if k in ("currency", "methodology"):
+            continue
+        if pd.isna(v):
+            o[k] = None
+        elif isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(v, bool):
+            o[k] = cast(v)
+    return o
 
 
 def yahoo(sym):
@@ -61,6 +76,8 @@ def yahoo(sym):
     out["est"] = {} if ee is None else {p: {k: (None if pd.isna(ee.loc[p, k]) else float(ee.loc[p, k]))
                                              for k in ("avg", "low", "high", "yearAgoEps", "numberOfAnalysts") if k in ee.columns}
                                          for p in ("0q", "+1q", "0y", "+1y") if p in ee.index}
+    if ee is not None and "methodology" in ee.columns and len(ee):      # yfinance >= 1.8: 'normalized' (adjusted) or 'gaap'
+        out["basis"] = str(ee["methodology"].iloc[0])
     ed = part("qh", lambda: t.get_earnings_dates(limit=32))
     out["qh"] = []
     if ed is not None:
@@ -95,13 +112,11 @@ def yahoo(sym):
             out["next"] = str(fut.index[0].date())
     tr = part("trend", lambda: t.eps_trend)
     if tr is not None:
-        out["trend"] = {p: {k: (None if pd.isna(tr.loc[p, k]) else float(tr.loc[p, k])) for k in tr.columns if k != "currency"}
-                        for p in ("0y", "+1y") if p in tr.index}
+        out["trend"] = {p: _nums(tr.loc[p], float) for p in ("0y", "+1y") if p in tr.index}
     try:                                                     # analysts revising in the last 7 / 30 days (readiness check)
         rv = t.eps_revisions
         if rv is not None and len(rv):
-            out["revs"] = {p: {k: (None if pd.isna(rv.loc[p, k]) else int(rv.loc[p, k])) for k in rv.columns if k != "currency"}
-                           for p in ("0y", "+1y") if p in rv.index}
+            out["revs"] = {p: _nums(rv.loc[p], int) for p in ("0y", "+1y") if p in rv.index}
     except Exception:
         pass
     if missing:
