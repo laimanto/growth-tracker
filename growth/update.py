@@ -228,15 +228,26 @@ def refresh_eps(syms, workers=6, log=print):
 
 
 # ---------------------------------------------------------------- prices
-def settled(df):
-    """Drop bars whose session has not closed yet (a run during market hours would otherwise store intraday prices as
-    the close). US tickers: day D counts after 16:15 New York time on D; ^HSI after 16:30 Hong Kong time on D."""
+def _last_settled():
+    """Latest finished session date: US after 16:15 New York time, ^HSI after 16:30 Hong Kong time."""
     from datetime import datetime
     from zoneinfo import ZoneInfo
     ny = datetime.now(ZoneInfo("America/New_York"))
     hk = datetime.now(ZoneInfo("Asia/Hong_Kong"))
     us_last = pd.Timestamp(ny.date()) if (ny.hour, ny.minute) >= (16, 15) else pd.Timestamp(ny.date()) - pd.Timedelta(days=1)
     hk_last = pd.Timestamp(hk.date()) if (hk.hour, hk.minute) >= (16, 30) else pd.Timestamp(hk.date()) - pd.Timedelta(days=1)
+    return us_last, hk_last
+
+
+def session_done(sym, day):
+    us_last, hk_last = _last_settled()
+    return day <= (hk_last if sym.startswith("^HSI") else us_last)
+
+
+def settled(df):
+    """Drop bars whose session has not closed yet (a run during market hours would otherwise store intraday prices as
+    the close). US tickers: day D counts after 16:15 New York time on D; ^HSI after 16:30 Hong Kong time on D."""
+    us_last, hk_last = _last_settled()
     df = df.copy()
     hk_cols = [c for c in df.columns if c.startswith("^HSI")]
     us_cols = [c for c in df.columns if c not in hk_cols]
@@ -287,6 +298,9 @@ def refresh_prices(syms, start_universe, log=print):
         last = pd.read_csv(path, index_col=0, parse_dates=True).index.max() if os.path.exists(path) else None
         start = (last - pd.Timedelta(days=5)).strftime("%Y-%m-%d") if last is not None else first
         c, a = fetch.closes(tick, start)
+        c, a, nq = fetch.fill_quotes(c, a, tick, session_done)
+        if nq:
+            log(f"prices: {os.path.basename(path)} {nq} closes from quotes (daily bar not out yet)")
         if adj:
             a.columns = [f"{x}_TR" for x in a.columns]
             c = pd.concat([c, a], axis=1)

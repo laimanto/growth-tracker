@@ -181,3 +181,54 @@ def closes(tickers, start, retries=2):
                 if c2[s].notna().any():
                     c[s], a[s] = c2[s].reindex(c.index.union(c2.index)), a2[s].reindex(a.index.union(a2.index))
     return c.dropna(how="all"), a.dropna(how="all")
+
+
+def _quote(sym):
+    """Last regular-session price and its exchange-local date (Yahoo chart meta), or None."""
+    import yfinance as yf
+    try:
+        tk = yf.Ticker(sym)
+        tk.history(period="1d", auto_adjust=False)
+        m = tk.history_metadata or {}
+        px, t = m.get("regularMarketPrice"), m.get("regularMarketTime")
+        if px is None or t is None:
+            return None
+        t = pd.Timestamp(t, unit="s", tz="UTC") if not isinstance(t, pd.Timestamp) else t
+        tz = m.get("exchangeTimezoneName") or "America/New_York"
+        return float(px), (t.tz_convert(tz) if t.tzinfo else t.tz_localize(tz)).tz_localize(None).normalize()
+    except Exception:
+        return None
+
+
+def fill_quotes(c, a, tickers, done, workers=8):
+    """Yahoo's daily bar for the latest session sometimes appears hours after the close. For each ticker whose
+    last close is older than its quote date, add the quote's regular-market price as that day's close (adjusted
+    close carried with the previous day's adj/close ratio). done(sym, day) says whether that session has closed;
+    the next run's download (5 days back) overwrites these cells with the real bar."""
+    from concurrent.futures import ThreadPoolExecutor
+    last = {s: (c[s].last_valid_index() if s in c else None) for s in tickers}
+    todo = [s for s in tickers if last[s] is not None]
+    if not todo:
+        return c, a, 0
+    newest = max(last[s] for s in todo)
+    lag = [s for s in todo if last[s] < newest]
+    # probe a few up-to-date tickers: quote all of them only if a newer, finished session shows up
+    probe = [s for s in todo if last[s] == newest][:3]
+    with ThreadPoolExecutor(workers) as ex:
+        q = dict(zip(probe, ex.map(_quote, probe)))
+    newer = any(v and v[1] > last[s] and done(s, v[1]) for s, v in q.items())
+    rest = lag + ([s for s in todo if last[s] == newest and s not in q] if newer else [])
+    with ThreadPoolExecutor(workers) as ex:
+        q.update(zip(rest, ex.map(_quote, rest)))
+    n = 0
+    for s, v in q.items():
+        if not v or v[1] <= last[s] or not done(s, v[1]):
+            continue
+        px, d = v
+        if d not in c.index:
+            c, a = c.reindex(c.index.union([d])), a.reindex(a.index.union([d]))
+        c.loc[d, s] = px
+        if s in a and pd.notna(a.loc[last[s], s]) and c.loc[last[s], s]:
+            a.loc[d, s] = px * a.loc[last[s], s] / c.loc[last[s], s]
+        n += 1
+    return c, a, n
