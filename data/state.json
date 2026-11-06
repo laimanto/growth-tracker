@@ -1,12 +1,6 @@
 {
  "runs": [
   {
-   "utc": "2026-10-24 05:13",
-   "eps_fetched": 0,
-   "trades": 0,
-   "secs": 12
-  },
-  {
    "utc": "2026-10-24 05:14",
    "eps_fetched": 0,
    "trades": 0,
@@ -359,6 +353,12 @@
    "eps_fetched": 482,
    "trades": 2,
    "secs": 310
+  },
+  {
+   "utc": "2026-11-06 01:43",
+   "eps_fetched": 197,
+   "trades": 0,
+   "secs": 128
   }
  ]
 }
