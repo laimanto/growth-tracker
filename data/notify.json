@@ -1,10 +1,8 @@
 {
- "n_trades": 9,
+ "n_trades": 11,
  "waiting": {
-  "COHR": "just reported (2026-11-04): no trade before day 3 (7 Nov) while analysts update",
-  "CSGP": "forecasts not settled: 2 of 14 analysts (14%) revised next year\u2019s forecast since the 2026-10-27 report (needs 50%) \u2013 settled on day 14 (10 Nov) at the latest",
+  "CSGP": "forecasts not settled: 6 of 14 analysts (43%) revised next year\u2019s forecast since the 2026-10-27 report (needs 50%) \u2013 settled on day 14 (10 Nov) at the latest",
   "FLEX": "forecasts not settled: 2 of 10 analysts (20%) revised next year\u2019s forecast since the 2026-10-28 report (needs 50%) \u2013 settled on day 14 (11 Nov) at the latest",
-  "LITE": "forecasts not settled: 1 of 23 analysts (4%) revised next year\u2019s forecast since the 2026-11-02 report (needs 50%) \u2013 settled on day 14 (16 Nov) at the latest",
-  "SMCI": "forecasts not settled: 4 of 17 analysts (24%) revised next year\u2019s forecast since the 2026-11-03 report (needs 50%) \u2013 settled on day 14 (17 Nov) at the latest"
+  "LITE": "forecasts not settled: 1 of 23 analysts (4%) revised next year\u2019s forecast since the 2026-11-02 report (needs 50%) \u2013 settled on day 14 (16 Nov) at the latest"
  }
 }
