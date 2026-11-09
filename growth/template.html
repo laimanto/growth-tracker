@@ -39,7 +39,7 @@ th,td{padding:3px 6px;text-align:right;border-bottom:1px solid var(--grid);white
 th{color:var(--text2);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface);z-index:2}
 th.grp{position:static;cursor:default;text-align:center;border-bottom:0;padding-bottom:0;font-weight:500;color:var(--muted)}
 td.l,th.l{text-align:left}td.rsn{text-align:left;color:var(--text2)}
-tr.click{cursor:pointer}tr.click:hover td{background:var(--chip)}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--chip)}tr.flash td{background:var(--hl)!important}
 td.hl{background:var(--hl)!important;font-weight:600}
 .ic{display:inline-block;margin-left:3px;font-size:10px;color:var(--muted);cursor:help}
 .rb{display:inline-block;margin:0 3px 0 0;padding:0 6px;border-radius:999px;font-size:10.5px;background:var(--chip);color:var(--text2);cursor:help;white-space:nowrap}
@@ -82,7 +82,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 <section data-tab="Signals">
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
-    <p class="cap">Rules: Strategy tab. <b>PEG</b> = P/E ÷ growth of the weakest forecast year; <b>PEG in / out</b> = buy / sell limit of its sector; <b>G in / out</b> = growth needed at today’s price to buy / keep (both rules). <span class="badge SELL">Red</span> cells = forecast years below G in (G out for holdings); Last = information only. Hover a signal, ⓘ or badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates = last 7 days. SOLD rows stay 7 days, then move to Trades. Click a row for detail.</p>
+    <p class="cap">Rules: Strategy tab. <b>PEG</b> = P/E ÷ growth of the weakest forecast year; <b>PEG in / out</b> = buy / sell limit of its sector; <b>G in / out</b> = growth needed at today’s price to buy / keep (both rules). <span class="badge SELL">Red</span> cells = forecast years below G in (G out for holdings); Last = information only. Hover a signal, ⓘ or badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates = last 7 days. SOLD rows stay 7 days, then move to Trades. Click a row to switch between Signals view and Earnings view.</p>
     <p class="cap hide" id="earnCap">EPS growth by fiscal year = today’s forecasts; they keep updating until the next report. <b>(Bracket)</b> = change since the forecasts just before the latest report, in % points of growth, e.g. 24% (+1); hover for the before and now figures and the EPS change. Same fiscal year compared: after a year-end report, Last compares the actual with what was expected; (new) = a year added by the rollover. Before this history began (21 Oct 2026) the “before” figures are approximate (Yahoo’s consensus from about then; marked ≈ in the hover). <b>#</b> = analysts forecasting next year. <b>Revised</b> = analysts who changed next year’s forecast since the report, out of all analysts (Yahoo counts names no one: new vs existing analysts cannot be told apart). <b>Forecasts</b>: <i>settled</i> = at least 50% of analysts have revised (from day 3), or day 14 is reached – only then may the model buy or sell; <i>pending</i> = not yet, or data incomplete (hover).</p>
     <div class="ctrl"><div class="chips" id="viewChips"></div><div class="chips" id="stateChips"></div><div class="chips hide" id="repChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
@@ -325,7 +325,7 @@ function sigTable() {
     {k: 'need_in', h: 'G in', t: 'growth needed to buy at today’s price: the higher of the buy floor and the growth that brings PEG down to PEG in', f: r => pctu(r.need_in)}, {k: 'need_out', h: 'G out', t: 'growth needed to keep a holding: the higher of the keep floor and the growth that keeps PEG at or below PEG out', f: r => pctu(r.need_out)},
     {k: 'next_report', h: 'Next rpt', f: r => r.next_report || '–'},
     {k: 'remark', h: 'Remark', l: 1, f: remarks, v: r => remarks(r).length}], rows,
-    {sort: 'state', click: openDetail, groups: [['', 4], ['Position and 12m target', 7], ['', 4], ['EPS growth by fiscal year', 4], ['', 4]]});
+    {sort: 'state', click: flipView, groups: [['', 4], ['Position and 12m target', 7], ['', 4], ['EPS growth by fiscal year', 4], ['', 4]]});
 }
 function sigInit() {
   const allOn = () => STATES.every(s => stF.has(s));
@@ -343,10 +343,21 @@ function sigInit() {
   const chipRow = (id, items, cur, set) => { const el = document.getElementById(id);
     el.innerHTML = items.map(c => `<button type="button" class="${c[0] === cur() ? 'on' : ''}" data-v="${c[0]}">${c[1]}</button>`).join('');
     el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { set(b.dataset.v); el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); showView(); })); };
-  const showView = () => { ['earnCap', 'repChips'].forEach(id => document.getElementById(id).classList.toggle('hide', view !== 'earn')); sigTable(); };
   chipRow('viewChips', V, () => view, v => { view = v; try { localStorage.setItem('gt_view', v); } catch (e) {} });
   chipRow('repChips', R, () => repF, v => { repF = v; });
   sigTiles(); showView();
+}
+function showView() { ['earnCap', 'repChips'].forEach(id => document.getElementById(id).classList.toggle('hide', view !== 'earn')); sigTable(); }
+/* click a row: switch Signals view <-> Earnings view and keep that stock in sight (Stock detail tab: own search box) */
+function flipView(sym) {
+  view = view === 'earn' ? 'sig' : 'earn'; try { localStorage.setItem('gt_view', view); } catch (e) {}
+  const mark = (id, v) => document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  showView();
+  const find = () => document.querySelector(`#sigTab tr[data-sym="${sym}"]`);
+  if (!find() && repF !== 'any') { repF = 'any'; sigTable(); }                      // report-date chip would hide it
+  mark('viewChips', view); mark('repChips', repF);
+  const tr = find(); if (!tr) return;
+  tr.scrollIntoView({block: 'center'}); tr.classList.add('flash'); setTimeout(() => tr.classList.remove('flash'), 1500);
 }
 
 /* ---------- Earnings view (Signals tab): forecasts at the last report vs now ---------- */
@@ -387,7 +398,7 @@ function earnTable(rows) {
     {k: 'ready', h: 'Forecasts', l: 1, t: 'settled = the model can act; pending = data not mature yet (hover)', f: r => r.wait ? `<span class="rb y" title="${r.wait.split('; ').join('\n').replace(/"/g, '&quot;')}">pending</span>` : (r.in_review ? '<span class="rb g">settled</span>' : '–'), v: r => r.wait ? 2 : (r.in_review ? 1 : 0)},
     ...nowCols,
     {k: 'n_analysts', h: '#', t: 'analysts forecasting next year now; (bracket) = change since the last report', f: r => (r.n_analysts || '–') + (dN(r) != null ? ` <span class="sub">(${dN(r) > 0 ? '+' : ''}${dN(r)})</span>` : '')}],
-    rows, {sort: 'last_report', click: openDetail, groups: [['', 3], ['Reports', 4], ['EPS growth by fiscal year now (change since the last report, % points)', 5]]});
+    rows, {sort: 'last_report', click: flipView, groups: [['', 3], ['Reports', 4], ['EPS growth by fiscal year now (change since the last report, % points)', 5]]});
 }
 
 /* ---------- line chart ---------- */
@@ -434,7 +445,7 @@ let detSym = null;
 function openDetail(sym) { detSym = sym; document.getElementById('detSearch').value = sym; showTab('Stock detail'); }
 function detail() {
   const r = BY[detSym], el = document.getElementById('detBody');
-  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in Signals / Trades.</p>'; return; }
+  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in Trades.</p>'; return; }
   let meter = '';
   if (r.fwd != null) {
     const mx = Math.max(r.need_in * 1.6, r.fwd, r.trail, 0.1), mn = Math.min(0, r.fwd, r.trail), P = v => ((v - mn) / (mx - mn) * 100).toFixed(1) + '%';
