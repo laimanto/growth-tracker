@@ -1345,9 +1345,9 @@
 "px": 331.58
 },
 "KVUE": {
-"state": "OUT",
-"since": "2026-10-23",
-"px": 19.57
+"state": "NO DATA",
+"since": "2026-11-06",
+"px": 19.31
 },
 "KDP": {
 "state": "OUT",
@@ -2120,9 +2120,9 @@
 "px": 307.15
 },
 "SMCI": {
-"state": "WATCH",
+"state": "OUT",
 "since": "2026-11-06",
-"px": 28.76
+"px": 28.760000228881836
 },
 "SYF": {
 "state": "OUT",
