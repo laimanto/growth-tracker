@@ -259,8 +259,11 @@ def settled(df):
 def _merge(path, new):
     old = pd.read_csv(path, index_col=0, parse_dates=True) if os.path.exists(path) else None
     if old is not None:
-        new = pd.concat([old[~old.index.isin(new.index)], new]).sort_index()
+        # cell by cell: a re-downloaded bar overrides the stored one, but a gap in the download keeps the stored value
+        # (7 Nov 2026: a stray 30 Oct bar for one ticker replaced the whole stored 30 Oct row with blanks)
         new = new.loc[:, ~new.columns.duplicated()]
+        cols = list(old.columns) + [c for c in new.columns if c not in old.columns]
+        new = new.combine_first(old)[cols].sort_index()
     new.round(4).to_csv(path, date_format="%Y-%m-%d")
     return new
 
