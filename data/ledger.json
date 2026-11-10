@@ -112,6 +112,36 @@
    "price": 222.9,
    "value": 10067.49,
    "reason": "trailing +79% and every forecast year (weakest +1 +22.3%) >= G in 22.1% (empty-slot refill)"
+  },
+  {
+   "date": "2026-11-10",
+   "price_date": "2026-11-09",
+   "sym": "CSGP",
+   "side": "BUY",
+   "shares": 320.102435,
+   "price": 31.24,
+   "value": 10000.0,
+   "reason": "trailing +53% and every forecast year (weakest +1 +25.9%) >= G in 21.3% (post-report review)"
+  },
+  {
+   "date": "2026-11-10",
+   "price_date": "2026-11-09",
+   "sym": "HPE",
+   "side": "SELL",
+   "shares": 181.521147,
+   "price": 47.54,
+   "value": 8629.52,
+   "reason": "replaced by ALNY: 12m upside +13% vs +25% (post-report review)"
+  },
+  {
+   "date": "2026-11-10",
+   "price_date": "2026-11-09",
+   "sym": "ALNY",
+   "side": "BUY",
+   "shares": 55.101944,
+   "price": 156.61,
+   "value": 8629.52,
+   "reason": "trailing +246% and every forecast year (weakest +1 +29.7%) >= G in 29.6%; replaces HPE (upside +25% vs +13%) (post-report review)"
   }
  ],
  "runs": [
@@ -124,10 +154,9 @@
   "2026-11-03",
   "2026-11-05",
   "2026-11-06",
-  "2026-11-07"
+  "2026-11-07",
+  "2026-11-10"
  ],
- "last_close": "2026-11-06",
- "free": [
-  10000.0
- ]
+ "last_close": "2026-11-09",
+ "free": []
 }

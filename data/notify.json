@@ -1,8 +1,7 @@
 {
- "n_trades": 11,
+ "n_trades": 14,
  "waiting": {
-  "CSGP": "forecasts not settled: 6 of 14 analysts (43%) revised next year\u2019s forecast since the 2026-10-27 report (needs 50%) \u2013 settled on day 14 (10 Nov) at the latest",
-  "FLEX": "forecasts not settled: 3 of 10 analysts (30%) revised next year\u2019s forecast since the 2026-10-28 report (needs 50%) \u2013 settled on day 14 (11 Nov) at the latest",
-  "LITE": "forecasts not settled: 1 of 23 analysts (4%) revised next year\u2019s forecast since the 2026-11-02 report (needs 50%) \u2013 settled on day 14 (16 Nov) at the latest"
+  "FLEX": "forecasts not settled: 3 of 10 analysts (30%) revised next year\u2019s forecast since the 2026-10-28 report (needs 50%) \u2013 settled on day 14 (11 Nov) at the latest; portfolio full (10 slots): bought only if its 12m upside is \u2265 5% above the weakest holding\u2019s",
+  "HPE": "waiting for the next quarterly report (2026-11-23): bought from day 3 after it (26 Nov) once analysts have updated \u2013 or at the first close of December (1 Dec), whichever comes first; portfolio full (10 slots): bought only if its 12m upside is \u2265 5% above the weakest holding\u2019s"
  }
 }
