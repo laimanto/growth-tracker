@@ -142,6 +142,26 @@
    "price": 156.61,
    "value": 8629.52,
    "reason": "trailing +246% and every forecast year (weakest +1 +29.7%) >= G in 29.6%; replaces HPE (upside +25% vs +13%) (post-report review)"
+  },
+  {
+   "date": "2026-11-11",
+   "price_date": "2026-11-10",
+   "sym": "STLD",
+   "side": "SELL",
+   "shares": 45.165929,
+   "price": 236.12,
+   "value": 10664.58,
+   "reason": "replaced by FLEX: 12m upside +15% vs +32% (post-report review)"
+  },
+  {
+   "date": "2026-11-11",
+   "price_date": "2026-11-10",
+   "sym": "FLEX",
+   "side": "BUY",
+   "shares": 140.157434,
+   "price": 76.09,
+   "value": 10664.58,
+   "reason": "trailing +32% and every forecast year (weakest Cur +53.2%) >= G in 24.1%; replaces STLD (upside +32% vs +15%) (post-report review)"
   }
  ],
  "runs": [
@@ -155,8 +175,9 @@
   "2026-11-05",
   "2026-11-06",
   "2026-11-07",
-  "2026-11-10"
+  "2026-11-10",
+  "2026-11-11"
  ],
- "last_close": "2026-11-09",
+ "last_close": "2026-11-10",
  "free": []
 }
