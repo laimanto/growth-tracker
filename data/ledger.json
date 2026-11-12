@@ -162,6 +162,36 @@
    "price": 76.09,
    "value": 10664.58,
    "reason": "trailing +32% and every forecast year (weakest Cur +53.2%) >= G in 24.1%; replaces STLD (upside +32% vs +15%) (post-report review)"
+  },
+  {
+   "date": "2026-11-12",
+   "price_date": "2026-11-11",
+   "sym": "ALNY",
+   "side": "SELL",
+   "shares": 55.101944,
+   "price": 159.85,
+   "value": 8808.05,
+   "reason": "+1 year +24.9% < G out 25.3% (post-report review)"
+  },
+  {
+   "date": "2026-11-12",
+   "price_date": "2026-11-11",
+   "sym": "GDDY",
+   "side": "SELL",
+   "shares": 88.660342,
+   "price": 113.54,
+   "value": 10066.5,
+   "reason": "+2 year +13.3% < G out 16.2% (post-report review)"
+  },
+  {
+   "date": "2026-11-12",
+   "price_date": "2026-11-11",
+   "sym": "HPE",
+   "side": "BUY",
+   "shares": 200.328263,
+   "price": 50.25,
+   "value": 10066.5,
+   "reason": "trailing +68% and every forecast year (weakest +1 +23.6%) >= G in 19.8% (empty-slot refill)"
   }
  ],
  "runs": [
@@ -176,8 +206,11 @@
   "2026-11-06",
   "2026-11-07",
   "2026-11-10",
-  "2026-11-11"
+  "2026-11-11",
+  "2026-11-12"
  ],
- "last_close": "2026-11-10",
- "free": []
+ "last_close": "2026-11-11",
+ "free": [
+  8808.05
+ ]
 }
