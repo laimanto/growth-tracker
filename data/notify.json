@@ -1,6 +1,4 @@
 {
  "n_trades": 19,
- "waiting": {
-  "XYZ": "forecasts not settled: 13 of 43 analysts (30%) revised next year\u2019s forecast since the 2026-11-03 report (needs 50%) \u2013 settled on day 14 (17 Nov) at the latest"
- }
+ "waiting": {}
 }
