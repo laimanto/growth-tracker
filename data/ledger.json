@@ -192,6 +192,16 @@
    "price": 50.25,
    "value": 10066.5,
    "reason": "trailing +68% and every forecast year (weakest +1 +23.6%) >= G in 19.8% (empty-slot refill)"
+  },
+  {
+   "date": "2026-11-17",
+   "price_date": "2026-11-16",
+   "sym": "LITE",
+   "side": "BUY",
+   "shares": 16.13196,
+   "price": 546.0,
+   "value": 8808.05,
+   "reason": "trailing +299% and every forecast year (weakest +1 +60.9%) >= G in 59.9% (post-report review)"
   }
  ],
  "runs": [
@@ -209,10 +219,9 @@
   "2026-11-11",
   "2026-11-12",
   "2026-11-13",
-  "2026-11-14"
+  "2026-11-14",
+  "2026-11-17"
  ],
- "last_close": "2026-11-13",
- "free": [
-  8808.05
- ]
+ "last_close": "2026-11-16",
+ "free": []
 }
