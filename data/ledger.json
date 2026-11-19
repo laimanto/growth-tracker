@@ -202,6 +202,26 @@
    "price": 546.0,
    "value": 8808.05,
    "reason": "trailing +299% and every forecast year (weakest +1 +60.9%) >= G in 59.9% (post-report review)"
+  },
+  {
+   "date": "2026-11-19",
+   "price_date": "2026-11-18",
+   "sym": "HPE",
+   "side": "SELL",
+   "shares": 200.328263,
+   "price": 45.78,
+   "value": 9171.03,
+   "reason": "replaced by XYZ: 12m upside +13% vs +27% (post-report review)"
+  },
+  {
+   "date": "2026-11-19",
+   "price_date": "2026-11-18",
+   "sym": "XYZ",
+   "side": "BUY",
+   "shares": 116.074261,
+   "price": 79.01,
+   "value": 9171.03,
+   "reason": "trailing +50% and every forecast year (weakest +1 +29.7%) >= G in 29.4%; replaces HPE (upside +27% vs +13%) (post-report review)"
   }
  ],
  "runs": [
@@ -221,8 +241,9 @@
   "2026-11-13",
   "2026-11-14",
   "2026-11-17",
-  "2026-11-18"
+  "2026-11-18",
+  "2026-11-19"
  ],
- "last_close": "2026-11-17",
+ "last_close": "2026-11-18",
  "free": []
 }
