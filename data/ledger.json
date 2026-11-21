@@ -222,6 +222,26 @@
    "price": 79.01,
    "value": 9171.03,
    "reason": "trailing +50% and every forecast year (weakest +1 +29.7%) >= G in 29.4%; replaces HPE (upside +27% vs +13%) (post-report review)"
+  },
+  {
+   "date": "2026-11-21",
+   "price_date": "2026-11-20",
+   "sym": "FIX",
+   "side": "SELL",
+   "shares": 9.163299,
+   "price": 1042.47,
+   "value": 9552.46,
+   "reason": "replaced by COHR: 12m upside +22% vs +45% (post-report review)"
+  },
+  {
+   "date": "2026-11-21",
+   "price_date": "2026-11-20",
+   "sym": "COHR",
+   "side": "BUY",
+   "shares": 51.022668,
+   "price": 187.22,
+   "value": 9552.46,
+   "reason": "trailing +62% and every forecast year (weakest +2 +41.5%) >= G in 41.3%; replaces FIX (upside +45% vs +22%) (post-report review)"
   }
  ],
  "runs": [
@@ -243,8 +263,9 @@
   "2026-11-17",
   "2026-11-18",
   "2026-11-19",
-  "2026-11-20"
+  "2026-11-20",
+  "2026-11-21"
  ],
- "last_close": "2026-11-19",
+ "last_close": "2026-11-20",
  "free": []
 }
