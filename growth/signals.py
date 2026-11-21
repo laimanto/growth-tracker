@@ -166,6 +166,10 @@ def fy_growth(y, n, q):
     f2 = f0 + pd.DateOffset(years=2)
     b = next((r for r in rows_n if abs((pd.Timestamp(r["fye"]) - f2).days) < 40), None)
     o["nfy"] = {f0.year: e0.get("numberOfAnalysts"), f0.year + 1: e1.get("numberOfAnalysts"), f0.year + 2: (b or {}).get("n")}
+    # FY+2 from only 1-2 analysts: not used as +2 (curve needs 3), kept as a warning; a decline blocks new buys
+    a = next((r for r in rows_n if abs((pd.Timestamp(r["fye"]) - (f0 + pd.DateOffset(years=1))).days) < 40), None)
+    if o["g2"] is None and a and b and (a.get("eps") or 0) > 0 and b.get("eps") is not None and 0 < (b.get("n") or 0) < 3:
+        o["g2_thin"], o["n2_thin"] = b["eps"] / a["eps"] - 1, int(b["n"])
     return o
 
 
@@ -198,7 +202,7 @@ def compute(U, recs, closes, held=(), today=None, revs=None):
         if c is not None:
             curves[s] = c
         fg = fy_growth(y, n, q)
-        row.update({k: fg[k] for k in ("fy", "gLast", "lastFlag", "gCur", "g1", "g2") if k in fg})
+        row.update({k: fg[k] for k in ("fy", "gLast", "lastFlag", "gCur", "g1", "g2", "g2_thin", "n2_thin") if k in fg})
         row["fy_eps"], row["fy_n"] = fg.get("eps"), fg.get("nfy")
         row["fy_points"] = [[str(pd.Timestamp(d).date()), round(float(v), 4)] for d, v in (pts or [])]
         row["qh"] = [[str(d.date()), v] for d, v in q][-12:]
@@ -284,7 +288,11 @@ def compute(U, recs, closes, held=(), today=None, revs=None):
             lows = {"trailing": x.trail, **yrs}
             lk, lv = min(lows.items(), key=lambda kv: kv[1])
             room = lv - x.need_in
-            if enter:
+            thin = x.get("g2_thin")
+            if enter and pd.notna(thin) and thin < C.THIN_FY2_MIN:
+                st, why = "WATCH", (f"passes both rules, but FY+2 forecast from only {int(x.n2_thin)} analyst(s) shows EPS {thin:+.1%} "
+                                    f"(a decline after +1 blocks buys)")
+            elif enter:
                 st, why = "BUY", f"trailing {x.trail:+.0%} and every forecast year (weakest {weak_k} {weak_v:+.1%}) >= G in {x.need_in:.1%}"
             elif room >= 0:                                  # passes both rules but too few analysts
                 st, why = "WATCH", f"passes both rules, but only {int(x.n_analysts)} analysts forecast next year (minimum {C.MIN_ANALYSTS})"

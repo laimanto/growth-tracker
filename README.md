@@ -20,7 +20,7 @@ Local copy: `dashboard/growth_tracker.html` (refreshed by every local run; `git 
   is refilled at once, any day, with the ready BUY with the most 12m upside (v1.11, Research Part 25c)
 * **readiness (v1.9):** a stock trades only when its data is mature: forecasts settled after a report (v1.12: >= 50% of analysts revised
   next year's forecast since the report, from day 3, else day 14), the new quarter in the data, fiscal year rolled at Yahoo, >= 3 next-year forecasts, FY+2 aligned,
-  Yahoo data fresh (<= 8 days, complete). A buy needs >= 10 analysts on the next fiscal year (v1.10, Research Part 24m; >= 3 after a fiscal-year rollover to be 'ready'). Held stocks that leave the indexes stay tracked (no new buys);
+  Yahoo data fresh (<= 8 days, complete). A buy needs >= 10 analysts on the next fiscal year (v1.10, Research Part 24m) and no falling FY+2 from only 1-2 analysts (2026-11-22, config.THIN_FY2_MIN, STLD; >= 3 after a fiscal-year rollover to be 'ready'). Held stocks that leave the indexes stay tracked (no new buys);
   a holding without a price for 7 days (delisted / acquired) is sold at its last close. Page tags: "waiting", "left index"
 * **portfolio (v1.8):** 10 fixed slots of equal start size; each stock keeps its own money (no trims, no rebalancing). A sale's
   whole value goes to the next qualifier - at once if a ready BUY is waiting (v1.11); when full, a new BUY replaces the lowest-12m-upside holding if its own upside is

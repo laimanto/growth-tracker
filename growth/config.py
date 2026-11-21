@@ -37,6 +37,7 @@ PRUNE_UPSIDE = 0.10
 # readiness to act (v1.9): a stock is only bought / sold once its data is mature
 SETTLE_SHARE = 0.50               # forecasts settled once >= 50% of analysts revised next year's forecast since the report (from day 3) ...
 SETTLE_DAY = 14                   # ... otherwise on day 14 (user 2026-11-01: the buy / sell depends on it; Yahoo's counts look incomplete)
+THIN_FY2_MIN = 0.0                # a FY+2 consensus from only 1-2 analysts (not used as +2) below this growth blocks new buys (2026-11-22, STLD)
 MIN_ANALYSTS = 10                 # at least 10 analysts on next fiscal year's forecast to buy (v1.10, Research Part 24m)
 ROLLOVER_MIN = 3                  # after a fiscal-year rollover, wait until at least 3 next-year forecasts exist
 START_FILL = False                # start-up: leave empty slots in cash (True = fill with the closest near-misses)

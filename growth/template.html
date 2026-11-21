@@ -145,10 +145,11 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li><b>Market P/E</b> = median P/E of the whole universe. <span id="floorNow"></span></li></ul></div>
     <div class="rule"><b>In one line</b><ul style="margin:4px 0 0;padding-left:18px">
       <li>Buy fast growers that are <b>not expensive for their growth</b>; sell when the <b>growth fades</b> or the <b>price runs too far ahead</b>.</li></ul></div>
-    <div class="rule"><b>Buy: all three must be true</b><ul style="margin:4px 0 0;padding-left:18px">
+    <div class="rule"><b>Buy: all four must be true</b><ul style="margin:4px 0 0;padding-left:18px">
       <li><b>1. Growing fast enough.</b> Growth (in %) at least <b>80% of the market P/E</b>, every forecast year and the last 12 months. <span class="mut" id="flIn"></span></li>
       <li><b>2. Not too expensive for that growth.</b> PEG (P/E ÷ growth %) at most <b>sector P/E ÷ 30</b>. <span class="mut" id="pegIn"></span></li>
-      <li><b>3. Well covered.</b> At least 10 analysts forecast next year (otherwise WATCH).</li></ul></div>
+      <li><b>3. Well covered.</b> At least 10 analysts forecast next year (otherwise WATCH).</li>
+      <li><b>4. No thin warning.</b> If only 1–2 analysts forecast the year after next, their figure is not used as +2, but if it shows EPS falling the stock is not bought (WATCH).</li></ul></div>
     <div class="rule"><b>Sell: any one is enough</b><ul style="margin:4px 0 0;padding-left:18px">
       <li><b>1. Growth fades.</b> Any forecast year below <b>53% of the market P/E</b>. <span class="mut" id="flOut"></span></li>
       <li><b>2. Price runs ahead.</b> PEG above <b>sector P/E ÷ 25</b> in any forecast year (20% more room than to buy). <span class="mut" id="pegOut"></span></li>
@@ -267,7 +268,8 @@ function remarks(r) {
   if (r.extra && !r.left_index) b.push(rb('watchlist', 'Added on request: outside the S&P 500 / Nasdaq-100. Same rules, but never bought by the model portfolio and not counted in the sector P/E medians.', 'b'));
   if (r.lastFlag) b.push(rb('one-off', r.lastFlag));
   if (r.oneoff) b.push(rb('one-off qtr', 'One-off quarter(s) replaced by the analysts’ estimate for P/E, trailing growth and the fiscal-year growth that contains them: ' + r.oneoff.join('; ')));
-  if (r.g2 == null && r.g1 != null) b.push(rb('FY+2 n/a', 'No FY+2 consensus at Nasdaq (fewer than 3 analysts): +2 is taken equal to +1.'));
+  if (r.g2_thin != null && r.need_in != null && r.g2_thin < r.need_in) b.push(rb('thin FY+2', `FY+2 forecast from only ${r.n2_thin} analyst${r.n2_thin > 1 ? 's' : ''}: EPS ${pct(r.g2_thin)} (G in ${pctu(r.need_in)}). Too few to count as +2 (taken equal to +1)` + (r.g2_thin < 0 ? ', but a decline blocks new buys.' : '.'), 'r'));
+  else if (r.g2 == null && r.g1 != null) b.push(rb('FY+2 n/a', 'No FY+2 consensus at Nasdaq (fewer than 3 analysts): +2 is taken equal to +1.'));
   if (r.tkind && r.tkind !== 'P/E model') b.push(rb('target: growth only', 'Not enough P/E history (24 months): the 12m target uses the growth-only model.'));
   return b.join('') || '';
 }
@@ -560,8 +562,8 @@ function stratInit() {
     ['G in / G out', 'The growth a stock needs at today’s price to pass both rules: G in = max(buy floor, P/E ÷ PEG in), G out = max(keep floor, P/E ÷ PEG out). Red years are below the one that matters for the row.'],
     ['Red year', 'A forecast year below the growth that matters for the row: G in for stocks not held, G out for holdings.'],
     ['ⓘ in a cell', 'The value is adjusted: Last shows the trailing 12-month growth when the reported fiscal-year figure is distorted by one-off items; +2 shows +1 when Nasdaq has no FY+2 consensus. Hover for details.'],
-    ['Remark badges', 'review now (3–14 days after a report, data ready) · data pending (data not ready, non-BUY/SELL rows) · report Nd (report within a week) · fcst ↑/↓ (a forecast year’s growth ±5 pts since the last report) · near exit (within 3 pts of G out) · N pts short (WATCH) · few analysts (&lt; 10) · one-off / one-off qtr (distorted figures replaced) · FY+2 n/a · target: growth only · watchlist · left index. Hover for details.'],
-    ['WATCH', 'Not held; weakest growth at most 5 pts below G in, or passes both rules with fewer than 10 analysts. Information only.'],
+    ['Remark badges', 'review now (3–14 days after a report, data ready) · data pending (data not ready, non-BUY/SELL rows) · report Nd (report within a week) · fcst ↑/↓ (a forecast year’s growth ±5 pts since the last report) · near exit (within 3 pts of G out) · N pts short (WATCH) · few analysts (&lt; 10) · one-off / one-off qtr (distorted figures replaced) · thin FY+2 (FY+2 from 1–2 analysts below G in; a decline blocks buys) · FY+2 n/a · target: growth only · watchlist · left index. Hover for details.'],
+    ['WATCH', 'Not held; weakest growth at most 5 pts below G in, or passes both rules with fewer than 10 analysts or a falling thin FY+2. Information only.'],
     ['Fcst Δ30d', 'Change of the next-year consensus EPS over the last 30 days.']];
   document.getElementById('guide').innerHTML = guide.map(g => `<tr><td class="l"><b>${g[0]}</b></td><td class="l" style="white-space:normal">${g[1]}</td></tr>`).join('');
   const tl = (el, t) => document.getElementById(el).innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
