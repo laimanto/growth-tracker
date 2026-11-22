@@ -1,5 +1,5 @@
 {
-"asof": "2026-10-23",
+"asof": "2026-11-22",
 "stocks": {
 "MMM": {
 "name": "3M",
@@ -1884,13 +1884,6 @@
 "sp500_added": "1975-06-30",
 "ndx": false
 },
-"KVUE": {
-"name": "Kenvue",
-"sector": "Consumer Defensive",
-"sp500": true,
-"sp500_added": "2023-08-25",
-"ndx": false
-},
 "KDP": {
 "name": "Keurig Dr Pepper",
 "sector": "Consumer Defensive",
@@ -2430,6 +2423,13 @@
 "sp500_added": "1957-03-04",
 "ndx": false
 },
+"OKTA": {
+"name": "Okta, Inc.",
+"sector": "Technology",
+"sp500": true,
+"sp500_added": "2026-11-04",
+"ndx": false
+},
 "ODFL": {
 "name": "Old Dominion",
 "sector": "Industrials",
@@ -2626,18 +2626,18 @@
 "sp500_added": "2002-07-22",
 "ndx": false
 },
-"PEG": {
-"name": "Public Service Enterprise Group",
-"sector": "Utilities",
-"sp500": true,
-"sp500_added": "1957-03-04",
-"ndx": false
-},
 "PTC": {
 "name": "PTC Inc.",
 "sector": "Technology",
 "sp500": true,
 "sp500_added": "2021-04-20",
+"ndx": false
+},
+"PEG": {
+"name": "Public Service Enterprise Group",
+"sector": "Utilities",
+"sp500": true,
+"sp500_added": "1957-03-04",
 "ndx": false
 },
 "PSA": {
@@ -2654,11 +2654,11 @@
 "sp500_added": "1984-04-30",
 "ndx": false
 },
-"PWR": {
-"name": "Quanta Services",
-"sector": "Industrials",
+"Q": {
+"name": "Qnity Electronics",
+"sector": "Technology",
 "sp500": true,
-"sp500_added": "2009-07-01",
+"sp500_added": "2025-11-03",
 "ndx": false
 },
 "QCOM": {
@@ -2668,18 +2668,18 @@
 "sp500_added": "1999-07-22",
 "ndx": true
 },
+"PWR": {
+"name": "Quanta Services",
+"sector": "Industrials",
+"sp500": true,
+"sp500_added": "2009-07-01",
+"ndx": false
+},
 "DGX": {
 "name": "Quest Diagnostics",
 "sector": "Healthcare",
 "sp500": true,
 "sp500_added": "2002-12-12",
-"ndx": false
-},
-"Q": {
-"name": "Qnity Electronics",
-"sector": "Technology",
-"sp500": true,
-"sp500_added": "2025-11-03",
 "ndx": false
 },
 "RL": {
@@ -2701,13 +2701,6 @@
 "sector": "Communication Services",
 "sp500": true,
 "sp500_added": "2026-08-18",
-"ndx": false
-},
-"RTX": {
-"name": "RTX Corporation",
-"sector": "Industrials",
-"sp500": true,
-"sp500_added": "1957-03-04",
 "ndx": false
 },
 "O": {
@@ -2801,6 +2794,13 @@
 "sp500_added": "2014-12-05",
 "ndx": false
 },
+"RTX": {
+"name": "RTX Corporation",
+"sector": "Industrials",
+"sp500": true,
+"sp500_added": "1957-03-04",
+"ndx": false
+},
 "SPGI": {
 "name": "S&P Global",
 "sector": "Financial Services",
@@ -2872,7 +2872,7 @@
 "ndx": false
 },
 "SKYD": {
-"name": "Skydance Corporation",
+"name": "Skydance",
 "sector": "Communication Services",
 "sp500": true,
 "sp500_added": "1994-09-30",
@@ -3522,65 +3522,9 @@
 "sp500_added": "2013-06-21",
 "ndx": false
 },
-"ALNY": {
-"name": "ALNY",
-"sector": "Healthcare",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"ARM": {
-"name": "ARM",
+"MSTR": {
+"name": "MSTR",
 "sector": "Technology",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"ASML": {
-"name": "ASML",
-"sector": "Technology",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"AZN": {
-"name": "AZN",
-"sector": "Healthcare",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"TEAM": {
-"name": "TEAM",
-"sector": "Technology",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"CCEP": {
-"name": "CCEP",
-"sector": "Consumer Defensive",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"EA": {
-"name": "EA",
-"sector": "Communication Services",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"FER": {
-"name": "FER",
-"sector": "Industrials",
-"sp500": false,
-"sp500_added": null,
-"ndx": true
-},
-"INSM": {
-"name": "INSM",
-"sector": "Healthcare",
 "sp500": false,
 "sp500_added": null,
 "ndx": true
@@ -3592,22 +3536,50 @@
 "sp500_added": null,
 "ndx": true
 },
-"MSTR": {
-"name": "MSTR",
+"ARM": {
+"name": "ARM",
 "sector": "Technology",
 "sp500": false,
 "sp500_added": null,
 "ndx": true
 },
-"PDD": {
-"name": "PDD",
-"sector": "Consumer Cyclical",
+"ZS": {
+"name": "ZS",
+"sector": "Technology",
 "sp500": false,
 "sp500_added": null,
 "ndx": true
 },
-"SHOP": {
-"name": "SHOP",
+"INSM": {
+"name": "INSM",
+"sector": "Healthcare",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"FER": {
+"name": "FER",
+"sector": "Industrials",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"AZN": {
+"name": "AZN",
+"sector": "Healthcare",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"ALNY": {
+"name": "ALNY",
+"sector": "Healthcare",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"TEAM": {
+"name": "TEAM",
 "sector": "Technology",
 "sp500": false,
 "sp500_added": null,
@@ -3627,9 +3599,37 @@
 "sp500_added": null,
 "ndx": true
 },
-"ZS": {
-"name": "ZS",
+"CCEP": {
+"name": "CCEP",
+"sector": "Consumer Defensive",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"SHOP": {
+"name": "SHOP",
 "sector": "Technology",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"EA": {
+"name": "EA",
+"sector": "Communication Services",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"ASML": {
+"name": "ASML",
+"sector": "Technology",
+"sp500": false,
+"sp500_added": null,
+"ndx": true
+},
+"PDD": {
+"name": "PDD",
+"sector": "Consumer Cyclical",
 "sp500": false,
 "sp500_added": null,
 "ndx": true
