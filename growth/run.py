@@ -171,8 +171,8 @@ def main():
         c = bench.get(f"{b}_TR")
         if c is not None:
             series[C.LABEL.get(b, b)] = c.dropna().pct_change().dropna()
-    live = {"Model (live)": nav.pct_change().dropna()} if len(nav) > 63 else {}
-    risk, wlab = perf.table(series, live)
+    risk, wlab = perf.table(series)                      # backtest vs benchmarks (Strategy tab)
+    risk_live = perf.since_start(navs)                   # live portfolio since inception (Performance tab)
     weights = {}
     for s, sh in pos.items():
         sec = U["stocks"].get(s, {}).get("sector", "Unknown")
@@ -190,7 +190,7 @@ def main():
          "cash": cash, "nav": navv, "n_pos": len(pos), "live_hold": live_hold, "sector_pe": S.attrs["sector_pe"], "floor": S.attrs["floor"],
          "rules": {"entry": C.ENTRY, "exit": C.EXIT, "watch": C.WATCH, "review": C.REVIEW, "highlight": C.HIGHLIGHT_DAYS},
          "signals": rows, "trips": [{k: clean(v) for k, v in t.items()} for t in T], "trades": L["trades"], "today": done,
-         "navs": navs, "risk": risk, "risk_windows": wlab, "sector_w": {k: v / navv for k, v in sorted(weights.items(), key=lambda z: -z[1])},
+         "navs": navs, "risk": risk, "risk_windows": wlab, "risk_live": risk_live, "sector_w": {k: v / navv for k, v in sorted(weights.items(), key=lambda z: -z[1])},
          "bench_names": C.BENCH_NAME, "backtest": bt, "fetched": n_eps}
     html = open(C.TEMPLATE, encoding="utf-8").read().replace("/*DATA*/null", json.dumps(D, separators=(",", ":"), default=clean))
     os.makedirs(os.path.dirname(C.OUT_HTML), exist_ok=True)

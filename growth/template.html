@@ -82,7 +82,7 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 <section data-tab="Signals">
   <div class="tiles" id="sigTiles"></div>
   <div class="card"><h2>Signals</h2>
-    <p class="cap">Rules: Strategy tab. <b>PEG</b> = P/E ÷ growth of the weakest forecast year; <b>PEG in / out</b> = buy / sell limit of its sector; <b>G in / out</b> = growth needed at today’s price to buy / keep (both rules). <span class="badge SELL">Red</span> cells = forecast years below G in (G out for holdings); Last = information only. Hover a signal, ⓘ or badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates = last 7 days. SOLD rows stay 7 days, then move to Trades. Click a row to switch between Signals view and Earnings view.</p>
+    <p class="cap">Rules: Strategy tab. <b>PEG</b> = P/E ÷ growth of the weakest forecast year; <b>PEG in / out</b> = buy / sell limit of its sector; <b>G in / out</b> = growth needed at today’s price to buy / keep (both rules). <span class="badge SELL">Red</span> cells = forecast years below G in (G out for holdings); Last = information only. Hover a signal, ⓘ or badge for details. <span style="background:var(--hl);padding:0 4px">Highlighted</span> dates = last 7 days. SOLD rows stay 7 days, then move to the trade log (Performance tab). Click a row to switch between Signals view and Earnings view.</p>
     <p class="cap hide" id="earnCap">EPS growth by fiscal year = today’s forecasts; they keep updating until the next report. <b>(Bracket)</b> = change since the forecasts just before the latest report, in % points of growth, e.g. 24% (+1); hover for the before and now figures and the EPS change. Same fiscal year compared: after a year-end report, Last compares the actual with what was expected; (new) = a year added by the rollover. Before this history began (21 Oct 2026) the “before” figures are approximate (Yahoo’s consensus from about then; marked ≈ in the hover). <b>#</b> = analysts forecasting next year. <b>Revised</b> = analysts who changed next year’s forecast since the report, out of all analysts (Yahoo counts names no one: new vs existing analysts cannot be told apart). <b>Forecasts</b>: <i>settled</i> = at least 50% of analysts have revised (from day 3), or day 14 is reached – only then may the model buy or sell; <i>pending</i> = not yet, or data incomplete (hover).</p>
     <div class="ctrl"><div class="chips" id="viewChips"></div><div class="chips" id="stateChips"></div><div class="chips hide" id="repChips"></div><input id="sigSearch" placeholder="Search ticker / name"><select id="sigSector"></select></div>
     <div class="topbar" data-for="sigWrap"><div></div></div><div class="tscroll" id="sigWrap"><table id="sigTab"></table></div></div>
@@ -94,18 +94,16 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
 
 <section data-tab="Performance">
   <div class="tiles" id="perfTiles"></div>
-  <div class="card"><h2>Risk and return</h2><p class="cap" id="riskCap"></p>
-    <div class="ctrl"><div class="chips" id="winChips"></div></div><div class="topbar" data-for="riskWrap"><div></div></div><div class="tscroll" id="riskWrap"><table id="riskTab"></table></div></div>
+  <div class="card"><h2>Since the start: model portfolio vs benchmarks</h2><p class="cap" id="liveCap"></p>
+    <div class="topbar" data-for="liveWrap"><div></div></div><div class="tscroll" id="liveWrap"><table id="liveTab"></table></div></div>
+  <div class="card"><h2>Profit and loss by year</h2><p class="cap">Calendar years on the model portfolio’s closing values (first year from the start, current year to date). P&amp;L = change in total value, incl. open positions; benchmarks over the same days. Realised = P&amp;L of positions sold that year, measured from their buy price. Trades = buys + sells (start-up buys not counted).</p>
+    <div class="tscroll"><table id="yearTab"></table></div></div>
   <div class="card"><h2>Model portfolio since the start (rebased to 1)</h2><p class="cap">Funds: total return. NDX, HSI: price index (HSI in HKD, last close carried on US days). Empty slots earn 0% here.</p>
     <div class="legend" id="perfLeg"></div><div class="chart" id="perfChart"></div></div>
-  <div class="card"><h2>Holdings and turnover</h2><p class="cap" id="holdCap"></p><table id="holdTab"></table></div>
   <div class="grid2">
     <div class="card"><h2>Weights by sector</h2><div class="chart" id="pfSector"></div></div>
-    <div class="card"><h2>Model portfolio set-up</h2><table id="setupTab"></table></div></div>
-</section>
-
-<section data-tab="Trades">
-  <div class="card"><h2>Positions (one row per buy → sell)</h2><p class="cap">Paper trades of the model portfolio, executed at the close. Entry price is the average purchase price, exit price the average sale price; P&amp;L includes partial sales from rebalancing. No orders are sent to any broker.</p>
+    <div class="card"><h2>Model portfolio set-up and activity</h2><table id="setupTab"></table></div></div>
+  <div class="card"><h2>Trade log: positions (one row per buy → sell)</h2><p class="cap">Paper trades of the model portfolio, executed at the close. Entry price is the average purchase price, exit price the average sale price; P&amp;L includes partial sales from rebalancing. No orders are sent to any broker.</p>
     <div class="topbar" data-for="tripWrap"><div></div></div><div class="tscroll" id="tripWrap"><table id="tripTab"></table></div>
     <details style="margin-top:10px"><summary class="cap" style="cursor:pointer">All individual trades (incl. rebalancing)</summary><div class="tscroll"><table id="trTab"></table></div></details></div>
 </section>
@@ -172,6 +170,9 @@ td.below{background:var(--sellbg)!important;color:var(--sell)!important;font-wei
       <li>Used for swaps and the quarterly sale (upside &lt; 10%).</li></ul></div>
     <p class="cap" id="ruleEx"></p>
     <h3>Column guide</h3><table id="guide"></table></div>
+  <div class="card"><h2>Backtest risk and return vs benchmarks</h2><p class="cap" id="riskCap"></p>
+    <div class="ctrl"><div class="chips" id="winChips"></div></div><div class="topbar" data-for="riskWrap"><div></div></div><div class="tscroll" id="riskWrap"><table id="riskTab"></table></div>
+    <h3>Holdings and turnover in the backtests</h3><p class="cap" id="holdCap"></p><table id="holdTab"></table></div>
   <div class="card"><h2>Backtest 1: Jan 2022 to Sep 2026, realistic set-up</h2>
     <p class="cap">Point-in-time universe (a stock is a candidate only after joining the S&amp;P 500 / Nasdaq-100). Forecast = actual EPS leaning 40% on recent growth (as analysts anchor), plus a 30% random error; 100 simulations. Trades happen 3 trading days after each earnings report (once analysts have updated), on actual daily prices. 10 fixed slots (start full, closest near-misses fill), whole-slot swaps when a newcomer is at least 5 points stronger (growth margin), quarterly sale of every holding below its buy bar; spare slots earn the T-bill rate. After Sep 2026 today's consensus is used. Shaded: 5th to 95th percentile of the runs.</p>
     <div class="tiles" id="btTilesA"></div><div class="legend" id="btLegA"></div><div class="chart" id="btChartA"></div>
@@ -206,7 +207,7 @@ const badge = s => `<span class="badge ${s.replace(' ', '')}">${s}</span>`;
 const daysAgo = d => d ? Math.round((Date.parse(D.price_date) - Date.parse(d)) / 864e5) : 1e9;
 const fresh = d => d && daysAgo(d) <= D.rules.highlight;
 const S = D.signals, BY = Object.fromEntries(S.map(r => [r.sym, r]));
-const TABS = ['Signals', 'Stock detail', 'Performance', 'Trades', 'Strategy'];
+const TABS = ['Signals', 'Stock detail', 'Performance', 'Strategy'];
 
 document.getElementById('meta').textContent = `Last update ${D.updated_utc} UTC · ${D.updated_hk} GMT+8`;
 function showTab(t) {
@@ -319,7 +320,7 @@ function sigTable() {
     {k: 'target', h: '12m $', t: '12-month target = expected 12-month PEAK level (P/E model). A buy reference, not a sell price.', f: r => px(r.target), tt: r => r.tkind || ''},
     {k: 'upside', h: 'Upside', t: 'target ÷ last price − 1', f: r => pct(r.upside), cls: r => cls(r.upside)},
     {k: 'pnl_pct', h: 'P&L', f: r => pct(r.pnl_pct, 1), cls: r => cls(r.pnl_pct)},
-    {k: 'exit_date', h: 'Exit', t: 'sale date; a SELL not sold yet: date the signal started. Actual trades: Trades tab', f: r => r.exit_date || r.sell_signal || '–', v: r => r.exit_date || r.sell_signal || '', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
+    {k: 'exit_date', h: 'Exit', t: 'sale date; a SELL not sold yet: date the signal started. Actual trades: trade log on the Performance tab', f: r => r.exit_date || r.sell_signal || '–', v: r => r.exit_date || r.sell_signal || '', cls: r => fresh(r.exit_date || r.sell_signal) ? 'hl' : ''},
     {k: 'pe', h: 'P/E', f: r => num(r.pe)},
     {k: 'peg', h: 'PEG', t: 'P/E ÷ growth (%) of the weakest forecast year', f: r => num(pegOf(r), 2), v: r => pegOf(r) ?? 99, cls: r => pegOf(r) != null && pegBar(r) != null && pegOf(r) > pegBar(r) ? 'below' : ''},
     {k: 'pegin', h: 'PEG in', t: 'PEG buy limit = sector P/E ÷ 30 (buy only if every year’s PEG is at or below it)', f: r => num(r.sector_pe / 30, 2), v: r => r.sector_pe ?? 99},
@@ -448,7 +449,7 @@ let detSym = null;
 function openDetail(sym) { detSym = sym; document.getElementById('detSearch').value = sym; showTab('Stock detail'); }
 function detail() {
   const r = BY[detSym], el = document.getElementById('detBody');
-  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in Trades.</p>'; return; }
+  if (!r) { el.innerHTML = '<p class="cap">Pick a ticker, or click a row in the trade log (Performance tab).</p>'; return; }
   let meter = '';
   if (r.fwd != null) {
     const mx = Math.max(r.need_in * 1.6, r.fwd, r.trail, 0.1), mn = Math.min(0, r.fwd, r.trail), P = v => ((v - mn) / (mx - mn) * 100).toFixed(1) + '%';
@@ -487,30 +488,61 @@ function holdInit() {
   const mo = v => v == null ? '–' : v.toFixed(1) + ' months', n0 = v => v == null ? '–' : v.toFixed(0), n1 = v => v == null ? '–' : v.toFixed(1);
   const tr = h => h ? n0(h.buys + h.sells + (h.trims || 0) + (h.reset || 0)) + ` <span class="sub">(${n0(h.buys)} buys, ${n0(h.sells)} sells)</span>` : '–';
   const rows = [
-    ['Live model portfolio', L.held, L.avg_days == null ? '–' : (L.avg_days / 30.44).toFixed(1) + ' months so far', '–', L.trades_per_year == null ? `${L.trades} since start (${L.days} days)` : n0(L.trades_per_year)],
     ['Backtest 2022–26 (median of 100 runs)', A && n1(A.held), A && mo(A.hold_months_mean), A && n0(A.new_per_year), tr(A)],
     ['Backtest 2008–24 (one simulation)', Bh && n1(Bh.held), Bh && mo(Bh.hold_months_mean), Bh && n0(Bh.new_per_year), tr(Bh)]];
   document.getElementById('holdTab').innerHTML = '<tr><th class="l"></th><th>Stocks held (avg)</th><th>Holding period (avg)</th><th>New positions / yr</th><th>Trades / yr</th></tr>' +
     rows.map(r => `<tr><td class="l">${r[0]}</td>${r.slice(1).map(v => `<td>${v ?? '–'}</td>`).join('')}</tr>`).join('');
-  document.getElementById('holdCap').innerHTML = 'Trades = whole stocks in or out (no trims). Backtest forecasts move ~3–10% a month vs ~0.6% for the real consensus, so backtest turnover is overstated; live holding periods should be longer.';
+  document.getElementById('holdCap').innerHTML = 'Trades = whole stocks in or out (no trims). Backtest forecasts move ~3–10% a month vs ~0.6% for the real consensus, so backtest turnover is overstated; live holding periods should be longer (live figures: Performance tab).';
 }
 
 function perfInit() {
-  holdInit();
   const N = D.navs, keys = Object.keys(N).filter(k => k !== 'dates'), r = c => lastv(N[c]) - 1;
   const t = [['Model portfolio', pct(r('Model'), 2), money(D.nav)], ['QQQ', pct(r('QQQ'), 2), 'same period'], ['Model vs QQQ', pct(r('Model') - r('QQQ'), 2), 'since ' + D.start_price_date],
     ['Holdings', D.n_pos, 'cash ' + money(D.cash)], ['Tracked', (N.dates.length - 1) + ' days', 'from ' + D.start_price_date]];
   document.getElementById('perfTiles').innerHTML = t.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
   document.getElementById('perfLeg').innerHTML = keys.map(k => `<label style="cursor:pointer"><input type="checkbox" data-k="${k}" ${perfOn.has(k) ? 'checked' : ''}> <i class="sw" style="background:${css(BCOL[k] || '--s4')}"></i>${k}</label>`).join('');
   document.querySelectorAll('#perfLeg input').forEach(c => c.addEventListener('change', () => { c.checked ? perfOn.add(c.dataset.k) : perfOn.delete(c.dataset.k); perfChart(); }));
+  liveTable(); yearTable();
   const W = Object.keys(D.risk);
   document.getElementById('winChips').innerHTML = W.map(w => `<button type="button" class="${w === win ? 'on' : ''}" data-w="${w}">${w} (${D.risk_windows[w]})</button>`).join('');
   document.querySelectorAll('#winChips button').forEach(b => b.addEventListener('click', () => { win = b.dataset.w; document.querySelectorAll('#winChips button').forEach(x => x.classList.toggle('on', x === b)); riskTable(); }));
-  document.getElementById('riskCap').innerHTML = "Daily returns; target (MAR) 4% a year, as in the Sortino dashboard. Annual return = compound growth; downside deviation = √252 × RMS of daily shortfalls below 4%; Sortino = (annual return − 4%) ÷ downside deviation. Strategy (backtest) = median run of Backtest 1 (price only, ~1%/yr below total return), ending Sep 2026. Model (live) appears after ~3 months. Common = days all series exist.";
+  document.getElementById('riskCap').innerHTML = "Daily returns; target (MAR) 4% a year, as in the Sortino dashboard. Annual return = compound growth; downside deviation = √252 × RMS of daily shortfalls below 4%; Sortino = (annual return − 4%) ÷ downside deviation. Strategy (backtest) = median run of Backtest 1 (price only, ~1%/yr below total return), ending Sep 2026; all windows end there. Common = days all series exist. The live model portfolio: Performance tab.";
   const st = [['Started', D.start], ['Bought at the close of', D.start_price_date], ['Capital (notional)', money(D.capital)], ['Weighting', '10 slots of equal start size, no rebalancing; a sale’s money funds the next buy; fractional shares'],
     ['Acts on', '3–17 days after a report once forecasts settle, or first close of each month; empty slots any day'], ['Prices used', D.price_date + ' close']];
+  const L = D.live_hold || {};
+  if (L.positions != null) st.push(['Positions so far', `${L.positions} (${L.held} held, ${L.closed} closed)`], ['Trades since the start', `${L.trades} in ${L.days} days (start-up buys not counted)`],
+    ['Average holding so far', L.avg_days == null ? '–' : Math.round(L.avg_days) + ' days (open positions counted to today)']);
   document.getElementById('setupTab').innerHTML = st.map(x => `<tr><td class="l">${x[0]}</td><td>${x[1]}</td></tr>`).join('');
   riskTable();
+}
+function yearTable() {
+  const N = D.navs, x = N.dates, cap = D.capital, out = [];
+  const val = (k, i) => { for (let j = i; j >= 0; j--) if (N[k] && N[k][j] != null) return N[k][j]; return null; };
+  [...new Set(x.map(d => d.slice(0, 4)))].forEach(y => {
+    const last = x.map(d => d.slice(0, 4)).lastIndexOf(y), first = x.findIndex(d => d.slice(0, 4) === y), i0 = first === 0 ? 0 : first - 1;
+    const ret = k => { const a = val(k, i0), b = val(k, last); return a && b != null ? b / a - 1 : null; };
+    const sold = D.trips.filter(t => t.status === 'closed' && (t.exit_date || '').startsWith(y));
+    out.push({y, from: x[i0], to: x[last], v0: cap * val('Model', i0), v1: cap * val('Model', last), m: ret('Model'), QQQ: ret('QQQ'), QGRW: ret('QGRW'), SPY: ret('SPY'),
+      real: sold.reduce((s, t) => s + (t.realized ?? t.pnl ?? 0), 0), nsold: sold.length,
+      ntr: D.trades.filter(t => t.price_date.startsWith(y) && !t.reason.startsWith('initial portfolio')).length});
+  });
+  const tot = out.length > 1 ? {y: 'Total', from: x[0], to: x.at(-1), v0: cap, v1: cap * val('Model', x.length - 1), m: val('Model', x.length - 1) - 1,
+    QQQ: val('QQQ', x.length - 1) - 1, QGRW: val('QGRW', x.length - 1) - 1, SPY: val('SPY', x.length - 1) - 1,
+    real: out.reduce((s, r) => s + r.real, 0), nsold: out.reduce((s, r) => s + r.nsold, 0), ntr: out.reduce((s, r) => s + r.ntr, 0)} : null;
+  const cell = (v, f) => `<td class="${cls(v)}">${f(v)}</td>`;
+  document.getElementById('yearTab').innerHTML = '<tr><th class="l">Year</th><th class="l">Period</th><th>Start value</th><th>End value</th><th>P&amp;L</th><th>Return</th><th>QQQ</th><th>QGRW</th><th>SPY</th><th>vs QQQ</th><th>Realised (sales)</th><th>Trades</th></tr>' +
+    [...out, ...(tot ? [tot] : [])].map(r => `<tr${r.y === 'Total' ? ' style="font-weight:600"' : ''}><td class="l">${r.y}${r.y === x.at(-1).slice(0, 4) && r.y !== 'Total' ? ' <span class="sub">(to date)</span>' : ''}</td><td class="l">${r.from} → ${r.to}</td>` +
+      `<td>${money(r.v0)}</td><td>${money(r.v1)}</td><td class="${clsm(r.v1 - r.v0)}">${money(r.v1 - r.v0)}</td>${cell(r.m, v => pct(v, 1))}${cell(r.QQQ, v => pct(v, 1))}${cell(r.QGRW, v => pct(v, 1))}${cell(r.SPY, v => pct(v, 1))}` +
+      `${cell(r.m != null && r.QQQ != null ? r.m - r.QQQ : null, v => v == null ? '–' : pct(v, 1))}<td class="${clsm(r.real)}">${money(r.real)} <span class="sub">(${r.nsold} sold)</span></td><td>${r.ntr}</td></tr>`).join('');
+}
+function liveTable() {
+  const R = D.risk_live || {}, rows = Object.entries(R).filter(([k, m]) => m).map(([k, m]) => Object.assign({k, name: k === 'Model' ? 'Live paper portfolio' : (D.bench_names[k] || k)}, m));
+  const any = rows.find(r => r.days), short = any && any.days < 63;
+  document.getElementById('liveCap').innerHTML = `From the ${D.start_price_date} close to ${D.price_date} (${any ? any.days : 0} trading days). Daily returns, funds with dividends; target (MAR) 4% a year as in the Sortino dashboard. ` +
+    (short ? '<b>Annual return and Sortino appear after ~3 months (63 trading days)</b>; over a few weeks they would only be noise.' : 'Annual return = compound growth; Sortino = (annual return − 4%) ÷ downside deviation.') + ' Empty slots earn 0%. Backtest results: Strategy tab.';
+  table('liveTab', [{k: 'k', h: 'Series', l: 1, f: r => r.k === 'Model' ? '<b>Model portfolio</b>' : `<b>${r.k}</b>`}, {k: 'name', h: 'What', l: 1},
+    {k: 'total', h: 'Return since start', f: r => pct(r.total, 1), cls: r => cls(r.total)}, {k: 'cagr', h: 'Annual return', f: r => r.cagr == null ? '–' : pct(r.cagr, 1), cls: r => cls(r.cagr)},
+    {k: 'sortino', h: 'Sortino', f: r => num(r.sortino, 2)}, {k: 'ddev', h: 'Downside dev.', f: r => pctu(r.ddev, 1)}, {k: 'mdd', h: 'Max drawdown', f: r => pctu(r.mdd, 1)}], rows, {sort: 'total'});
 }
 function riskTable() {
   const R = D.risk[win], rows = Object.entries(R).map(([k, m]) => Object.assign({k, name: k.startsWith('Strategy') ? 'Rule backtest, point-in-time, anchored forecasts' : k.startsWith('Model') ? 'Live paper portfolio' : (D.bench_names[k] || k)}, m || {}));
@@ -542,6 +574,7 @@ function trInit() {
 
 /* ---------- Strategy ---------- */
 function stratInit() {
+  holdInit();
   const B = D.backtest, A = B.sumA, Bs = B.sumB;
   document.getElementById('ruleEx').innerHTML = 'Example: a tech stock with P/E 26 and 40% growth has PEG 0.65; with the tech sector at P/E 26 its buy limit is 26 ÷ 30 = 0.87, so it passes. If its price rose 60% with the same forecasts, PEG 1.04 would reach the sell limit 26 ÷ 25 = 1.04. Each stock’s current PEG and limit are in the Signals table.';
   if (D.floor) {
@@ -556,7 +589,7 @@ function stratInit() {
     document.getElementById('pegOut').textContent = `Today: ${lim(25)}.`;
   }
   const guide = [['Entry / Entry $ / Last $', 'Date and price of the model buy (BUY / WATCH: date the signal started and that close), and the last close (SOLD: the sale price). Highlighted for 7 days.'],
-    ['Exit', 'SELL: date the signal started; SOLD: date sold (listed 7 days, then in Trades).'],
+    ['Exit', 'SELL: date the signal started; SOLD: date sold (listed 7 days, then in the trade log on the Performance tab).'],
     ['12m $ / Upside', 'Expected 12-month peak price (see 12m target above). Backtest 2008–24: peak within ±20% of it 57% of the time, no bias; selling at it would have cut returns (+18% vs +27%).'], ['Last / Cur / +1 / +2', 'EPS growth of the last fiscal year (actual), the current one and the next two (consensus). Hover for the fiscal year.'],
     ['PEG in / PEG out', 'PEG limits for the stock’s sector: buy only if every year’s PEG ≤ sector P/E ÷ 30 (PEG in); sell once any forecast year’s PEG > sector P/E ÷ 25 (PEG out).'],
     ['G in / G out', 'The growth a stock needs at today’s price to pass both rules: G in = max(buy floor, P/E ÷ PEG in), G out = max(keep floor, P/E ÷ PEG out). Red years are below the one that matters for the row.'],
@@ -607,6 +640,7 @@ let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() 
 sigInit(); perfInit(); trInit(); stratInit(); detail();
 let first = 'Signals'; try { first = TABS.includes(localStorage.getItem('gt_tab')) ? localStorage.getItem('gt_tab') : first; } catch (e) {}
 if (location.hash) first = decodeURIComponent(location.hash.slice(1));
+if (first === 'Trades') first = 'Performance';   // trade log merged into Performance
 showTab(TABS.includes(first) ? first : 'Signals');
 </script>
 </body>
